@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,31 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# documents (caso de negocio, tableros, etc.)
+*.pdf
+
+# serwist generated service worker
+public/sw.js
+public/sw.js.map
+public/swe-worker-*.js
+public/workbox-*.js
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# logs
+*.log
