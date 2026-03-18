@@ -242,9 +242,9 @@ Esto creara la carpeta `node_modules/` con todas las dependencias. Este proceso 
 
 ---
 
-### Paso 4: Configurar variables de entorno
+### Paso 4: Configurar variables de entorno (Supabase)
 
-El proyecto necesita conectarse a Supabase. Para eso debes crear un archivo `.env.local` con las claves de tu proyecto.
+> **CONCEPTO CLAVE:** Todo el equipo usa **el mismo proyecto de Supabase**. No crees tu propio proyecto. Las claves son compartidas y las va a proporcionar Carlos (gestor del proyecto). Todos apuntan a la misma base de datos para que los modulos se integren correctamente entre si.
 
 **4.1** Copia el archivo de ejemplo:
 
@@ -252,44 +252,87 @@ El proyecto necesita conectarse a Supabase. Para eso debes crear un archivo `.en
 cp .env.example .env.local
 ```
 
-**4.2** Abre `.env.local` en tu editor y reemplaza los valores con los datos de tu proyecto de Supabase:
+> En Windows (CMD) usa: `copy .env.example .env.local`
+> En Windows (PowerShell) usa: `Copy-Item .env.example .env.local`
+
+**4.2** Abre `.env.local` en tu editor de texto y pega las claves que Carlos compartio con el equipo:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key-aqui
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-**4.3 Donde encontrar estas claves:**
+Reemplaza los valores `xxxxxxxx` y `eyJhb...` con los valores reales que recibiste. **No modifiques** `NEXT_PUBLIC_SITE_URL`, dejalo como `http://localhost:3000`.
 
-1. Ve a [https://supabase.com/dashboard](https://supabase.com/dashboard)
-2. Selecciona tu proyecto (o crea uno nuevo si no tienes)
-3. Ve a **Settings** (icono de engranaje) → **API**
-4. Copia:
-   - `Project URL` → es tu `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon public` (bajo Project API keys) → es tu `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+**4.3 Reglas importantes sobre las variables de entorno:**
 
-> **IMPORTANTE:** Nunca subas el archivo `.env.local` a Git. Ya esta en el `.gitignore`.
+- **NUNCA** subas el archivo `.env.local` a Git (ya esta en `.gitignore`, pero verificalo)
+- **NUNCA** compartas las claves por un canal publico (no las pegues en el chat del grupo de WhatsApp ni en issues de GitHub)
+- **NUNCA** crees tu propio proyecto de Supabase para trabajar en el proyecto — todos usamos el mismo
+- Si necesitas las claves, pideselas directamente a Carlos por mensaje privado
+- El archivo `.env.example` que SI esta en el repositorio solo contiene valores de ejemplo, **no son las claves reales**
+
+**4.4 Verificar que `.env.local` se creo correctamente:**
+
+Abre el archivo y confirma que:
+- No tiene espacios antes o despues del `=`
+- No tiene comillas alrededor de los valores
+- La URL empieza con `https://` y termina en `.supabase.co`
+- La key es una cadena larga que empieza con `eyJ`
+
+Ejemplo de archivo **CORRECTO**:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://abcdefgh.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.xxxxx
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
+
+Ejemplo de archivo **INCORRECTO** (no hagas esto):
+```env
+# MAL: tiene comillas
+NEXT_PUBLIC_SUPABASE_URL="https://abcdefgh.supabase.co"
+
+# MAL: tiene espacios
+NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGci...
+
+# MAL: es el valor de ejemplo, no el real
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+```
 
 ---
 
 ### Paso 5: Configurar la base de datos en Supabase
 
+> **IMPORTANTE:** Este paso solo lo hace **Carlos** (una sola vez para todo el equipo). Si eres Alejandro, Juan o Christian, **salta al Paso 6**. La base de datos ya estara configurada cuando clones el proyecto.
+
 El proyecto incluye migraciones SQL que crean todas las tablas necesarias y un archivo de seed con datos de ejemplo.
 
-#### Opcion A: Usando Supabase en la nube (recomendado para empezar rapido)
+#### Instrucciones para Carlos (configuracion unica):
 
-**5.1** Ve al **SQL Editor** de tu proyecto en [https://supabase.com/dashboard](https://supabase.com/dashboard) → selecciona tu proyecto → **SQL Editor**.
+**5.1** Ve al **SQL Editor** de tu proyecto en [https://supabase.com/dashboard](https://supabase.com/dashboard) → selecciona el proyecto del equipo → **SQL Editor** (icono de terminal en el menu izquierdo).
 
-**5.2** Abre el archivo `supabase/migrations/00000000000000_init.sql` de tu proyecto local, copia todo su contenido y pegalo en el SQL Editor. Haz clic en **Run**.
+**5.2** Abre el archivo `supabase/migrations/00000000000000_init.sql` desde tu copia local del proyecto. Selecciona **todo** el contenido del archivo (Ctrl+A), copialo (Ctrl+C) y pegalo (Ctrl+V) en el SQL Editor de Supabase. Haz clic en el boton verde **Run** (o presiona Ctrl+Enter).
 
-Esto creara las tablas: `profiles`, `services`, `reservations`, `subscriptions` y `transactions`, junto con todas las politicas de seguridad RLS.
+Si todo sale bien, veras el mensaje "Success. No rows returned". Esto es normal — las migraciones crean tablas, no devuelven filas.
 
-**5.3** Luego abre el archivo `supabase/seed.sql`, copia su contenido y ejecutalo en el SQL Editor. Esto insertara los servicios de ejemplo (paquetes mensuales, trimestrales, anuales, auditorias y capacitaciones).
+Esto crea las tablas: `profiles`, `services`, `reservations`, `subscriptions` y `transactions`, junto con todas las politicas de seguridad RLS y los triggers.
 
-#### Opcion B: Usando Supabase CLI local (requiere Docker)
+**5.3** Ahora abre el archivo `supabase/seed.sql`, copia todo su contenido y pegalo en el SQL Editor (puedes abrir un nuevo query o borrar el anterior). Haz clic en **Run**.
 
-Si tienes Docker Desktop instalado y corriendo:
+Deberia mostrar "Success. 6 rows affected" (son los 6 servicios de ejemplo).
+
+**5.4** Verifica que las tablas se crearon: en el menu izquierdo de Supabase Dashboard, haz clic en **Table Editor**. Deberias ver 5 tablas: `profiles`, `services`, `reservations`, `subscriptions`, `transactions`. Haz clic en `services` y confirma que hay 6 filas de datos.
+
+**5.5** Comparte las claves del proyecto con el equipo (por mensaje privado, no por canal publico):
+1. Ve a **Settings** → **API**
+2. Copia `Project URL` → esta es la `NEXT_PUBLIC_SUPABASE_URL`
+3. Copia `anon public` (bajo Project API keys) → esta es la `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Envia ambos valores a cada companero por mensaje directo
+
+#### Opcion alternativa: Supabase local con Docker (para desarrollo aislado)
+
+Si algun integrante quiere experimentar sin afectar la base de datos compartida, puede levantar una instancia local. Esto **no es obligatorio** y requiere tener Docker Desktop instalado y corriendo.
 
 ```bash
 npx supabase start
@@ -297,7 +340,7 @@ npx supabase start
 
 Esto levantara una instancia local de PostgreSQL, Auth (GoTrue), Storage y Studio. La primera vez descargara las imagenes de Docker (puede tardar varios minutos).
 
-Al terminar, el comando mostrara las URLs y claves locales. Actualiza tu `.env.local` con esos valores:
+Al terminar, el comando mostrara las URLs y claves locales en la terminal. Si eliges esta opcion, actualiza tu `.env.local` con esos valores locales en vez de los del proyecto en la nube:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
@@ -312,11 +355,13 @@ npx supabase db reset
 
 Este comando ejecuta las migraciones y luego el `seed.sql` automaticamente.
 
-Para acceder al panel visual de administracion de la base de datos:
+Para acceder al panel visual de administracion de la base de datos local:
 
 ```
 http://127.0.0.1:54323
 ```
+
+> **Recuerda:** si usas Supabase local, tus datos son independientes y tus companeros no veran lo que hagas ahi. Cuando termines de experimentar, vuelve a poner las claves del proyecto en la nube en tu `.env.local`.
 
 ---
 
@@ -539,26 +584,67 @@ export function MiComponente() {
 
 ### Problemas comunes
 
+**"La pagina carga pero no muestra datos / sale un error de Supabase"**
+Tu archivo `.env.local` tiene claves incorrectas o no existe. Verifica lo siguiente:
+1. Que el archivo `.env.local` existe en la raiz del proyecto (al mismo nivel que `package.json`)
+2. Que las claves son las reales del proyecto compartidas por Carlos (no los valores de ejemplo)
+3. Que no hay comillas, espacios extra ni saltos de linea dentro de los valores
+4. Despues de modificar `.env.local`, **debes reiniciar el servidor** (`Ctrl+C` y luego `npm run dev` de nuevo). Next.js no detecta cambios en `.env.local` en caliente.
+
 **"No puedo acceder a /dashboard, me redirige a /login"**
-Esto es correcto. Las rutas de admin estan protegidas. Necesitas autenticarte con un usuario que tenga `role = 'admin'` en la tabla `profiles`. Puedes cambiarlo manualmente desde el SQL Editor de Supabase:
+Esto es correcto. Las rutas de admin estan protegidas. Necesitas autenticarte con un usuario que tenga `role = 'admin'` en la tabla `profiles`. Pide a Carlos que ejecute lo siguiente en el SQL Editor de Supabase para darte acceso admin:
 ```sql
-update profiles set role = 'admin' where id = 'tu-user-id';
+-- Reemplaza 'tu-email@ejemplo.com' con el email con el que te registraste
+update profiles set role = 'admin'
+where id = (select id from auth.users where email = 'tu-email@ejemplo.com');
 ```
 
 **"npm run dev no arranca"**
-Verifica que tienes Node.js 20+ (`node -v`). Si el error menciona `.env`, asegurate de que creaste el archivo `.env.local` con las claves correctas.
+Verifica lo siguiente en orden:
+1. `node -v` debe mostrar v20 o superior. Si no, descarga Node.js LTS desde https://nodejs.org
+2. Ejecutaste `npm install` despues de clonar? Si no, ejecutalo.
+3. Existe el archivo `.env.local`? Si no, crealo (ver Paso 4 del tutorial).
+4. Si el error dice "Module not found", borra `node_modules` y ejecuta `npm install` de nuevo:
+   ```bash
+   rm -rf node_modules
+   npm install
+   ```
+
+**"npm install falla o tarda demasiado"**
+- Verifica tu conexion a internet
+- Si estas en la red de la universidad, prueba con datos moviles (algunas redes bloquean registros de npm)
+- Intenta limpiar la cache: `npm cache clean --force` y luego `npm install`
 
 **"Error de tipos con Supabase"**
-Regenera los tipos ejecutando:
+Si ves errores de TypeScript relacionados con tablas o columnas, es posible que los tipos esten desactualizados. Solo aplica si tienes Supabase local con Docker:
 ```bash
 npx supabase gen types typescript --local > types/database.ts
 ```
 
 **"Los tests E2E fallan"**
-Asegurate de haber instalado los navegadores con `npx playwright install` y de que el servidor de desarrollo este corriendo en otra terminal (`npm run dev`).
+1. Asegurate de haber instalado los navegadores: `npx playwright install`
+2. Los tests E2E necesitan que el servidor este corriendo. Abre **otra terminal** y ejecuta `npm run dev`, luego en la terminal original ejecuta `npm run test:e2e`
 
 **"Git dice que no tengo permisos para hacer push"**
-Asegurate de que tu cuenta de GitHub tiene acceso al repositorio. Pide al administrador del repo que te agregue como colaborador.
+Tu cuenta de GitHub no tiene acceso al repositorio. Pide a Carlos que te agregue como colaborador:
+1. Carlos va a GitHub → repositorio → Settings → Collaborators
+2. Hace clic en "Add people" y agrega tu usuario de GitHub
+3. Te llegara una invitacion por email o en GitHub, debes aceptarla
+
+**"Git dice que hay conflictos al hacer merge"**
+Esto pasa cuando dos personas modificaron el mismo archivo. No entres en panico:
+1. Abre los archivos marcados con conflicto en VS Code (aparecen con marcas `<<<<<<< HEAD`)
+2. VS Code te mostrara opciones: "Accept Current Change", "Accept Incoming Change", "Accept Both"
+3. Elige la opcion correcta segun el caso, o edita manualmente
+4. Despues de resolver: `git add .` y `git commit -m "fix: resolver conflictos con develop"`
+5. Si no sabes como resolverlo, pregunta en el grupo antes de hacer nada
+
+**"Me aparece el template de Next.js en vez de la landing de RNG-Vantage"**
+Estas en una rama desactualizada. Ejecuta:
+```bash
+git checkout develop
+git pull origin develop
+```
 
 ---
 
