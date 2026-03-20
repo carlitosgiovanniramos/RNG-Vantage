@@ -1,933 +1,808 @@
 # Plan de Desarrollo — RNG-Vantage
 
-> Sistema integral de automatizacion de ventas, reservas y control financiero para un emprendimiento de marketing digital.
+> Sistema integral de automatización de ventas, reservas y control financiero para un emprendimiento de marketing digital.
 
 ---
 
-## 1. Informacion del Equipo
+## 1. Información del Equipo
 
-| Integrante | Rol Principal | Area | Par de Trabajo |
+| Integrante | Rol Principal | Área de Responsabilidad | Par de Trabajo |
 |---|---|---|---|
-| **Carlos Giovanni Ramos Jacome** | Backend Lead + Gestion de Proyecto | Logica de negocio, APIs, seguridad, Edge Functions | Carlos + Alejandro |
-| **Edison Alejandro Andrade Ocana** | Backend + Base de Datos | Esquema de datos, CRUD, endpoints, migraciones, validaciones | Carlos + Alejandro |
-| **Juan Pablo Lopez Ramos** | Frontend Lead + UX | Interfaces publicas (cliente), formularios, experiencia mobile-first | Juan + Christian |
-| **Christian Alexis Hurtado Torres** | Frontend + Dashboard UI | Interfaces de admin, graficos, tablas, sistema de diseno | Juan + Christian |
+| **Carlos Giovanni Ramos Jacome** | Backend Lead + Gestión de Proyecto | Autenticación, seguridad (RLS), Edge Functions, transacciones, coordinación del equipo | Carlos + Alejandro (par backend) |
+| **Edison Alejandro Andrade Ocaña** | Backend + Base de Datos | Schemas Zod, Server Actions CRUD de todos los módulos, migraciones SQL, seed data, tipos TypeScript | Carlos + Alejandro (par backend) |
+| **Juan Pablo López Ramos** | Frontend Lead + UX | Páginas públicas (landing, catálogo, reservar, checkout, privacidad), navbar/footer, formularios, responsive mobile-first | Juan + Christian (par frontend) |
+| **Christian Alexis Hurtado Torres** | Frontend + Dashboard UI | Páginas admin (dashboard, reservas, servicios, transacciones), gráficos Recharts, design system ShadCN, páginas de login/register | Juan + Christian (par frontend) |
 
-**Distribucion de carga:** Backend (Carlos + Alejandro) = 55% | Frontend (Juan + Christian) = 45%
+**Distribución de carga:** Backend (Carlos + Alejandro) = 55% | Frontend (Juan + Christian) = 45%
 
-**Metodologia:** Programacion en pares. Cada par trabaja en la misma area para garantizar transferencia de conocimiento y evitar cuellos de botella si un integrante no esta disponible.
+**Metodología:** Programación en pares. Cada par trabaja en la misma área para garantizar transferencia de conocimiento y evitar cuellos de botella si un integrante no está disponible.
 
 ---
 
 ## 2. Cronograma General
 
-Basado en el cronograma academico de 16 semanas (Enero 2026 – Julio 2026):
+Basado en el cronograma académico de 16 semanas (Enero 2026 – Julio 2026):
 
-| Fase | Semanas | Periodo | Descripcion |
-|---|---|---|---|
-| Inicio y Planificacion | 1-2 | Ene 2026 | Requisitos, historias de usuario, alcance, project charter |
-| Analisis y Diseno | 3-4 | Feb 2026 | Arquitectura de datos, prototipos Mobile-First, diseno LOPDP |
-| **Desarrollo Sprint 1** | **5-6** | **Feb-Mar 2026** | **Base funcional: auth, reservas, landing, sistema de diseno** |
-| **Desarrollo Sprint 2** | **7-8** | **Mar 2026** | **Modulos core: suscripciones, catalogo, dashboard, checkout** |
-| **Desarrollo Sprint 3** | **9-10** | **Abr 2026** | **Integracion: metricas, realtime, LOPDP, responsive** |
-| **Desarrollo Sprint 4** | **11-12** | **Abr-May 2026** | **Cierre: documentacion, migraciones finales, pulido UX** |
-| Pruebas y QA | 13-14 | May-Jun 2026 | Tests funcionales, E2E, seguridad, carga, validacion de roles |
-| Implantacion y Cierre | 15-16 | Jun-Jul 2026 | Deploy produccion, migracion datos reales, capacitacion, manuales |
+| Fase | Semanas | Descripción |
+|---|---|---|
+| Inicio y Planificación | 1–2 | Requisitos, historias de usuario, alcance, project charter |
+| Análisis y Diseño | 3–4 | Arquitectura de datos, prototipos Mobile-First, diseño LOPDP |
+| **Desarrollo Sprint 1** | **5–6** | **Base funcional: auth, reservas, landing, sistema de diseño** |
+| **Desarrollo Sprint 2** | **7–8** | **Módulos core: suscripciones, catálogo, dashboard, checkout** |
+| **Desarrollo Sprint 3** | **9–10** | **Integración: métricas, realtime, LOPDP, responsive** |
+| **Desarrollo Sprint 4** | **11–12** | **Cierre: documentación, migraciones finales, pulido UX** |
+| Pruebas y QA | 13–14 | Tests funcionales, E2E, seguridad, carga, validación de roles |
+| Implantación y Cierre | 15–16 | Deploy producción, migración datos reales, capacitación, manuales |
 
 ---
 
 ## 3. Roles y Tareas Detalladas
 
+A continuación se detallan TODAS las tareas de cada integrante con especificaciones técnicas completas: archivos a crear/modificar, lógica esperada, criterios de aceptación, dependencias entre tareas y rama de Git correspondiente.
+
+### Mapa de Dependencias entre Tareas
+
+Antes de leer las tareas individuales, es importante entender qué tareas bloquean a otras. Si tu tarea depende de otra que no está lista, coordina con tu compañero para acordar prioridades.
+
+```
+Carlos: Auth (T1) ────────┬──→ Christian: Login/Register UI (T2)
+                           ├──→ Alejandro: Server Actions (necesitan auth context)
+                           └──→ Juan: Checkout UI (necesita auth para comprar)
+
+Alejandro: Schemas Zod (T1) ──┬──→ Juan: Formulario Reserva (T3)
+                               ├──→ Christian: Formularios Admin (T4-T6)
+                               └──→ Carlos: Server Actions de transacciones
+
+Alejandro: CRUD Backend ──────┬──→ Juan: Catálogo UI, Checkout UI
+                               └──→ Christian: Tablas Admin (reservas, servicios, transacciones)
+
+Carlos: Edge Function Métricas ──→ Christian: Dashboard con datos reales
+```
+
+> **Regla:** Si estás bloqueado por una tarea de otro compañero, trabaja en tareas que NO tengan dependencias pendientes. No esperes sin hacer nada.
+
 ---
 
-### 3.1 Carlos Giovanni Ramos Jacome
+### 3.1 Carlos Giovanni Ramos Jacome — Backend Lead + Gestión de Proyecto
 
-**Cargo:** Backend Lead + Gestion de Proyecto
-**Responsabilidad:** Toda la logica de negocio del servidor, seguridad del sistema, Edge Functions de Supabase y coordinacion general del equipo.
+**Responsabilidad general:** Toda la lógica de negocio del servidor, seguridad del sistema, Edge Functions de Supabase y coordinación general del equipo.
 
 ---
 
-#### Tarea 1: Sistema de Autenticacion y Seguridad
+#### Tarea 1: Sistema de Autenticación y Seguridad
 
-**Descripcion:** Implementar el flujo completo de autenticacion usando Supabase Auth, incluyendo registro, login, asignacion automatica de roles y cumplimiento LOPDP en el proceso de registro.
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/auth-registro-login`
+**Dependencias:** Ninguna (es la primera tarea del proyecto)
+**Bloquea a:** Christian (login/register UI), Alejandro (Server Actions necesitan auth), Juan (checkout necesita auth)
+
+**¿Qué hay que hacer?**
+Implementar el flujo completo de autenticación usando Supabase Auth: registro con consentimiento LOPDP, login con redirección por rol, y protección de rutas admin.
 
 **Archivos a crear/modificar:**
-- `app/(auth)/login/page.tsx` — conectar con la logica de signIn (coordinacion con Christian que hace la UI)
-- `app/(auth)/register/page.tsx` — conectar con la logica de signUp
-- `lib/supabase/server.ts` — agregar funciones helper de auth si se necesitan
-- `supabase/migrations/` — agregar trigger para asignar rol por defecto al registrarse
-- `middleware.ts` — refinar la proteccion de rutas por rol (ya tiene estructura base)
 
-**Criterios de aceptacion:**
-- Un usuario puede registrarse con email y contrasena
-- Al registrarse se crea automaticamente su perfil con `role = 'client'`
-- El primer usuario admin se configura manualmente desde SQL o desde un endpoint protegido
-- El checkbox de consentimiento LOPDP es obligatorio y se guarda `data_consent_at` en el perfil
-- Las rutas `/dashboard`, `/reservas`, `/servicios`, `/transacciones` solo son accesibles para usuarios con `role = 'admin'`
-- Las rutas `/catalogo`, `/reservar`, `/checkout` son accesibles para cualquier usuario autenticado
+| Archivo | Acción | Qué hacer |
+|---|---|---|
+| `app/(auth)/login/page.tsx` | Modificar | Conectar la lógica de `supabase.auth.signInWithPassword()`. La UI la hace Christian, pero la conexión con Supabase la coordinas tú. Implementar redirect post-login: si `role === 'admin'` → `/dashboard`, si `role === 'client'` → `/catalogo` |
+| `app/(auth)/register/page.tsx` | Modificar | Conectar la lógica de `supabase.auth.signUp()` con `options.data.full_name`. Asegurar que el checkbox LOPDP sea obligatorio y que se guarde `data_consent_at` en el perfil |
+| `lib/supabase/server.ts` | Modificar (si necesario) | Agregar funciones helper si se necesitan (ej: `getCurrentUser()`, `requireAdmin()`) |
+| `middleware.ts` | Modificar | Refinar la protección de rutas. Ya tiene estructura base. Verificar que funcione correctamente el flujo: no autenticado → redirect a `/login?redirect={pathname}`, autenticado pero no admin → redirect a `/` |
 
-**Rama:** `feature/auth-registro-login`
-**Sprint:** 1 (Semanas 5-6)
-**Dependencias:** Ninguna (es la primera tarea)
-**Bloquea a:** Christian (necesita auth funcional para conectar las paginas de login/register)
+**Lógica detallada del registro:**
+```
+1. Recibir: email, password, full_name, data_consent (boolean)
+2. Verificar que data_consent === true (si no, rechazar con error)
+3. Llamar: supabase.auth.signUp({ email, password, options: { data: { full_name } } })
+4. El trigger handle_new_user() en la BD crea automáticamente el perfil con role='client'
+5. Guardar data_consent_at = now() en el perfil recién creado
+6. JWT se almacena en cookie vía @supabase/ssr
+7. Redirigir a /catalogo
+```
+
+**Lógica detallada del login:**
+```
+1. Recibir: email, password
+2. Llamar: supabase.auth.signInWithPassword({ email, password })
+3. Si error → mostrar mensaje (credenciales incorrectas, usuario no existe, etc)
+4. Si éxito → consultar profiles.role del usuario
+5. Si role === 'admin' → redirect a /dashboard
+6. Si role === 'client' → redirect a /catalogo (o al redirect de la URL si viene de una ruta protegida)
+```
+
+**Criterios de aceptación (cómo saber que está terminado):**
+- [ ] Un usuario nuevo puede registrarse con email, contraseña y nombre completo
+- [ ] Al registrarse se crea automáticamente su perfil con `role = 'client'` y `data_consent_at` lleno
+- [ ] Si el usuario no marca el checkbox LOPDP, el formulario NO permite enviar
+- [ ] Un usuario registrado puede iniciar sesión y es redirigido según su rol
+- [ ] Las rutas `/dashboard`, `/reservas`, `/servicios`, `/transacciones`, `/subscriptions` redirigen a `/login` si el usuario no está autenticado
+- [ ] Las mismas rutas redirigen a `/` si el usuario está autenticado pero NO es admin
+- [ ] El primer usuario admin se configura manualmente ejecutando SQL en Supabase Dashboard
+- [ ] Si el JWT expira, el middleware lo refresca automáticamente sin que el usuario note nada
+
+**Cómo probar manualmente:**
+1. Ejecuta `npm run dev` y ve a `/register`
+2. Crea una cuenta con email, contraseña y nombre
+3. Verifica en Supabase Dashboard → Table Editor → `profiles` que se creó el perfil con `role = 'client'`
+4. Cierra sesión e inicia sesión de nuevo → deberías llegar a `/catalogo`
+5. En SQL Editor de Supabase: `UPDATE profiles SET role = 'admin' WHERE ...`
+6. Cierra sesión e inicia sesión → deberías llegar a `/dashboard`
+7. En modo incógnito, intenta acceder a `/dashboard` → debe redirigir a `/login`
 
 ---
 
-#### Tarea 2: Validacion y Refinamiento de Politicas RLS
+#### Tarea 2: Validación y Refinamiento de Políticas RLS
 
-**Descripcion:** Revisar y probar todas las politicas Row Level Security de cada tabla para garantizar que los clientes solo ven sus datos y los admins ven todo. Corregir posibles brechas.
+**Sprint:** 1–2 (Semanas 5–8, en paralelo) · **Rama:** `feature/rls-politicas-seguridad`
+**Dependencias:** Tarea 1 (auth debe funcionar para probar con diferentes roles)
+
+**¿Qué hay que hacer?**
+Revisar y probar TODAS las políticas Row Level Security de cada tabla para garantizar que los clientes solo ven sus datos y los admins ven todo. Corregir cualquier brecha encontrada.
 
 **Archivos a modificar:**
-- `supabase/migrations/00000000000000_init.sql` — corregir o agregar politicas si se encuentran problemas
-- Crear nueva migracion si el esquema cambia: `supabase/migrations/00000000000001_rls_fix.sql`
+- `supabase/migrations/00000000000000_init.sql` — corregir políticas si se encuentran problemas
+- Nueva migración `supabase/migrations/00000000000001_rls_fix.sql` — si el esquema cambia
 
-**Criterios de aceptacion:**
-- Un usuario con `role = 'client'` NO puede ver reservas, suscripciones ni transacciones de otros usuarios
-- Un usuario con `role = 'client'` NO puede acceder a la tabla `profiles` de otros usuarios
-- Un usuario con `role = 'admin'` puede ver TODOS los registros de todas las tablas
-- Un usuario no autenticado NO puede leer ni escribir en ninguna tabla
-- Tests manuales documentados con capturas de pantalla o queries SQL
+**Matriz de pruebas RLS (probar cada combinación):**
 
-**Rama:** `feature/rls-politicas-seguridad`
-**Sprint:** 1-2 (Semanas 5-8, en paralelo con otras tareas)
-**Dependencias:** Tarea 1 (auth debe funcionar para probar roles)
+| Tabla | Usuario no autenticado | Cliente (su propia data) | Cliente (data de otro) | Admin |
+|---|---|---|---|---|
+| `profiles` | ❌ No puede leer | ✅ Lee/edita su perfil | ❌ No puede ver | ✅ Lee todos |
+| `services` | ❌ No puede leer | ✅ Lee activos | ❌ No puede crear | ✅ CRUD completo |
+| `reservations` | ❌ No puede leer | ✅ Lee/crea las suyas | ❌ No ve de otros | ✅ Lee/edita todas |
+| `subscriptions` | ❌ No puede leer | ✅ Lee las suyas | ❌ No ve de otros | ✅ Lee/edita todas |
+| `transactions` | ❌ No puede leer | ✅ Lee las suyas | ❌ No ve de otros | ✅ CRUD completo |
+
+**Criterios de aceptación:**
+- [ ] Cada celda de la matriz de arriba se cumple exactamente
+- [ ] Tests documentados con capturas de pantalla o queries SQL que demuestren cada caso
+- [ ] Un usuario no autenticado NO puede leer ni escribir en NINGUNA tabla
 
 ---
 
 #### Tarea 3: Motor de Suscripciones — Edge Function
 
-**Descripcion:** Desarrollar una Edge Function en Deno que se ejecute periodicamente para gestionar el ciclo de vida de las suscripciones: detectar vencimientos, renovar automaticamente o expirar.
+**Sprint:** 2 (Semanas 7–8) · **Rama:** `feature/edge-function-suscripciones`
+**Dependencias:** Tarea 1 (auth) + Alejandro debe tener la lógica de contratación lista (Alejandro T4)
+
+**¿Qué hay que hacer?**
+Desarrollar una Edge Function en Deno que gestione el ciclo de vida de las suscripciones: detectar vencimientos, renovar automáticamente las que tengan `auto_renew = true`, y expirar las demás.
 
 **Archivos a crear:**
-- `supabase/functions/subscription-renewal/index.ts` — logica principal
+- `supabase/functions/subscription-renewal/index.ts` — lógica principal
 - `supabase/functions/subscription-renewal/deno.json` — config de Deno
-- Actualizar `supabase/config.toml` — registrar la nueva funcion
 
-**Logica detallada:**
+**Pseudocódigo:**
 ```
-1. Consultar suscripciones donde ends_at <= now() AND status = 'active'
-2. Para cada suscripcion:
+1. Consultar: SELECT * FROM subscriptions WHERE ends_at <= now() AND status = 'active'
+2. Para cada suscripción encontrada:
    a. Si auto_renew = true:
-      - Calcular nueva ends_at sumando duration_months del servicio asociado
-      - Actualizar starts_at = ends_at anterior, ends_at = nueva fecha
-      - Crear una transaccion con status = 'pending' por el monto del servicio
+      - Obtener el servicio: SELECT duration_months, price FROM services WHERE id = subscription.service_id
+      - Actualizar suscripción: starts_at = ends_at anterior, ends_at = nueva fecha (+ duration_months)
+      - Crear transacción: { user_id, subscription_id, amount: service.price, status: 'pending', payment_method: 'pending' }
    b. Si auto_renew = false:
-      - Cambiar status a 'expired'
-3. Retornar resumen: X renovadas, Y expiradas
+      - Actualizar suscripción: status = 'expired'
+3. Retornar JSON: { renewed: X, expired: Y, errors: [...] }
 ```
 
-**Criterios de aceptacion:**
-- La funcion procesa correctamente suscripciones vencidas
-- Las renovaciones crean una transaccion pendiente asociada
-- Las suscripciones no renovables cambian a `expired`
-- La funcion es idempotente (ejecutarla dos veces no duplica datos)
-- Se puede invocar manualmente via `curl` para testing
+**Criterios de aceptación:**
+- [ ] La función procesa correctamente suscripciones vencidas
+- [ ] Las renovaciones crean una transacción pendiente asociada con el monto correcto
+- [ ] Las suscripciones no renovables cambian a `expired`
+- [ ] La función es **idempotente**: ejecutarla dos veces seguidas NO duplica datos
+- [ ] Se puede invocar manualmente vía `curl` para testing
+- [ ] Solo usuarios admin pueden invocarla (JWT verificado en el header)
 
-**Rama:** `feature/edge-function-suscripciones`
-**Sprint:** 2 (Semanas 7-8)
-**Dependencias:** Tarea 1 (auth) + Alejandro debe tener la logica de contratacion lista
+**Cómo probar:**
+```bash
+npx supabase functions serve subscription-renewal --no-verify-jwt
+curl -X POST http://localhost:54321/functions/v1/subscription-renewal \
+  -H "Authorization: Bearer TU_JWT_TOKEN" \
+  -H "Content-Type: application/json"
+```
 
 ---
 
-#### Tarea 4: API de Metricas del Dashboard — Edge Function
+#### Tarea 4: API de Métricas del Dashboard — Edge Function
 
-**Descripcion:** Desarrollar una Edge Function que calcule y retorne todas las metricas financieras que el dashboard necesita mostrar.
+**Sprint:** 3 (Semanas 9–10) · **Rama:** `feature/edge-function-dashboard-metrics`
+**Dependencias:** Datos en todas las tablas (Alejandro debe tener transacciones, suscripciones, reservas con datos)
+**Bloquea a:** Christian (necesita esta API para alimentar los gráficos del dashboard)
+
+**¿Qué hay que hacer?**
+Edge Function que calcula y retorna TODAS las métricas financieras que el dashboard necesita en una sola llamada.
 
 **Archivos a crear:**
 - `supabase/functions/dashboard-metrics/index.ts`
 - `supabase/functions/dashboard-metrics/deno.json`
-- Opcionalmente: crear vistas SQL en una nueva migracion para optimizar consultas
+- Opcionalmente: nueva migración con vistas SQL para optimizar queries
 
-**Metricas a calcular:**
-| Metrica | Query |
-|---|---|
-| Ingresos del mes actual | SUM(amount) de transactions WHERE status='completed' AND created_at del mes actual |
-| Ingresos por tipo de servicio | JOIN transactions → subscriptions → services, agrupado por service.type |
-| Suscripciones activas | COUNT de subscriptions WHERE status='active' |
-| Suscripciones por vencer (proximos 7 dias) | COUNT de subscriptions WHERE ends_at BETWEEN now() AND now()+7 days |
-| Reservas pendientes | COUNT de reservations WHERE status='pending' |
-| Transacciones del mes | Lista de transactions del mes actual con datos del usuario |
-| Tasa de conversion | (COUNT subscriptions / COUNT reservations) * 100 |
+**Métricas a calcular (cada una es un campo del JSON de respuesta):**
 
-**Criterios de aceptacion:**
-- La funcion retorna un JSON con todas las metricas en una sola llamada
-- Los calculos son correctos contra datos de prueba conocidos
-- El tiempo de respuesta es menor a 500ms con datos de prueba
-- Solo usuarios admin pueden invocar esta funcion (JWT verificado)
+| Campo JSON | Descripción | Query SQL aproximado |
+|---|---|---|
+| `monthly_revenue` | Ingresos del mes actual | `SUM(amount) FROM transactions WHERE status='completed' AND created_at >= inicio_del_mes` |
+| `revenue_by_service_type` | Ingresos agrupados por tipo | `JOIN transactions → subscriptions → services, GROUP BY services.type` |
+| `active_subscriptions` | Suscripciones activas | `COUNT(*) FROM subscriptions WHERE status='active'` |
+| `expiring_soon` | Suscripciones por vencer (7 días) | `COUNT(*) FROM subscriptions WHERE ends_at BETWEEN now() AND now()+7days` |
+| `pending_reservations` | Reservas pendientes | `COUNT(*) FROM reservations WHERE status='pending'` |
+| `recent_transactions` | Últimas 10 transacciones | `SELECT ... FROM transactions JOIN profiles ORDER BY created_at DESC LIMIT 10` |
+| `conversion_rate` | Tasa de conversión | `(COUNT subscriptions / COUNT reservations) * 100` |
 
-**Rama:** `feature/edge-function-dashboard-metrics`
-**Sprint:** 3 (Semanas 9-10)
-**Dependencias:** Alejandro debe tener datos en todas las tablas (transacciones, suscripciones, reservas)
-**Bloquea a:** Christian (necesita esta API para alimentar los graficos del dashboard)
+**Criterios de aceptación:**
+- [ ] Retorna JSON con todas las métricas en una sola llamada
+- [ ] Los cálculos son correctos contra datos de prueba conocidos
+- [ ] Tiempo de respuesta < 500ms con datos de prueba
+- [ ] Solo usuarios admin pueden invocarla (JWT verificado)
 
 ---
 
-#### Tarea 5: Logica de Transacciones y Preparacion para Pasarela de Pago
+#### Tarea 5: Lógica de Transacciones y Preparación para Pasarela de Pago
 
-**Descripcion:** Implementar la logica server-side para el registro de pagos, disenar el flujo de estados y preparar la estructura para integrar una pasarela de pago real en el futuro.
+**Sprint:** 2 (Semanas 7–8) · **Rama:** `feature/transacciones-logica-pagos`
+**Dependencias:** Tarea 1 (auth)
+
+**¿Qué hay que hacer?**
+Implementar la lógica server-side para el registro de pagos, diseñar el flujo de estados y preparar un webhook placeholder para integrar una pasarela de pago real en el futuro.
 
 **Archivos a crear/modificar:**
 - `app/api/transactions/route.ts` — Route Handler para registrar transacciones
-- `lib/validators/transaction.ts` — schema Zod (coordinacion con Alejandro)
-- `supabase/functions/payment-webhook/index.ts` — placeholder para webhook de pasarela futura
+- `lib/validators/transaction.ts` — schema Zod (coordinar con Alejandro)
+- `supabase/functions/payment-webhook/index.ts` — placeholder documentado
 
-**Flujo de estados de una transaccion:**
+**Flujo de estados de una transacción:**
 ```
-pending → completed    (pago exitoso)
-pending → failed       (pago rechazado)
-completed → refunded   (devolucion, solo admin)
+pending ───→ completed    (admin registra pago exitoso)
+pending ───→ failed       (admin registra pago rechazado)
+completed ──→ refunded    (admin registra devolución)
 ```
 
-**Criterios de aceptacion:**
-- Un admin puede registrar un pago manual desde la interfaz
-- Al completar un pago, la suscripcion asociada se activa automaticamente
-- El webhook placeholder esta documentado para integracion futura
-- Las transacciones se validan con Zod antes de insertarse
-
-**Rama:** `feature/transacciones-logica-pagos`
-**Sprint:** 2 (Semanas 7-8)
-**Dependencias:** Tarea 1 (auth)
+**Criterios de aceptación:**
+- [ ] Un admin puede registrar un pago manual desde la interfaz
+- [ ] Al completar un pago (`status = 'completed'`), la suscripción asociada se activa automáticamente
+- [ ] El webhook placeholder tiene documentación clara de cómo integrarlo con una pasarela futura
+- [ ] Las transacciones se validan con Zod antes de insertarse
 
 ---
 
-#### Tarea 6: Gestion del Proyecto y Documentacion
+#### Tarea 6: Gestión del Proyecto y Documentación
 
-**Descripcion:** Mantener la coordinacion del equipo, facilitar reuniones, hacer code review y elaborar la documentacion tecnica final.
+**Sprint:** Continuo (todas las semanas) · **Sin rama específica**
 
-**Actividades continuas (todas las semanas):**
-- Configurar y mantener el tablero de tareas en GitHub Projects
-- Facilitar reunion semanal de seguimiento (15-30 min) con el equipo
-- Revisar y aprobar Pull Requests de todos los integrantes
-- Resolver conflictos de merge en `develop`
-- Garantizar que el build pase antes de cada merge
+**Actividades semanales:**
+- [ ] Configurar y mantener tablero de tareas en GitHub Projects
+- [ ] Facilitar reunión semanal de seguimiento (15–30 min)
+- [ ] Revisar y aprobar Pull Requests de todos los integrantes
+- [ ] Resolver conflictos de merge en `develop`
+- [ ] Verificar que el build pase antes de cada merge
 
-**Documentacion tecnica (Sprint 4, semanas 11-12):**
-- Documentar la arquitectura del sistema
-- Documentar las Edge Functions (parametros, respuestas, como probarlas)
-- Documentar el esquema de base de datos final
-- Crear guia de deploy a produccion
-
-**No tiene rama especifica** — es trabajo continuo.
+**Documentación técnica (Sprint 4, semanas 11–12):**
+- [ ] Documento de arquitectura del sistema
+- [ ] Documentación de Edge Functions (parámetros, respuestas, cómo probarlas)
+- [ ] Esquema de base de datos final con diagrama ER
+- [ ] Guía de deploy a producción (Vercel + Supabase)
 
 ---
 
-### 3.2 Edison Alejandro Andrade Ocana
+### 3.2 Edison Alejandro Andrade Ocaña — Backend + Base de Datos
 
-**Cargo:** Backend + Base de Datos
-**Responsabilidad:** Todo lo relacionado con el esquema de datos, operaciones CRUD, validaciones Zod, migraciones SQL y seed data.
+**Responsabilidad general:** Todo lo relacionado con el esquema de datos, operaciones CRUD (Server Actions), validaciones Zod reutilizables, migraciones SQL y seed data para testing.
 
 ---
 
-#### Tarea 1: Schemas de Validacion Zod
+#### Tarea 1: Schemas de Validación Zod
 
-**Descripcion:** Crear todos los esquemas de validacion reutilizables que seran usados tanto en el backend (Server Actions) como en el frontend (React Hook Form).
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/validators-zod-schemas`
+**Dependencias:** Ninguna (es lo primero que debe estar listo)
+**Bloquea a:** Juan (formularios), Christian (formularios admin), Carlos (Server Actions de transacciones)
+
+**¿Qué hay que hacer?**
+Crear TODOS los schemas de validación reutilizables que serán usados tanto en el backend (Server Actions) como en el frontend (React Hook Form resolver).
 
 **Archivos a crear:**
-- `lib/validators/auth.ts`
-- `lib/validators/reservation.ts`
-- `lib/validators/service.ts`
-- `lib/validators/subscription.ts`
-- `lib/validators/transaction.ts`
-- `lib/validators/index.ts` — re-exportar todos los schemas
 
-**Detalle de cada schema:**
-
-```typescript
-// auth.ts
-loginSchema: { email (email valido), password (min 6 chars) }
-registerSchema: { email, password, full_name (min 2 chars), data_consent (debe ser true) }
-
-// reservation.ts
-createReservationSchema: {
-  full_name (min 2, max 100),
-  email (email valido),
-  phone (opcional, formato ecuatoriano 09XXXXXXXX),
-  preferred_date (fecha futura),
-  notes (opcional, max 500),
-  data_consent (debe ser true)
-}
-
-// service.ts
-createServiceSchema: {
-  name (min 3, max 100),
-  description (opcional, max 500),
-  type (enum: manejo_redes | auditoria | capacitacion | otro),
-  price (numero >= 0),
-  duration_months (entero > 0),
-  is_active (boolean, default true)
-}
-
-// subscription.ts
-createSubscriptionSchema: {
-  service_id (uuid),
-  auto_renew (boolean, default false)
-}
-
-// transaction.ts
-createTransactionSchema: {
-  subscription_id (uuid, opcional),
-  amount (numero > 0),
-  payment_method (enum: cash | transfer | card),
-  notes (opcional, max 500)
-}
-```
-
-**Criterios de aceptacion:**
-- Cada schema valida correctamente datos validos e invalidos
-- Los mensajes de error estan en espanol
-- Los schemas son importables desde `@/lib/validators`
-- Unit tests para cada schema (al menos 3 tests por schema: valido, invalido, edge case)
-
-**Rama:** `feature/validators-zod-schemas`
-**Sprint:** 1 (Semanas 5-6) — es lo primero que debe estar listo porque todos dependen de esto
-**Dependencias:** Ninguna
-**Bloquea a:** Juan (formulario de reserva), Christian (formularios admin), Carlos (Server Actions)
-
----
-
-#### Tarea 2: Modulo de Captacion y Reservas — Backend
-
-**Descripcion:** Implementar toda la logica del servidor para el sistema de reservas de capacitaciones: creacion desde el formulario publico, cambio de estados por el admin y notificaciones en tiempo real.
-
-**Archivos a crear:**
-- `app/(public)/reservar/actions.ts` — Server Action para crear reserva
-- `app/(dashboard)/reservas/actions.ts` — Server Actions para actualizar estado
-
-**Logica de Server Action (crear reserva):**
-```
-1. Validar datos con reservationSchema
-2. Obtener user_id si el usuario esta autenticado (opcional para reservas)
-3. Insertar en tabla reservations con status = 'pending'
-4. Retornar { success: true } o { error: 'mensaje' }
-```
-
-**Logica de Server Action (actualizar estado):**
-```
-1. Verificar que el usuario es admin
-2. Validar que el nuevo estado es valido (pending → confirmed | cancelled, confirmed → completed | cancelled)
-3. Actualizar el registro
-```
-
-**Criterios de aceptacion:**
-- Un visitante puede crear una reserva desde `/reservar` sin estar autenticado
-- Un visitante autenticado tiene su `user_id` asociado automaticamente
-- El admin puede cambiar el estado de cualquier reserva desde `/reservas`
-- No se puede saltar estados (por ejemplo, de pending a completed directamente)
-- Los datos se validan con el schema Zod antes de tocar la base de datos
-
-**Rama:** `feature/reservas-backend-crud`
-**Sprint:** 1 (Semanas 5-6)
-**Dependencias:** Tarea 1 (schemas Zod)
-**Bloquea a:** Juan (necesita el Server Action para conectar el formulario)
-
----
-
-#### Tarea 3: Modulo de Servicios/Catalogo — Backend
-
-**Descripcion:** Implementar el CRUD completo de servicios que el admin usara para gestionar el catalogo de paquetes.
-
-**Archivos a crear:**
-- `app/(dashboard)/servicios/actions.ts` — Server Actions CRUD
-
-**Server Actions:**
-| Accion | Descripcion |
+| Archivo | Schemas que contiene |
 |---|---|
-| `createService(formData)` | Crea un nuevo servicio, validado con serviceSchema |
-| `updateService(id, formData)` | Actualiza un servicio existente |
-| `toggleServiceActive(id)` | Activa/desactiva un servicio (soft delete) |
+| `lib/validators/auth.ts` | `loginSchema`: email (formato válido), password (min 6 chars). `registerSchema`: email, password, full_name (min 2 chars), data_consent (debe ser `true`) |
+| `lib/validators/reservation.ts` | `createReservationSchema`: full_name (min 2, max 100), email (válido), phone (opcional, formato ecuatoriano `09XXXXXXXX`), preferred_date (fecha futura obligatoria), notes (opcional, max 500), data_consent (debe ser `true`) |
+| `lib/validators/service.ts` | `createServiceSchema`: name (min 3, max 100), description (opcional, max 500), type (enum: `manejo_redes` \| `auditoria` \| `capacitacion` \| `otro`), price (número >= 0), duration_months (entero > 0), is_active (boolean, default `true`) |
+| `lib/validators/subscription.ts` | `createSubscriptionSchema`: service_id (uuid), auto_renew (boolean, default `false`) |
+| `lib/validators/transaction.ts` | `createTransactionSchema`: subscription_id (uuid, opcional), amount (número > 0), payment_method (enum: `cash` \| `transfer` \| `card`), notes (opcional, max 500) |
+| `lib/validators/index.ts` | Re-exportar todos los schemas para import fácil: `import { loginSchema } from "@/lib/validators"` |
 
-**Criterios de aceptacion:**
-- El admin puede crear servicios nuevos con todos los campos requeridos
-- El admin puede editar servicios existentes
-- El admin puede desactivar un servicio (no se elimina, solo `is_active = false`)
-- Los servicios desactivados no aparecen en el catalogo publico pero si en la vista admin
-- Validacion Zod en todos los inputs
+**Requisitos importantes:**
+- Los mensajes de error deben estar en **español** (ej: "El nombre debe tener al menos 2 caracteres")
+- Cada schema debe exportar tanto el schema como su tipo inferido (ej: `type LoginInput = z.infer<typeof loginSchema>`)
 
-**Rama:** `feature/servicios-backend-crud`
-**Sprint:** 1 (Semanas 5-6)
-**Dependencias:** Tarea 1 (schemas Zod)
-**Bloquea a:** Juan (catalogo UI) y Christian (servicios admin UI)
+**Criterios de aceptación:**
+- [ ] Cada schema valida correctamente datos válidos e inválidos
+- [ ] Los mensajes de error están en español
+- [ ] Unit tests para cada schema: al menos 3 tests por schema (dato válido, dato inválido, edge case)
+- [ ] Los schemas son importables globalmente desde `@/lib/validators`
+
+**Ejemplo de implementación esperada:**
+```typescript
+// lib/validators/auth.ts
+import { z } from "zod";
+
+export const loginSchema = z.object({
+  email: z.string().email("Ingresa un email válido"),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+});
+
+export type LoginInput = z.infer<typeof loginSchema>;
+```
 
 ---
 
-#### Tarea 4: Modulo de Suscripciones — Logica de Contratacion
+#### Tarea 2: Módulo de Captación y Reservas — Backend
 
-**Descripcion:** Implementar la logica para que un cliente contrate un paquete/servicio, creando la suscripcion y la transaccion asociada.
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/reservas-backend-crud`
+**Dependencias:** Tarea 1 (schemas Zod)
+**Bloquea a:** Juan (necesita el Server Action para conectar el formulario de reserva)
+
+**¿Qué hay que hacer?**
+Implementar toda la lógica del servidor para el sistema de reservas: creación desde el formulario público y cambio de estados por el admin.
 
 **Archivos a crear:**
-- `app/(public)/checkout/actions.ts` — Server Action para contratar
-- `app/api/subscriptions/route.ts` — Route Handler alternativo si se necesita
+- `app/(public)/reservar/actions.ts` — Server Action: crear reserva
+- `app/(dashboard)/reservas/actions.ts` — Server Actions: actualizar estado de reserva
 
-**Logica de contratacion:**
+**Server Action `createReservation(formData)`:**
 ```
-1. Recibir service_id y auto_renew del formulario de checkout
-2. Validar con subscriptionSchema
-3. Obtener el servicio y verificar que is_active = true
-4. Calcular ends_at = now() + duration_months del servicio
-5. Insertar en subscriptions: { user_id, service_id, starts_at: now(), ends_at, status: 'active', auto_renew }
-6. Insertar en transactions: { user_id, subscription_id, amount: service.price, payment_method: 'pending', status: 'pending' }
-7. Retornar { success: true, subscription_id }
+1. Validar datos con createReservationSchema
+2. Obtener user_id si el usuario está autenticado (OPCIONAL — las reservas pueden ser anónimas)
+3. Insertar en tabla reservations con status = 'pending'
+4. Retornar { success: true, id: reservation.id } o { error: 'mensaje descriptivo' }
 ```
 
-**Criterios de aceptacion:**
-- Un cliente autenticado puede contratar cualquier servicio activo
-- Se crea la suscripcion con fechas correctas segun la duracion del servicio
-- Se crea automaticamente una transaccion pendiente asociada
-- Un cliente no puede contratar un servicio desactivado
-- Un usuario no autenticado es redirigido a login
+**Server Action `updateReservationStatus(id, newStatus)`:**
+```
+1. Verificar que el usuario actual es admin
+2. Validar transición de estado:
+   - pending → confirmed ✅
+   - pending → cancelled ✅
+   - confirmed → completed ✅
+   - confirmed → cancelled ✅
+   - completed → (ninguna) ❌
+   - cancelled → (ninguna) ❌
+3. Si transición inválida → retornar { error: "Transición no permitida" }
+4. Actualizar el registro en la BD
+5. Retornar { success: true }
+```
 
-**Rama:** `feature/suscripciones-contratacion`
-**Sprint:** 2 (Semanas 7-8)
-**Dependencias:** Tarea 1 (schemas), Tarea 3 (servicios deben existir), Carlos Tarea 1 (auth)
-**Bloquea a:** Juan (checkout UI necesita esta accion), Carlos (Edge Function de renovacion)
-
----
-
-#### Tarea 5: Mantenimiento de Base de Datos
-
-**Descripcion:** Mantener el esquema de datos actualizado, crear nuevas migraciones cuando sea necesario, y mantener seed data realista para testing.
-
-**Actividades continuas:**
-- Si algun integrante necesita un campo nuevo en alguna tabla, crear la migracion correspondiente
-- Despues de cada cambio en el esquema, ejecutar:
-  ```bash
-  npx supabase gen types typescript --local > types/database.ts
-  ```
-- Mantener `supabase/seed.sql` con datos que permitan probar todos los flujos
-- Crear vistas SQL si Carlos las necesita para las metricas del dashboard
-
-**Seed data final (Sprint 4):**
-- Al menos 2 usuarios de prueba (1 admin, 1 client)
-- Los 6 servicios actuales mas cualquiera que se agregue
-- Al menos 10 reservas con diferentes estados
-- Al menos 5 suscripciones (activas, expiradas, canceladas)
-- Al menos 10 transacciones con diferentes estados y metodos de pago
-
-**Rama:** `feature/migraciones-refinamiento`
-**Sprint:** Continuo (Semanas 5-12)
+**Criterios de aceptación:**
+- [ ] Un visitante puede crear una reserva desde `/reservar` **sin estar autenticado**
+- [ ] Un visitante autenticado tiene su `user_id` asociado automáticamente
+- [ ] El admin puede cambiar el estado de cualquier reserva
+- [ ] No se puede saltar estados (ej: pending → completed directamente está prohibido)
+- [ ] Los datos se validan con Zod antes de tocar la base de datos
 
 ---
 
-### 3.3 Juan Pablo Lopez Ramos
+#### Tarea 3: Módulo de Servicios/Catálogo — Backend
 
-**Cargo:** Frontend Lead + UX
-**Responsabilidad:** Todas las interfaces que ve el cliente final (parte publica del sistema), experiencia mobile-first, formularios y flujos de usuario.
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/servicios-backend-crud`
+**Dependencias:** Tarea 1 (schemas Zod)
+**Bloquea a:** Juan (catálogo UI), Christian (servicios admin UI)
+
+**Archivo a crear:** `app/(dashboard)/servicios/actions.ts`
+
+**Server Actions a implementar:**
+
+| Acción | Parámetros | Lógica |
+|---|---|---|
+| `createService(formData)` | Datos del formulario | Validar con `createServiceSchema`, insertar en tabla `services`, retornar `{ success, id }` |
+| `updateService(id, formData)` | ID + datos actualizados | Verificar que el servicio existe, validar datos, actualizar registro |
+| `toggleServiceActive(id)` | ID del servicio | Cambiar `is_active` al valor contrario (true↔false). Esto es un soft delete |
+
+**Criterios de aceptación:**
+- [ ] El admin puede crear servicios nuevos con todos los campos requeridos
+- [ ] El admin puede editar nombre, descripción, precio, duración, tipo de un servicio existente
+- [ ] El admin puede desactivar un servicio (no se elimina de la BD, solo `is_active = false`)
+- [ ] Los servicios desactivados NO aparecen en el catálogo público pero SÍ en la vista admin
+- [ ] Validación Zod en todos los inputs
 
 ---
 
-#### Tarea 1: Navbar, Footer y Layout Publico
+#### Tarea 4: Módulo de Suscripciones — Lógica de Contratación
 
-**Descripcion:** Implementar la estructura visual que envuelve todas las paginas publicas: barra de navegacion superior y pie de pagina.
+**Sprint:** 2 (Semanas 7–8) · **Rama:** `feature/suscripciones-contratacion`
+**Dependencias:** T1 (schemas), T3 (servicios deben existir), Carlos T1 (auth)
+**Bloquea a:** Juan (checkout UI), Carlos (Edge Function de renovación)
 
-**Archivos a modificar/crear:**
-- `app/(public)/layout.tsx` — ya existe con placeholder, implementar layout completo
-- `components/navbar.tsx` — componente de navegacion
-- `components/footer.tsx` — componente de pie de pagina
+**Archivo a crear:** `app/(public)/checkout/actions.ts`
 
-**Especificacion de la Navbar:**
-- Logo o nombre "RNG-Vantage" (link a `/`)
-- Links: Servicios (`/catalogo`), Reservar (`/reservar`)
-- Boton: "Iniciar Sesion" (`/login`) o nombre del usuario si esta autenticado
-- **Mobile:** hamburger menu que despliega los links en un panel lateral (usar ShadCN Sheet)
+**Server Action `createSubscription(formData)`:**
+```
+1. Recibir: service_id, auto_renew (del formulario de checkout)
+2. Validar con createSubscriptionSchema
+3. Obtener usuario actual con supabase.auth.getUser()
+   - Si no está autenticado → retornar { error: "Debes iniciar sesión", redirect: "/login" }
+4. Obtener el servicio: SELECT * FROM services WHERE id = service_id
+   - Si no existe o is_active = false → retornar { error: "Servicio no disponible" }
+5. Calcular ends_at = now() + servicio.duration_months
+6. INSERTAR en subscriptions: { user_id, service_id, starts_at: now(), ends_at, status: 'active', auto_renew }
+7. INSERTAR en transactions: { user_id, subscription_id, amount: servicio.price, payment_method: 'pending', status: 'pending' }
+8. Retornar { success: true, subscription_id }
+```
 
-**Especificacion del Footer:**
-- Links: Politica de Privacidad (`/politica-privacidad`), Contacto
-- Copyright del emprendimiento
-- Diseno simple, una sola fila
+**Criterios de aceptación:**
+- [ ] Un cliente autenticado puede contratar cualquier servicio activo
+- [ ] Se crea la suscripción con fechas correctas según la duración del servicio
+- [ ] Se crea automáticamente una transacción pendiente con el monto del servicio
+- [ ] Un cliente NO puede contratar un servicio desactivado
+- [ ] Un usuario no autenticado recibe un error con redirect a login
 
-**Criterios de aceptacion:**
-- La navbar es sticky (se queda fija arriba al hacer scroll)
-- En mobile (< 768px) los links se colapsan en un hamburger menu
-- El boton de login cambia a mostrar el nombre del usuario cuando esta autenticado
-- El footer se ve bien en todas las resoluciones
+---
 
-**Rama:** `feature/navbar-footer-publico`
-**Sprint:** 1 (Semanas 5-6)
+#### Tarea 5: Mantenimiento de Base de Datos (Continua)
+
+**Sprint:** Continuo (5–12) · **Rama:** `feature/migraciones-refinamiento`
+
+**Actividades:**
+- Si algún integrante necesita un campo nuevo → crear migración SQL correspondiente
+- Después de cada cambio en el esquema → regenerar tipos: `npx supabase gen types typescript --local > types/database.ts`
+- Mantener `supabase/seed.sql` actualizado con datos que permitan probar todos los flujos
+- Crear vistas SQL si Carlos las necesita para las métricas del dashboard
+
+**Seed data final (Sprint 4):** Al menos 2 usuarios (1 admin, 1 client), los 6+ servicios, 10+ reservas con diferentes estados, 5+ suscripciones (activas, expiradas, canceladas), 10+ transacciones con diferentes estados y métodos de pago.
+
+---
+
+### 3.3 Juan Pablo López Ramos — Frontend Lead + UX
+
+**Responsabilidad general:** Todas las interfaces que ve el cliente final (parte pública del sistema), experiencia mobile-first, formularios y flujos de usuario.
+
+---
+
+#### Tarea 1: Navbar, Footer y Layout Público
+
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/navbar-footer-publico`
 **Dependencias:** Ninguna
-**Componentes ShadCN necesarios:** `npx shadcn@latest add sheet button`
+**Componentes ShadCN:** `npx shadcn@latest add sheet button`
+
+**Archivos a crear/modificar:**
+- `app/(public)/layout.tsx` — implementar layout completo
+- `components/navbar.tsx` — componente de navegación
+- `components/footer.tsx` — componente de pie de página
+
+**Especificación de la Navbar:**
+- Logo/nombre "RNG-Vantage" (link a `/`)
+- Links: Servicios (`/catalogo`), Reservar (`/reservar`)
+- Botón: "Iniciar Sesión" (`/login`) — o nombre del usuario + avatar si está autenticado
+- **Mobile (< 768px):** Los links se colapsan en hamburger menu → panel lateral (usar ShadCN `Sheet`)
+- La navbar es **sticky** (se queda fija arriba al hacer scroll)
+
+**Especificación del Footer:**
+- Links: Política de Privacidad (`/politica-privacidad`), Contacto
+- Copyright del emprendimiento
+- Diseño simple, una sola fila
+
+**Criterios de aceptación:**
+- [ ] La navbar es sticky y tiene transición suave al hacer scroll
+- [ ] En mobile (< 768px) los links se colapsan en hamburger menu con panel lateral
+- [ ] El botón de login cambia a mostrar el nombre del usuario cuando está autenticado
+- [ ] El footer se ve bien en todas las resoluciones (320px hasta 1280px+)
+- [ ] El layout envuelve correctamente todas las páginas del grupo `(public)`
 
 ---
 
 #### Tarea 2: Landing Page
 
-**Descripcion:** Disenar e implementar la pagina principal del emprendimiento, que es lo primero que ve cualquier visitante.
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/landing-page`
+**Dependencias:** Tarea 1 (navbar/footer)
+**Archivo a modificar:** `app/page.tsx`
 
-**Archivo a modificar:**
-- `app/page.tsx` — ya existe con placeholder, implementar diseno completo
+**Secciones a implementar:**
 
-**Secciones de la landing:**
+| Sección | Contenido | Notas técnicas |
+|---|---|---|
+| **Hero** | Título principal con propuesta de valor, subtítulo, 2 botones CTA ("Ver Servicios" → `/catalogo` y "Reservar Capacitación" → `/reservar`), imagen/ilustración de fondo | Usar gradientes o imagen optimizada con `next/image` |
+| **Servicios Destacados** | 3 cards con preview de servicios principales + botón "Ver todos" → `/catalogo` | **Server Component**: cargar los 3 primeros servicios activos desde Supabase |
+| **Cómo Funciona** | 3 pasos ilustrados con iconos de Lucide: 1) Reserva → 2) Elige tu paquete → 3) Gestiona tus redes | Iconos: `Calendar`, `Package`, `TrendingUp` |
+| **CTA Final** | Frase motivacional + botón grande "Empieza Ahora" → `/reservar` | Sección con fondo de color prominente |
 
-| Seccion | Contenido |
-|---|---|
-| **Hero** | Titulo principal, subtitulo con propuesta de valor, 2 botones CTA ("Ver Servicios" y "Reservar Capacitacion"), imagen o ilustracion de fondo |
-| **Servicios Destacados** | Preview de 3 servicios principales con cards (traer de Supabase), boton "Ver todos" → `/catalogo` |
-| **Como Funciona** | 3 pasos ilustrados: 1) Reserva tu capacitacion gratuita → 2) Elige tu paquete → 3) Gestiona tus redes. Iconos de Lucide React |
-| **CTA Final** | Frase motivacional + boton grande "Empieza Ahora" → `/reservar` |
-
-**Criterios de aceptacion:**
-- La pagina se ve profesional y alineada con un emprendimiento de marketing digital
-- Es 100% responsive: se ve bien en mobile (320px), tablet (768px) y desktop (1280px)
-- Los servicios destacados se cargan desde Supabase (Server Component)
-- Las imagenes/ilustraciones estan optimizadas con `next/image`
-- Carga inicial rapida (no bloquea render con queries pesadas)
-
-**Rama:** `feature/landing-page`
-**Sprint:** 1 (Semanas 5-6)
-**Dependencias:** Tarea 1 (navbar/footer para que la pagina tenga estructura)
+**Criterios de aceptación:**
+- [ ] Se ve profesional y alineada con marketing digital
+- [ ] 100% responsive: 320px, 375px, 768px, 1280px+
+- [ ] Los servicios destacados se cargan desde Supabase (Server Component)
+- [ ] Las imágenes están optimizadas con `next/image`
 
 ---
 
 #### Tarea 3: Formulario de Reserva
 
-**Descripcion:** Implementar el formulario completo de reserva de capacitaciones en `/reservar`, que es el punto principal de captacion de prospectos.
-
-**Archivos a modificar/crear:**
-- `app/(public)/reservar/page.tsx` — ya existe con placeholder, implementar formulario completo
-- Usar schema de `lib/validators/reservation.ts` (creado por Alejandro)
-- Conectar con Server Action de `app/(public)/reservar/actions.ts` (creado por Alejandro)
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/reservar-formulario`
+**Dependencias:** Alejandro T1 (schema Zod) y Alejandro T2 (Server Action)
+**Componentes ShadCN:** `npx shadcn@latest add form input textarea calendar popover checkbox toast`
+**Archivo a modificar:** `app/(public)/reservar/page.tsx`
 
 **Campos del formulario:**
 
-| Campo | Tipo | Validacion | Requerido |
+| Campo | Componente ShadCN | Validación | Requerido |
 |---|---|---|---|
-| Nombre completo | text | Min 2, max 100 caracteres | Si |
-| Email | email | Formato email valido | Si |
-| Telefono | tel | Formato 09XXXXXXXX | No |
-| Fecha preferida | date picker | Debe ser fecha futura | Si |
-| Notas | textarea | Max 500 caracteres | No |
-| Consentimiento LOPDP | checkbox | Debe ser true | Si |
+| Nombre completo | `Input` | Min 2, max 100 caracteres | Sí |
+| Email | `Input` (type="email") | Formato email válido | Sí |
+| Teléfono | `Input` (type="tel") | Formato `09XXXXXXXX` | No |
+| Fecha preferida | `Calendar` + `Popover` | Debe ser fecha futura | Sí |
+| Notas | `Textarea` | Max 500 caracteres | No |
+| Consentimiento LOPDP | `Checkbox` | Debe ser `true` | Sí |
 
-**Flujo de usuario:**
-```
-1. Usuario llena el formulario
-2. Validacion en tiempo real (mensajes de error debajo de cada campo)
-3. Click en "Enviar Reserva"
-4. Loading state en el boton
-5. Si exito: mostrar toast de confirmacion + limpiar formulario
-6. Si error: mostrar toast de error con mensaje descriptivo
-```
-
-**Criterios de aceptacion:**
-- El formulario funciona sin estar autenticado (captacion de prospectos)
-- Validacion client-side en tiempo real con React Hook Form + Zod
-- El checkbox de LOPDP muestra un link a `/politica-privacidad`
-- El date picker no permite seleccionar fechas pasadas
-- Feedback visual claro de exito y error
-- Funciona correctamente en mobile
-
-**Rama:** `feature/reservar-formulario`
-**Sprint:** 1 (Semanas 5-6)
-**Dependencias:** Alejandro Tarea 1 (schema Zod) y Tarea 2 (Server Action)
-**Componentes ShadCN necesarios:** `npx shadcn@latest add form input textarea calendar popover checkbox toast`
+**Criterios de aceptación:**
+- [ ] El formulario funciona **sin estar autenticado**
+- [ ] Validación client-side en tiempo real con React Hook Form + Zod
+- [ ] El checkbox LOPDP muestra link a `/politica-privacidad`
+- [ ] El date picker bloquea fechas pasadas
+- [ ] Feedback visual claro (toast) de éxito y error
+- [ ] Funciona correctamente en mobile
 
 ---
 
-#### Tarea 4: Catalogo de Servicios — UI
+#### Tarea 4: Catálogo de Servicios — UI
 
-**Descripcion:** Implementar la pagina del catalogo donde los clientes ven todos los servicios/paquetes disponibles y pueden iniciar la contratacion.
+**Sprint:** 2 (Semanas 7–8) · **Rama:** `feature/catalogo-servicios-ui`
+**Dependencias:** Alejandro T3 (servicios CRUD)
+**Componentes ShadCN:** `npx shadcn@latest add card badge tabs`
+**Archivo a modificar:** `app/(public)/catalogo/page.tsx`
 
-**Archivo a modificar:**
-- `app/(public)/catalogo/page.tsx` — ya existe con placeholder, implementar completo
-
-**Diseno:**
-- Grid de cards (1 columna en mobile, 2 en tablet, 3 en desktop)
-- Cada card muestra: nombre, descripcion corta, precio, duracion, boton "Contratar"
-- Filtro por tipo de servicio (tabs o botones: Todos, Manejo de Redes, Auditoria, Capacitacion)
-- Los servicios se cargan desde Supabase (solo `is_active = true`)
-
-**Criterios de aceptacion:**
-- Los servicios se cargan desde la base de datos (Server Component)
-- El filtro por tipo funciona correctamente
-- El boton "Contratar" redirige a `/checkout?service_id=xxx`
-- Las cards se ven bien en todas las resoluciones
-- Si no hay servicios, mostrar un mensaje apropiado
-
-**Rama:** `feature/catalogo-servicios-ui`
-**Sprint:** 2 (Semanas 7-8)
-**Dependencias:** Alejandro Tarea 3 (servicios CRUD, para que haya datos)
-**Componentes ShadCN necesarios:** `npx shadcn@latest add card badge tabs`
+**Diseño:** Grid de cards (1 col mobile, 2 tablet, 3 desktop). Cada card: nombre, descripción, precio, duración, botón "Contratar" → `/checkout?service_id=xxx`. Filtro por tipo (Tabs). Server Component. Mensaje si no hay servicios.
 
 ---
 
 #### Tarea 5: Flujo de Checkout — UI
 
-**Descripcion:** Implementar la pagina de checkout donde el cliente confirma la contratacion de un servicio.
+**Sprint:** 2 (Semanas 7–8) · **Rama:** `feature/checkout-ui`
+**Dependencias:** Alejandro T4 (Server Action de contratación), Carlos T1 (auth)
+**Componentes ShadCN:** `npx shadcn@latest add card checkbox separator`
+**Archivo a modificar:** `app/(public)/checkout/page.tsx`
 
-**Archivo a modificar:**
-- `app/(public)/checkout/page.tsx` — ya existe con placeholder, implementar completo
-
-**Flujo:**
-```
-1. URL: /checkout?service_id=xxx
-2. Cargar datos del servicio desde Supabase
-3. Mostrar resumen: nombre del servicio, descripcion, precio, duracion
-4. Si auto_renew: mostrar checkbox "Renovar automaticamente al vencer"
-5. Boton "Confirmar Contratacion"
-6. Si no esta autenticado → redirigir a /login?redirect=/checkout?service_id=xxx
-7. Si esta autenticado → ejecutar Server Action de contratacion (de Alejandro)
-8. Exito: mostrar confirmacion con numero de suscripcion
-9. Error: mostrar mensaje de error
-```
-
-**Criterios de aceptacion:**
-- Si no hay `service_id` en la URL, redirigir a `/catalogo`
-- Si el servicio no existe o esta desactivado, mostrar error
-- El usuario debe estar autenticado para completar la compra
-- Despues de la compra exitosa, mostrar resumen claro
-
-**Rama:** `feature/checkout-ui`
-**Sprint:** 2 (Semanas 7-8)
-**Dependencias:** Alejandro Tarea 4 (Server Action de contratacion), Carlos Tarea 1 (auth)
-**Componentes ShadCN necesarios:** `npx shadcn@latest add card checkbox separator`
+**Flujo:** URL con `?service_id=xxx` → cargar servicio → mostrar resumen → checkbox auto_renew → confirmar → si no autenticado redirect a login → ejecutar Server Action → confirmación o error.
 
 ---
 
-#### Tarea 6: Politica de Privacidad
+#### Tarea 6: Política de Privacidad (LOPDP)
 
-**Descripcion:** Implementar la pagina de politica de privacidad y tratamiento de datos personales conforme a la LOPDP de Ecuador.
+**Sprint:** 3 (Semanas 9–10) · **Rama:** `feature/politica-privacidad`
+**Archivo a modificar:** `app/(public)/politica-privacidad/page.tsx`
 
-**Archivo a modificar:**
-- `app/(public)/politica-privacidad/page.tsx` — ya existe con placeholder
-
-**Secciones del contenido:**
-1. Responsable del tratamiento de datos (nombre del emprendimiento)
-2. Datos que se recopilan (nombre, email, telefono, datos de pago)
-3. Finalidad del tratamiento (gestion de reservas, suscripciones, comunicacion)
-4. Base legal (consentimiento explicito del usuario)
-5. Derechos del titular (acceso, rectificacion, eliminacion)
-6. Tiempo de conservacion
-7. Medidas de seguridad (cifrado, RLS, SSL)
-8. Contacto para ejercer derechos
-
-**Rama:** `feature/politica-privacidad`
-**Sprint:** 3 (Semanas 9-10)
+**Secciones:** Responsable del tratamiento, datos recopilados, finalidad, base legal, derechos del titular, tiempo de conservación, medidas de seguridad, contacto.
 
 ---
 
 #### Tarea 7: Pulido Responsive y Pruebas de Interfaz
 
-**Descripcion:** Revisar todas las paginas publicas en diferentes resoluciones y corregir problemas de responsive.
+**Sprint:** 4 (Semanas 11–12) · **Rama:** `feature/pulido-responsive`
 
-**Actividades:**
-- Probar en: 320px (mobile pequeno), 375px (iPhone), 768px (tablet), 1024px (laptop), 1280px+ (desktop)
-- Corregir overflow, textos cortados, botones inaccesibles
-- Verificar que los formularios son usables en mobile (campos no se tapan con el teclado)
-- Ejecutar tests E2E con el perfil mobile-chrome de Playwright
+**Resoluciones a probar:** 320px, 375px, 768px, 1024px, 1280px+
 
-**Rama:** `feature/pulido-responsive`
-**Sprint:** 4 (Semanas 11-12)
-
----
-
-### 3.4 Christian Alexis Hurtado Torres
-
-**Cargo:** Frontend + Dashboard UI
-**Responsabilidad:** Todas las interfaces del panel administrativo, graficos con Recharts, tablas de datos y el sistema de diseno visual.
+**Checklist:**
+- [ ] Ningún texto se corta o desborda
+- [ ] Botones accesibles (mínimo 44x44px en mobile)
+- [ ] Formularios usables en mobile
+- [ ] Tablas admin se adaptan o transforman en cards
+- [ ] Gráficos Recharts responsivos
+- [ ] Tests E2E con perfil mobile-chrome de Playwright
 
 ---
 
-#### Tarea 1: Sistema de Diseno y Componentes Base
+### 3.4 Christian Alexis Hurtado Torres — Frontend + Dashboard UI
 
-**Descripcion:** Definir la identidad visual del proyecto y preparar todos los componentes ShadCN que el equipo necesitara.
+**Responsabilidad general:** Todas las interfaces del panel administrativo, gráficos con Recharts, tablas de datos, el sistema de diseño visual y las páginas de autenticación.
+
+---
+
+#### Tarea 1: Sistema de Diseño y Componentes Base
+
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/sistema-diseno-shadcn`
+**Dependencias:** Ninguna (es lo primero del frontend)
+**Bloquea a:** Todas las demás tareas de UI del equipo
 
 **Archivos a modificar/crear:**
-- `app/globals.css` — ajustar la paleta de colores al branding del emprendimiento
-- `lib/design-tokens.ts` — actualizar con los colores y valores definitivos
-- `components/ui/` — instalar componentes ShadCN necesarios
 
-**Componentes a instalar:**
+| Archivo | Qué hacer |
+|---|---|
+| `app/globals.css` | Ajustar variables CSS del tema (colores primarios, secundarios, destructive). Verificar dark mode |
+| `lib/design-tokens.ts` | Actualizar `BRAND`, `CHART_COLORS` con los colores definitivos |
+| `components/ui/` | Instalar componentes ShadCN (ver comando abajo) |
+| `components/status-badge.tsx` | Badge con color semántico: pending=amarillo, active=verde, expired=rojo, completed=azul |
+| `components/data-card.tsx` | Card de métrica para dashboard: props título, valor, ícono, tendencia |
+| `components/data-table.tsx` | Wrapper de tabla con paginación básica y soporte para filtros |
+
+**Componentes ShadCN a instalar:**
 ```bash
 npx shadcn@latest add button input textarea form card table dialog sheet toast badge tabs separator popover calendar checkbox select dropdown-menu avatar
 ```
 
-**Componentes custom a crear (si se necesitan):**
-- `components/status-badge.tsx` — badge que muestra el estado con color (pending=amarillo, active=verde, expired=rojo, etc.)
-- `components/data-card.tsx` — card de metrica para el dashboard (titulo, valor, icono, tendencia)
-- `components/data-table.tsx` — wrapper de table con paginacion y filtros basicos
-
-**Criterios de aceptacion:**
-- La paleta de colores es coherente con un emprendimiento de marketing digital
-- Los componentes custom son reutilizables y aceptan props tipados
-- El dark mode funciona correctamente (los tokens CSS estan definidos para ambos temas)
-
-**Rama:** `feature/sistema-diseno-shadcn`
-**Sprint:** 1 (Semanas 5-6)
-**Dependencias:** Ninguna (es lo primero del frontend)
-**Bloquea a:** Todas las demas tareas de UI
+**Criterios de aceptación:**
+- [ ] Paleta de colores profesional y coherente con marketing digital
+- [ ] Dark mode funciona correctamente
+- [ ] `StatusBadge` acepta prop `status` y renderiza con el color correcto
+- [ ] `DataCard` acepta `title`, `value`, `icon`, `trend` como props tipados
+- [ ] `DataTable` acepta data genérica y renderiza con paginación
 
 ---
 
-#### Tarea 2: Paginas de Login y Register — UI
+#### Tarea 2: Páginas de Login y Register — UI
 
-**Descripcion:** Implementar las interfaces de autenticacion y conectarlas con la logica de Supabase Auth que Carlos desarrolla.
+**Sprint:** 1 (Semanas 5–6) · **Rama:** `feature/auth-login-register-ui`
+**Dependencias:** Carlos T1 (auth backend), Alejandro T1 (schema Zod auth)
 
-**Archivos a modificar:**
-- `app/(auth)/login/page.tsx` — ya existe con placeholder
-- `app/(auth)/register/page.tsx` — ya existe con placeholder
-- `app/(auth)/layout.tsx` — ya existe, ajustar si es necesario
+**Archivos a modificar:** `app/(auth)/login/page.tsx`, `app/(auth)/register/page.tsx`, `app/(auth)/layout.tsx`
 
-**Pagina de Login:**
-- Formulario: email + contrasena
-- Boton "Iniciar Sesion"
-- Link "No tienes cuenta? Registrate" → `/register`
-- Validacion con schema `auth.ts` de Alejandro
-- Despues del login: redirigir segun rol (admin → `/dashboard`, client → `/catalogo`)
+**Login:** Formulario email + contraseña. Botón con loading state. Link a `/register`. Validación con `loginSchema`. Redirect por rol.
+**Register:** Formulario nombre + email + contraseña + confirmar contraseña. Checkbox LOPDP obligatorio. Link a `/login`. Validación con `registerSchema`.
 
-**Pagina de Register:**
-- Formulario: nombre completo + email + contrasena + confirmar contrasena
-- Checkbox de consentimiento LOPDP (obligatorio)
-- Boton "Crear Cuenta"
-- Link "Ya tienes cuenta? Inicia Sesion" → `/login`
-
-**Criterios de aceptacion:**
-- Ambas paginas usan React Hook Form + Zod
-- Errores de autenticacion se muestran de forma clara (email ya registrado, contrasena incorrecta, etc.)
-- El redirect post-login funciona correctamente segun el rol
-- Diseno centrado, limpio, mobile-first
-
-**Rama:** `feature/auth-login-register-ui`
-**Sprint:** 1 (Semanas 5-6)
-**Dependencias:** Carlos Tarea 1 (auth backend), Alejandro Tarea 1 (schema Zod auth)
+**Criterios de aceptación:**
+- [ ] Ambas páginas usan React Hook Form + Zod
+- [ ] Errores de autenticación claros (toast o inline)
+- [ ] Redirect post-login funciona según rol
+- [ ] Diseño centrado, limpio, mobile-first
 
 ---
 
 #### Tarea 3: Dashboard Financiero — UI
 
-**Descripcion:** Implementar la pagina principal del panel administrativo con metricas visuales, graficos y tabla de transacciones recientes.
+**Sprint:** 2 (estructura) + Sprint 3 (datos reales) · **Rama:** `feature/dashboard-graficos`
+**Dependencias:** Carlos T4 (Edge Function de métricas)
+**Archivo a modificar:** `app/(dashboard)/dashboard/page.tsx`
 
-**Archivo a modificar:**
-- `app/(dashboard)/dashboard/page.tsx` — ya existe con placeholder
-
-**Layout del dashboard:**
-
+**Layout:**
 ```
-┌─────────────────────────────────────────────────┐
-│  [Card]         [Card]         [Card]    [Card] │
-│  Ingresos Mes   Suscripciones  Reservas  Trans. │
-│  $2,450.00      12 activas     5 pend.   28     │
-├─────────────────────────┬───────────────────────┤
-│                         │                       │
-│  [BarChart]             │  [PieChart]           │
-│  Ingresos ultimos       │  Rentabilidad por     │
-│  6 meses                │  tipo de servicio     │
-│                         │                       │
-├─────────────────────────┴───────────────────────┤
-│  [Table] Transacciones recientes                │
-│  Fecha | Cliente | Servicio | Monto | Estado    │
-│  ...                                            │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ [DataCard]     [DataCard]      [DataCard]  [DataCard]│
+│ Ingresos Mes   Suscripciones   Reservas    Trans.    │
+├──────────────────────────┬───────────────────────────┤
+│ [BarChart] Ingresos      │ [PieChart] Rentabilidad   │
+│ últimos 6 meses          │ por tipo de servicio      │
+├──────────────────────────┴───────────────────────────┤
+│ [DataTable] Transacciones recientes (10 filas + pag) │
+└──────────────────────────────────────────────────────┘
 ```
 
-**Graficos con Recharts:**
-- BarChart o AreaChart para ingresos mensuales (ultimos 6 meses)
-- PieChart para distribucion de ingresos por tipo de servicio
-- Usar colores de `lib/design-tokens.ts` (`CHART_COLORS`)
+**Gráficos:** BarChart/AreaChart (ingresos mensuales) + PieChart (distribución por tipo). Colores de `CHART_COLORS`.
 
-**Datos:** Consumir desde la Edge Function `dashboard-metrics` de Carlos (TanStack Query)
-
-**Criterios de aceptacion:**
-- Las 4 cards muestran datos reales de Supabase
-- Los graficos se renderizan correctamente con Recharts
-- La tabla muestra las ultimas 10 transacciones con paginacion
-- El dashboard se actualiza en tiempo real via Supabase Realtime (al menos las cards)
-- Es responsive: en mobile las cards se apilan verticalmente y los graficos ocupan todo el ancho
-
-**Rama:** `feature/dashboard-graficos`
-**Sprint:** 2 (Semanas 7-8) para estructura + Sprint 3 (Semanas 9-10) para datos reales
-**Dependencias:** Carlos Tarea 4 (Edge Function de metricas)
-**Componentes ShadCN necesarios:** `npx shadcn@latest add card table`
+**Criterios de aceptación:**
+- [ ] Las 4 DataCards muestran métricas reales
+- [ ] Gráficos se renderizan con Recharts
+- [ ] Tabla con últimas 10 transacciones y paginación
+- [ ] Responsive: cards y gráficos se apilan en mobile
 
 ---
 
-#### Tarea 4: Gestion de Reservas — UI Admin
+#### Tarea 4: Gestión de Reservas — UI Admin
 
-**Descripcion:** Implementar la vista donde el admin gestiona todas las reservas de capacitaciones.
+**Sprint:** 2 (Semanas 7–8) · **Rama:** `feature/reservas-admin-ui`
+**Dependencias:** Alejandro T2 (CRUD reservas backend)
+**Archivo a modificar:** `app/(dashboard)/reservas/page.tsx`
 
-**Archivo a modificar:**
-- `app/(dashboard)/reservas/page.tsx` — ya existe con placeholder
-
-**Funcionalidades:**
-- Tabla con columnas: nombre, email, telefono, fecha, estado, acciones
-- Filtro por estado (tabs: Todas, Pendientes, Confirmadas, Completadas, Canceladas)
-- Boton de accion por fila: cambiar estado (dropdown con opciones validas segun estado actual)
-- Dialog de detalle: al hacer click en una fila se abre un modal con toda la info de la reserva
-
-**Criterios de aceptacion:**
-- La tabla carga todas las reservas desde Supabase
-- Los filtros funcionan correctamente
-- El cambio de estado llama al Server Action de Alejandro
-- Se muestra un toast de confirmacion/error despues de cada accion
-- Nueva reserva aparece en tiempo real (Supabase Realtime)
-
-**Rama:** `feature/reservas-admin-ui`
-**Sprint:** 2 (Semanas 7-8)
-**Dependencias:** Alejandro Tarea 2 (CRUD reservas backend)
+**Funcionalidades:** DataTable con columnas (nombre, email, teléfono, fecha, estado, acciones). Filtro por estado (Tabs). Dropdown para cambiar estado. Dialog de detalle. StatusBadge. Toast de confirmación/error.
 
 ---
 
-#### Tarea 5: Gestion de Servicios — UI Admin
+#### Tarea 5: Gestión de Servicios — UI Admin
 
-**Descripcion:** Implementar la vista donde el admin gestiona el catalogo de servicios.
+**Sprint:** 3 (Semanas 9–10) · **Rama:** `feature/servicios-admin-ui`
+**Dependencias:** Alejandro T3 (CRUD servicios backend)
+**Archivo a modificar:** `app/(dashboard)/servicios/page.tsx`
 
-**Archivo a modificar:**
-- `app/(dashboard)/servicios/page.tsx` — ya existe con placeholder
-
-**Funcionalidades:**
-- Tabla con columnas: nombre, tipo, precio, duracion, estado (activo/inactivo), acciones
-- Boton "Nuevo Servicio" que abre un dialog con formulario
-- Accion por fila: editar (abre dialog con datos precargados) y activar/desactivar (toggle)
-- StatusBadge para mostrar activo (verde) / inactivo (gris)
-
-**Criterios de aceptacion:**
-- El admin puede crear, editar y desactivar servicios sin salir de la pagina
-- Los formularios usan React Hook Form + Zod (schema de Alejandro)
-- El toggle activo/inactivo es inmediato con feedback visual
-- Los servicios desactivados se muestran con opacidad reducida
-
-**Rama:** `feature/servicios-admin-ui`
-**Sprint:** 3 (Semanas 9-10)
-**Dependencias:** Alejandro Tarea 3 (CRUD servicios backend)
+**Funcionalidades:** DataTable (nombre, tipo, precio, duración, estado, acciones). Botón "Nuevo Servicio" → Dialog con formulario. Editar (dialog precargado). Toggle activo/inactivo. StatusBadge. Servicios inactivos con opacidad reducida.
 
 ---
 
 #### Tarea 6: Registro de Transacciones — UI Admin
 
-**Descripcion:** Implementar la vista donde el admin ve y registra pagos/transacciones.
+**Sprint:** 3 (Semanas 9–10) · **Rama:** `feature/transacciones-admin-ui`
+**Dependencias:** Carlos T5 (lógica de transacciones)
+**Archivo a modificar:** `app/(dashboard)/transacciones/page.tsx`
 
-**Archivo a modificar:**
-- `app/(dashboard)/transacciones/page.tsx` — ya existe con placeholder
-
-**Funcionalidades:**
-- Tabla con columnas: fecha, cliente, monto, metodo de pago, estado, acciones
-- Filtros: por estado (pending, completed, failed, refunded) y por rango de fechas
-- Boton "Registrar Pago" que abre dialog con formulario (para pagos en efectivo o transferencia manual)
-- StatusBadge por estado con colores apropiados
-
-**Criterios de aceptacion:**
-- La tabla carga transacciones con paginacion
-- Los filtros combinan correctamente (estado + fechas)
-- El formulario de registro manual valida con Zod
-- Se muestra el total filtrado en la parte superior
-
-**Rama:** `feature/transacciones-admin-ui`
-**Sprint:** 3 (Semanas 9-10)
-**Dependencias:** Carlos Tarea 5 (logica de transacciones)
+**Funcionalidades:** DataTable (fecha, cliente, monto, método, estado, acciones). Filtros combinables (estado + rango de fechas). Botón "Registrar Pago" → dialog con formulario. StatusBadge. Total filtrado visible.
 
 ---
 
 #### Tarea 7: Supabase Realtime en Dashboard
 
-**Descripcion:** Implementar actualizaciones en tiempo real en el dashboard para que las metricas se actualicen sin recargar la pagina.
+**Sprint:** 4 (Semanas 11–12) · **Rama:** `feature/dashboard-realtime`
+**Dependencias:** Tarea 3 (dashboard base)
 
 **Archivos a crear/modificar:**
-- `hooks/use-realtime-metrics.ts` — custom hook que escucha cambios en tablas relevantes
+- `hooks/use-realtime-metrics.ts` — custom hook que escucha cambios
 - `app/(dashboard)/dashboard/page.tsx` — integrar el hook
 
-**Tablas a escuchar:**
-- `reservations` — para actualizar el contador de reservas pendientes
-- `transactions` — para actualizar ingresos y transacciones recientes
-- `subscriptions` — para actualizar suscripciones activas
+**Tablas a escuchar:** `reservations`, `transactions`, `subscriptions`
 
-**Criterios de aceptacion:**
-- Cuando se crea una nueva reserva, el contador se actualiza en el dashboard sin recargar
-- Cuando se registra un pago, los ingresos del mes se actualizan
-- No hay memory leaks (el listener se desuscribe correctamente al desmontar)
-
-**Rama:** `feature/dashboard-realtime`
-**Sprint:** 4 (Semanas 11-12)
-**Dependencias:** Tarea 3 (dashboard base)
+**Criterios de aceptación:**
+- [ ] Reserva nueva → contador se actualiza sin recargar
+- [ ] Pago registrado → ingresos se actualizan en tiempo real
+- [ ] No hay memory leaks (listener se desuscribe al desmontar)
 
 ---
 
 ## 4. Sprints Detallados
 
-### Sprint 1 — Semanas 5-6: Base Funcional
+### Sprint 1 — Semanas 5–6: Base Funcional
 
-**Objetivo:** Que el sistema tenga autenticacion funcional, el formulario de reservas operativo y la identidad visual definida.
+**Objetivo:** Sistema con autenticación funcional, formulario de reservas operativo e identidad visual definida.
 
-| Desarrollador | Tarea | Rama | Entregable |
+| Desarrollador | Tareas | Ramas | Entregable |
 |---|---|---|---|
-| Carlos | Auth completo + roles + LOPDP | `feature/auth-registro-login` | Login/register funcional con roles |
-| Alejandro | Schemas Zod + CRUD reservas + CRUD servicios | `feature/validators-zod-schemas`, `feature/reservas-backend-crud`, `feature/servicios-backend-crud` | Schemas + Server Actions listos |
-| Juan | Navbar/Footer + Landing page + Formulario reserva | `feature/navbar-footer-publico`, `feature/landing-page`, `feature/reservar-formulario` | Paginas publicas operativas |
-| Christian | Sistema de diseno + Auth UI | `feature/sistema-diseno-shadcn`, `feature/auth-login-register-ui` | Componentes base + login/register UI |
+| Carlos | Auth completo + roles + LOPDP | `feature/auth-registro-login` | Login/register funcional con redirect por rol |
+| Alejandro | Schemas Zod + CRUD reservas + CRUD servicios | `feature/validators-zod-schemas`, `feature/reservas-backend-crud`, `feature/servicios-backend-crud` | Schemas validando + Server Actions operativos |
+| Juan | Navbar/Footer + Landing + Formulario reserva | `feature/navbar-footer-publico`, `feature/landing-page`, `feature/reservar-formulario` | Navegación pública + landing profesional + formulario funcional |
+| Christian | Design system + Auth UI | `feature/sistema-diseno-shadcn`, `feature/auth-login-register-ui` | Componentes base + login/register conectados |
 
-**Demo de Sprint 1:** Un visitante puede ver la landing, navegar al catalogo, reservar una capacitacion y registrarse. Un admin puede iniciar sesion y ver el dashboard (vacio por ahora).
+**Demo Sprint 1:** Un visitante ve la landing, navega al catálogo, reserva una capacitación y se registra. Un admin inicia sesión y llega al dashboard (vacío por ahora).
 
 ---
 
-### Sprint 2 — Semanas 7-8: Modulos Core
+### Sprint 2 — Semanas 7–8: Módulos Core
 
-**Objetivo:** Que el flujo completo de contratacion funcione: catalogo → checkout → suscripcion + pago. Dashboard con datos basicos.
+**Objetivo:** Flujo completo de contratación: catálogo → checkout → suscripción + pago. Dashboard con datos básicos.
 
-| Desarrollador | Tarea | Rama | Entregable |
+| Desarrollador | Tareas | Ramas | Entregable |
 |---|---|---|---|
-| Carlos | Edge Function suscripciones + RLS refinamiento | `feature/edge-function-suscripciones`, `feature/rls-politicas-seguridad` | Motor de renovacion + seguridad validada |
-| Alejandro | Logica contratacion + transacciones | `feature/suscripciones-contratacion` | Flujo compra completo en backend |
-| Juan | Catalogo UI + Checkout UI | `feature/catalogo-servicios-ui`, `feature/checkout-ui` | Flujo compra completo en frontend |
-| Christian | Dashboard (estructura + graficos) + Reservas admin | `feature/dashboard-graficos`, `feature/reservas-admin-ui` | Panel admin con datos basicos |
+| Carlos | Edge Function suscripciones + RLS refinamiento | `feature/edge-function-suscripciones`, `feature/rls-politicas-seguridad` | Motor de renovación + seguridad validada |
+| Alejandro | Lógica contratación + transacciones | `feature/suscripciones-contratacion` | Flujo de compra completo en backend |
+| Juan | Catálogo UI + Checkout UI | `feature/catalogo-servicios-ui`, `feature/checkout-ui` | Flujo de compra completo en frontend |
+| Christian | Dashboard + Reservas admin | `feature/dashboard-graficos`, `feature/reservas-admin-ui` | Panel admin con métricas básicas |
 
-**Demo de Sprint 2:** Un cliente puede ver servicios, contratar un paquete y se genera su suscripcion. El admin ve reservas y metricas basicas en el dashboard.
+**Demo Sprint 2:** Un cliente puede ver servicios, contratar un paquete y se genera su suscripción. El admin ve reservas y métricas básicas.
 
 ---
 
-### Sprint 3 — Semanas 9-10: Integracion
+### Sprint 3 — Semanas 9–10: Integración
 
-**Objetivo:** Metricas financieras reales en el dashboard, gestion completa de servicios y transacciones, cumplimiento LOPDP.
+**Objetivo:** Métricas financieras reales, gestión completa de módulos, cumplimiento LOPDP.
 
-| Desarrollador | Tarea | Rama | Entregable |
+| Desarrollador | Tareas | Ramas | Entregable |
 |---|---|---|---|
-| Carlos | Edge Function metricas + optimizacion SQL | `feature/edge-function-dashboard-metrics` | API de metricas financieras |
+| Carlos | Edge Function métricas + optimización SQL | `feature/edge-function-dashboard-metrics` | API de métricas financieras |
 | Alejandro | Vistas SQL + Realtime + refinamiento BD | `feature/migraciones-refinamiento` | BD optimizada con datos realistas |
-| Juan | Politica privacidad + responsive | `feature/politica-privacidad` | LOPDP cumplida + UX mobile pulida |
+| Juan | Política privacidad + responsive | `feature/politica-privacidad` | LOPDP cumplida + UX mobile pulida |
 | Christian | Servicios admin + Transacciones admin | `feature/servicios-admin-ui`, `feature/transacciones-admin-ui` | Panel admin completo |
 
-**Demo de Sprint 3:** Dashboard con metricas reales y graficos. Admin puede gestionar servicios, reservas y transacciones. Politica de privacidad publicada.
+**Demo Sprint 3:** Dashboard con métricas reales y gráficos. Admin gestiona todos los módulos. LOPDP publicada.
 
 ---
 
-### Sprint 4 — Semanas 11-12: Cierre de Desarrollo
+### Sprint 4 — Semanas 11–12: Cierre de Desarrollo
 
-**Objetivo:** Pulir todo, documentar, preparar para la fase de QA.
+**Objetivo:** Pulir todo, documentar y preparar para QA.
 
-| Desarrollador | Tarea | Rama | Entregable |
+| Desarrollador | Tareas | Ramas | Entregable |
 |---|---|---|---|
-| Carlos | Documentacion tecnica + code review | — | Docs de arquitectura, APIs, deploy |
-| Alejandro | Seed data final + migraciones definitivas | `feature/migraciones-refinamiento` | BD lista para produccion |
+| Carlos | Documentación técnica + code review | — | Docs de arquitectura, APIs, deploy |
+| Alejandro | Seed data final + migraciones definitivas | `feature/migraciones-refinamiento` | BD lista para producción |
 | Juan | Pulido responsive + pruebas interfaz | `feature/pulido-responsive` | UX mobile impecable |
 | Christian | Realtime dashboard + pulido admin | `feature/dashboard-realtime` | Dashboard en tiempo real |
 
-**Demo de Sprint 4:** Sistema completo funcionando end-to-end, listo para la fase de QA.
+**Demo Sprint 4:** Sistema completo end-to-end, listo para QA.
 
 ---
 
-## 5. Fase de QA — Semanas 13-14
+## 5. Fase de QA — Semanas 13–14
 
-**Todos los integrantes participan en testing:**
-
-| Tipo de Prueba | Responsable Principal | Herramienta |
-|---|---|---|
-| Pruebas funcionales y de integracion | Alejandro | Vitest + tests manuales |
-| Pruebas de flujo completo (E2E) | Juan | Playwright |
-| Validacion de calculos financieros | Carlos | Queries SQL + comparacion manual |
-| Pruebas de error (inputs invalidos, edge cases) | Christian | Tests manuales + Vitest |
-| Pruebas de seguridad (RLS, auth, inyeccion) | Carlos | Tests manuales + SQL |
-| Auditoria de datos (integridad, consistencia) | Alejandro | SQL queries |
-| Pruebas de carga | Carlos | Herramienta a definir (k6 o similar) |
-| Validacion de roles (admin vs client) | Christian | Playwright + tests manuales |
-| Pruebas de interfaz y UX (mobile) | Juan | Navegadores reales + Playwright mobile |
+| Tipo de Prueba | Responsable | Herramienta | Qué se prueba |
+|---|---|---|---|
+| Pruebas funcionales e integración | Alejandro | Vitest + tests manuales | Cada Server Action con datos válidos e inválidos |
+| Flujos completos E2E | Juan | Playwright | Registro → login → reserva → contratación → dashboard |
+| Cálculos financieros | Carlos | Queries SQL + comparación manual | Que las métricas del dashboard coincidan con los datos reales |
+| Pruebas de error (edge cases) | Christian | Tests manuales + Vitest | Inputs inválidos, campos vacíos, doble submit |
+| Seguridad (RLS, auth, inyección) | Carlos | Tests manuales + SQL directo | Intentar acceder a datos de otros usuarios |
+| Auditoría de datos | Alejandro | SQL queries | Integridad referencial, datos huérfanos |
+| Pruebas de carga | Carlos | k6 o similar | Múltiples usuarios concurrentes |
+| Validación de roles | Christian | Playwright | Que admin y client vean solo lo que les corresponde |
+| UX y mobile | Juan | Navegadores reales + Playwright mobile | Responsive en dispositivos reales |
 
 ---
 
-## 6. Fase de Implantacion — Semanas 15-16
+## 6. Fase de Implantación — Semanas 15–16
 
 | Actividad | Responsable | Detalle |
 |---|---|---|
-| Deploy frontend en Vercel | Carlos | Conectar repo GitHub, configurar env vars de produccion |
-| Configurar Supabase produccion | Alejandro | Aplicar migraciones, seed data real, configurar auth providers |
-| Configurar PWA | Juan | Verificar manifest, iconos, instalabilidad en mobile |
-| Migracion de datos reales | Alejandro | Script para importar clientes/datos existentes del emprendimiento |
-| Configurar dominio | Carlos | DNS, SSL (incluido en Vercel/Supabase) |
-| Manuales de usuario | Juan + Christian | Guia para el admin (dashboard) y guia para el cliente (reservas, catalogo) |
-| Capacitacion al cliente | Todo el equipo | Sesion presencial con la propietaria del emprendimiento |
-| Cierre del proyecto | Carlos | Presentacion final, entrega de documentacion, acta de cierre |
+| Deploy frontend en Vercel | Carlos | Conectar repo GitHub, configurar variables de entorno de producción, verificar build |
+| Configurar Supabase producción | Alejandro | Aplicar migraciones al proyecto de producción, configurar auth providers, seed data real |
+| Configurar PWA | Juan | Verificar manifest.json, íconos en diferentes tamaños, instalabilidad en mobile |
+| Migración de datos reales | Alejandro | Script SQL para importar clientes/datos existentes del emprendimiento |
+| Configurar dominio | Carlos | DNS, SSL (incluido en Vercel/Supabase automáticamente) |
+| Manuales de usuario | Juan + Christian | Guía para admin (cómo usar dashboard) + guía para cliente (cómo reservar y contratar) |
+| Capacitación al cliente | Todo el equipo | Sesión presencial con la propietaria del emprendimiento mostrando el sistema |
+| Cierre del proyecto | Carlos | Presentación final universitaria, entrega de documentación, acta de cierre |

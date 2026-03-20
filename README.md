@@ -1,261 +1,484 @@
 # RNG-Vantage
 
-Sistema integral de automatizacion de ventas, reservas y control financiero para un emprendimiento de marketing digital. PWA Mobile-First construida con arquitectura Serverless (BaaS) sobre Next.js y Supabase.
+> Sistema integral de automatización de ventas, reservas y control financiero para un emprendimiento de marketing digital.
+> PWA Mobile-First construida con arquitectura Serverless (BaaS) sobre Next.js y Supabase.
+
+| Dato | Valor |
+|---|---|
+| **Universidad** | Universidad Técnica de Ambato (UTA), Ecuador |
+| **Período Académico** | Enero 2026 – Julio 2026 (8vo Semestre) |
+| **Equipo** | 4 desarrolladores |
+| **Repositorio** | GitHub (privado) |
+| **Estado Actual** | `BASE_STRUCTURE_COMPLETE` — infraestructura lista, lógica de negocio por implementar |
+| **Versión** | `0.1.0` |
 
 ---
 
-## 🏗 Arquitectura y Stack Tecnologico
+## 📌 ¿Qué es RNG-Vantage?
 
-El proyecto adopta un enfoque **Backend as a Service (BaaS)** mediante Supabase y un **Frontend Desacoplado** alojado en la Edge Network.
+RNG-Vantage es una **aplicación web progresiva (PWA)** diseñada para automatizar las operaciones de un emprendimiento de marketing digital. El sistema resuelve tres problemas concretos del negocio:
 
-### 🎨 Frontend
-*   **Framework Base:** [Next.js 16](https://nextjs.org/) (App Router) configurado con TypeScript.
-*   **Estilos y Componentes:** [Tailwind CSS v4](https://tailwindcss.com/) + [ShadCN/UI](https://ui.shadcn.com/) + Lucide React. Tokens de diseno en `lib/design-tokens.ts`.
-*   **Manejo de Formularios y Validacion:** [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/) para validacion estricta de esquemas.
-*   **Data Fetching & Cache:** [TanStack Query](https://tanstack.com/query) (React Query). El `QueryClientProvider` se inyecta globalmente desde `components/providers.tsx`.
-*   **Dashboard Visuals:** [Recharts](https://recharts.org/) para metricas e indicadores financieros.
-*   **PWA:** [`@serwist/next`](https://serwist.pages.dev/) + `serwist` para instalabilidad, precaching y soporte offline. Service worker en `app/sw.ts`.
+1. **Captación de clientes:** Un formulario público permite a cualquier visitante reservar una capacitación gratuita en marketing digital, capturando prospectos sin necesidad de registro.
+2. **Venta de servicios:** Un catálogo con paquetes (manejo de redes sociales, auditorías, capacitaciones) que los clientes pueden contratar directamente, generando suscripciones y transacciones.
+3. **Control financiero:** Un dashboard administrativo con métricas de ingresos, suscripciones activas, reservas pendientes y gráficos de rentabilidad por tipo de servicio.
 
-### ⚡ Backend / BaaS (Supabase)
-*   **Database:** PostgreSQL con migraciones versionadas en `supabase/migrations/` y **Row Level Security (RLS)** habilitado en todas las tablas. Seed data en `supabase/seed.sql`.
-*   **Auth:** Sesiones JWT con refresh automatico via `middleware.ts`. Proteccion de rutas admin por rol. Helpers en `lib/supabase/` (client, server, middleware).
-*   **Roles:** `admin` (dashboard financiero) y `client` (reservas, catalogo, suscripciones).
-*   **Realtime / Storage:** Suscripciones a la base de datos por WebSockets en el dashboard.
+### ¿Quién usa el sistema?
 
-#### 🧠 Logica Compleja (Edge Functions)
-[Edge Functions](https://supabase.com/docs/guides/functions) en **Deno** bajo `/supabase/functions/`:
-- Calculos de metricas financieras e inteligencia de datos.
-- Renovacion automatica de suscripciones y facturacion.
-- Webhooks e integraciones de pago.
-
-### 🧪 Testing
-*   **Unit Tests:** [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) con entorno jsdom. Config en `vitest.config.ts`.
-*   **E2E Tests:** [Playwright](https://playwright.dev/) con soporte para Desktop Chrome y Mobile Chrome. Config en `playwright.config.ts`, tests en `e2e/`.
-
-### 🔒 Cumplimiento Normativo (LOPDP)
-El sistema esta disenado para cumplir con la **Ley Organica de Proteccion de Datos Personales (LOPDP)** de Ecuador:
-- Consentimiento explicito de tratamiento de datos (`data_consent` en reservas, `data_consent_at` en perfiles).
-- Pagina de politica de privacidad (`/politica-privacidad`).
-- RLS en todas las tablas para que cada usuario solo acceda a sus propios datos.
-
-### 🚀 Despliegue
-*   **Frontend:** **Vercel** (build con `--webpack` por compatibilidad con Serwist).
-*   **Backend:** Instancia hospedada de **Supabase** (escalabilidad, backups automaticos, Edge Deno).
-
----
-
-## 📦 Modulos del Sistema
-
-Basados en el caso de negocio del emprendimiento de marketing digital:
-
-| Modulo | Descripcion | Rutas |
+| Actor | ¿Qué hace en el sistema? | Rutas principales |
 |---|---|---|
-| **Captacion y Reservas** | Formulario publico para agendar capacitaciones y capturar prospectos | `/reservar` (cliente), `/reservas` (admin) |
-| **Catalogo de Servicios** | Catalogo dinamico de paquetes (mensual, trimestral, anual) | `/catalogo` (cliente), `/servicios` (admin) |
-| **Motor de Suscripciones** | Gestion de ciclos de facturacion y renovacion automatica | `/subscriptions` (admin) |
-| **Checkout y Pagos** | Flujo de contratacion directa de paquetes | `/checkout` (cliente) |
-| **Dashboard Financiero** | Metricas de rentabilidad por servicio, ingresos y transacciones | `/dashboard` (admin) |
-| **Registro de Transacciones** | Control de ventas y pagos | `/transacciones` (admin) |
+| **Visitante** (sin cuenta) | Ve la landing page, explora el catálogo, reserva una capacitación gratuita | `/`, `/catalogo`, `/reservar` |
+| **Cliente** (registrado, `role = 'client'`) | Todo lo anterior + contrata paquetes, ve sus suscripciones | `/checkout` |
+| **Admin** (registrado, `role = 'admin'`) | Gestiona reservas, servicios, suscripciones, transacciones. Ve métricas financieras | `/dashboard`, `/reservas`, `/servicios`, `/subscriptions`, `/transacciones` |
+
+---
+
+## 🏗 Arquitectura del Sistema
+
+El proyecto usa una arquitectura **Backend-as-a-Service (BaaS)**. Esto significa que **no hay un servidor backend tradicional** (no hay Express, NestJS, ni API REST propia). Toda la lógica del servidor vive en **Supabase**, y el frontend se comunica directamente con él.
+
+### ¿Por qué BaaS?
+
+- **Menos código backend** → Supabase provee autenticación, base de datos, políticas de seguridad (RLS) y funciones serverless de fábrica
+- **Despliegue separado** → Frontend en Vercel, backend en Supabase Cloud. Cada uno escala de forma independiente
+- **Tiempo real incluido** → Supabase tiene WebSockets nativos para actualizaciones en vivo en el dashboard
+
+### Diagrama de Flujo de Datos
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         NAVEGADOR (PWA)                             │
+│                                                                     │
+│  ┌──────────────────────┐    ┌──────────────────────────────────┐   │
+│  │ Server Components     │    │ Client Components                │   │
+│  │ (se ejecutan en el    │    │ (se ejecutan en el navegador)    │   │
+│  │  servidor de Next.js) │    │                                  │   │
+│  │                       │    │  useSupabase() → Supabase Client │   │
+│  │  await createClient() │    │  TanStack Query (cache 60s)      │   │
+│  └──────────┬────────────┘    └──────────────┬───────────────────┘   │
+│             │                                 │                      │
+└─────────────┼─────────────────────────────────┼──────────────────────┘
+              │                                 │
+              ▼                                 ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       SUPABASE CLOUD                                │
+│                                                                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────────────────────┐    │
+│  │ PostgreSQL    │  │ Auth (JWT)   │  │ Edge Functions (Deno)  │    │
+│  │ + RLS         │  │ + Cookies    │  │ • subscription-renewal │    │
+│  │ 5 tablas      │  │ + Roles      │  │ • dashboard-metrics    │    │
+│  │ + triggers    │  │              │  │ • payment-webhook      │    │
+│  └──────────────┘  └──────────────┘  └────────────────────────┘    │
+│                                                                     │
+│  ┌──────────────┐  ┌──────────────┐                                 │
+│  │ Realtime     │  │ Storage      │                                 │
+│  │ (WebSocket)  │  │ (archivos)   │                                 │
+│  └──────────────┘  └──────────────┘                                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Flujo de Autenticación
+
+```
+REGISTRO:
+  Usuario envía email + contraseña + nombre + consentimiento LOPDP
+  → Supabase Auth crea usuario en auth.users
+  → Trigger automático crea perfil en tabla profiles (role = 'client')
+  → JWT se guarda en cookie HTTP-only
+
+LOGIN:
+  Usuario envía email + contraseña
+  → Supabase Auth valida credenciales
+  → JWT se guarda en cookie HTTP-only
+  → Redirect: admin → /dashboard, client → /catalogo
+
+CADA PETICIÓN:
+  middleware.ts intercepta la request
+  → Llama a supabase.auth.getUser() para refrescar el JWT si expiró
+  → Si es ruta admin: verifica que profiles.role === 'admin'
+  → Si no es admin: redirige a /login
+
+```
+
+---
+
+## ⚙️ Stack Tecnológico Completo
+
+### Frontend
+
+| Tecnología | Versión | Para qué se usa | Dónde se configura |
+|---|---|---|---|
+| **Next.js** | 16.1.6 | Framework base. App Router con Server Components y SSR | `next.config.ts` |
+| **React** | 19.2.3 | Renderizado de componentes | — (incluido en Next.js) |
+| **TypeScript** | ^5 | Tipado estricto en todo el proyecto | `tsconfig.json` |
+| **Tailwind CSS** | ^4 | Estilos con clases utilitarias (no CSS custom por componente) | `postcss.config.mjs`, `app/globals.css` |
+| **ShadCN/UI** (base-nova) | ^4.0.8 | Componentes pre-construidos y accesibles (Button, Input, Card, Table, Dialog...) | `components.json`, `components/ui/` |
+| **Lucide React** | ^0.577.0 | Iconos SVG | — |
+| **React Hook Form** | ^7.71.2 | Manejo de estado de formularios (sin rerenders innecesarios) | — |
+| **Zod** | ^4.3.6 | Esquemas de validación reutilizables (frontend y backend) | `lib/validators/` |
+| **TanStack Query** | ^5.90.21 | Cache de datos client-side, mutations con optimistic updates | `components/providers.tsx` |
+| **Recharts** | ^3.8.0 | Gráficos (barras, pie, área) para el dashboard financiero | — |
+| **Serwist** | ^9.5.7 | PWA: Service Worker, precaching, soporte offline | `app/sw.ts`, `next.config.ts` |
+
+### Backend (Supabase)
+
+| Tecnología | Para qué se usa | Dónde se configura |
+|---|---|---|
+| **PostgreSQL** | Base de datos relacional con 5 tablas, RLS habilitado en todas | `supabase/migrations/` |
+| **Supabase Auth** | Autenticación email+password, JWT en cookies, roles | `lib/supabase/`, `middleware.ts` |
+| **Edge Functions** (Deno) | Lógica de negocio compleja: renovación de suscripciones, métricas | `supabase/functions/` |
+| **Supabase Realtime** | WebSockets para actualizaciones en vivo del dashboard | — (por implementar) |
+| **Supabase Storage** | Almacenamiento de archivos (si se necesita en el futuro) | — (por implementar) |
+
+### Testing
+
+| Herramienta | Versión | Para qué se usa | Configuración |
+|---|---|---|---|
+| **Vitest** | ^4.1.0 | Tests unitarios (schemas Zod, utilidades, lógica) | `vitest.config.ts` |
+| **Testing Library** | ^16.3.2 | Tests de componentes React (renderizado, interacciones) | `vitest.setup.ts` |
+| **Playwright** | ^1.58.2 | Tests E2E (flujos completos en navegador real) | `playwright.config.ts` |
+
+### Despliegue
+
+| Servicio | Para qué |
+|---|---|
+| **Vercel** | Frontend (auto-deploy desde GitHub al hacer push a `main`) |
+| **Supabase Cloud** | Backend (instancia compartida para todo el equipo) |
+
+---
+
+## 📦 Módulos del Sistema
+
+El sistema se organiza en 6 módulos funcionales basados en el caso de negocio:
+
+### Módulo 1: Captación y Reservas
+- **Propósito:** Capturar prospectos a través de un formulario de reserva de capacitaciones gratuitas
+- **Ruta cliente:** `/reservar` — formulario público (no requiere login)
+- **Ruta admin:** `/reservas` — tabla de gestión con filtros por estado y acciones de cambio de estado
+- **Flujo:** Visitante llena formulario → se crea reserva con status `pending` → admin la confirma o cancela
+- **Tablas involucradas:** `reservations`
+
+### Módulo 2: Catálogo de Servicios
+- **Propósito:** Mostrar los paquetes disponibles que el emprendimiento ofrece
+- **Ruta cliente:** `/catalogo` — grid de cards con filtro por tipo de servicio
+- **Ruta admin:** `/servicios` — CRUD completo (crear, editar, activar/desactivar servicios)
+- **Tipos de servicio:** `manejo_redes`, `auditoria`, `capacitacion`, `otro`
+- **Tablas involucradas:** `services`
+
+### Módulo 3: Motor de Suscripciones
+- **Propósito:** Gestionar los ciclos de vida de las contrataciones de servicios
+- **Ruta admin:** `/subscriptions` — tabla de suscripciones con estados y gestión
+- **Flujo:** Cliente contrata servicio → se crea suscripción `active` con `ends_at` calculado → al vencer, una Edge Function la renueva o expira automáticamente
+- **Tablas involucradas:** `subscriptions`, `services`
+
+### Módulo 4: Checkout y Pagos
+- **Propósito:** Permitir la contratación directa de paquetes desde el catálogo
+- **Ruta cliente:** `/checkout?service_id=xxx` — resumen del servicio + confirmación
+- **Flujo:** Cliente elige servicio en catálogo → va a checkout → confirma → se crea suscripción + transacción pendiente
+- **Nota MVP:** No hay pasarela de pago real. Los pagos se registran manualmente por el admin (cash, transferencia, tarjeta)
+- **Tablas involucradas:** `subscriptions`, `transactions`
+
+### Módulo 5: Dashboard Financiero
+- **Propósito:** Dar al admin visibilidad sobre la salud financiera del negocio
+- **Ruta admin:** `/dashboard` — KPI cards + gráficos de Recharts + tabla de transacciones recientes
+- **Métricas:** Ingresos del mes, suscripciones activas, reservas pendientes, ingresos por tipo de servicio, tasa de conversión
+- **Datos:** Se obtienen de una Edge Function que ejecuta queries SQL optimizados
+- **Tablas involucradas:** Todas (via Edge Function `dashboard-metrics`)
+
+### Módulo 6: Registro de Transacciones
+- **Propósito:** Control de ventas y pagos del emprendimiento
+- **Ruta admin:** `/transacciones` — tabla con filtros por estado y fecha, registro manual de pagos
+- **Estados:** `pending` → `completed` | `failed`, `completed` → `refunded`
+- **Tablas involucradas:** `transactions`
+
+---
+
+## 🗄 Esquema de Base de Datos
+
+5 tablas con **Row Level Security (RLS)** habilitado en todas. Auto-trigger `handle_updated_at` en todas las tablas.
+
+### Relaciones entre tablas
+
+```
+auth.users (1) ←──── (1) profiles         Un usuario tiene un perfil
+auth.users (1) ←──── (N) reservations     Un usuario puede tener muchas reservas
+auth.users (1) ←──── (N) subscriptions    Un usuario puede tener muchas suscripciones
+auth.users (1) ←──── (N) transactions     Un usuario puede tener muchas transacciones
+services   (1) ←──── (N) subscriptions    Un servicio puede tener muchas suscripciones
+subscriptions (1) ←── (N) transactions    Una suscripción puede tener muchos pagos
+```
+
+### Tabla `profiles`
+Extiende `auth.users`. Se crea automáticamente cuando un usuario se registra (trigger `handle_new_user`).
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id` | uuid (PK, FK → auth.users) | Mismo ID que auth.users |
+| `full_name` | text | Nombre completo del usuario |
+| `avatar_url` | text | URL del avatar (opcional) |
+| `role` | text (`'admin'` \| `'client'`) | Rol del usuario. Default: `'client'` |
+| `data_consent_at` | timestamptz | Fecha/hora del consentimiento LOPDP |
+| `created_at` / `updated_at` | timestamptz | Timestamps automáticos |
+
+**RLS:** Cada usuario puede ver y editar solo su propio perfil. Admin puede ver todos.
+
+### Tabla `services`
+Catálogo de servicios/paquetes del emprendimiento.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id` | uuid (PK) | ID auto-generado |
+| `name` | text | Nombre del servicio |
+| `description` | text | Descripción (opcional) |
+| `type` | text (enum) | `'manejo_redes'` \| `'auditoria'` \| `'capacitacion'` \| `'otro'` |
+| `price` | numeric(10,2) | Precio (≥ 0) |
+| `duration_months` | int | Duración en meses (> 0) |
+| `is_active` | boolean | `true` = visible en catálogo. `false` = soft delete |
+| `created_at` / `updated_at` | timestamptz | Timestamps automáticos |
+
+**RLS:** Cualquier usuario autenticado ve servicios activos. Admin ve todos (incluidos inactivos) y puede crear/editar/eliminar.
+
+### Tabla `reservations`
+Reservas de capacitaciones hechas por visitantes/clientes.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id` | uuid (PK) | ID auto-generado |
+| `user_id` | uuid (FK, opcional) | Si el visitante está logueado, se asocia |
+| `full_name` | text | Nombre del solicitante |
+| `email` | text | Email de contacto |
+| `phone` | text | Teléfono (opcional, formato 09XXXXXXXX) |
+| `preferred_date` | timestamptz | Fecha preferida para la capacitación |
+| `status` | text (enum) | `'pending'` → `'confirmed'` → `'completed'` / `'cancelled'` |
+| `notes` | text | Notas adicionales (opcional) |
+| `data_consent` | boolean | Consentimiento LOPDP (obligatorio = `true`) |
+| `created_at` / `updated_at` | timestamptz | Timestamps automáticos |
+
+**RLS:** Cada usuario ve solo sus reservas. Admin ve todas. Cualquier autenticado puede crear.
+
+### Tabla `subscriptions`
+Suscripciones activas que relacionan un usuario con un servicio.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id` | uuid (PK) | ID auto-generado |
+| `user_id` | uuid (FK) | Usuario dueño de la suscripción |
+| `service_id` | uuid (FK) | Servicio contratado |
+| `starts_at` | timestamptz | Fecha de inicio |
+| `ends_at` | timestamptz | Fecha de vencimiento (calculada: starts_at + duration_months) |
+| `status` | text (enum) | `'active'` \| `'expired'` \| `'cancelled'` \| `'pending'` |
+| `auto_renew` | boolean | Si `true`, la Edge Function renueva automáticamente |
+| `created_at` / `updated_at` | timestamptz | Timestamps automáticos |
+
+**RLS:** Cada usuario ve solo sus suscripciones. Admin ve todas y puede actualizar.
+
+### Tabla `transactions`
+Registro de pagos/ventas del emprendimiento.
+
+| Columna | Tipo | Descripción |
+|---|---|---|
+| `id` | uuid (PK) | ID auto-generado |
+| `user_id` | uuid (FK, opcional) | Usuario asociado al pago |
+| `subscription_id` | uuid (FK, opcional) | Suscripción asociada (si aplica) |
+| `amount` | numeric(10,2) | Monto del pago (≥ 0) |
+| `payment_method` | text (enum) | `'cash'` \| `'transfer'` \| `'card'` \| `'pending'` |
+| `status` | text (enum) | `'pending'` \| `'completed'` \| `'failed'` \| `'refunded'` |
+| `notes` | text | Notas (opcional) |
+| `created_at` / `updated_at` | timestamptz | Timestamps automáticos |
+
+**RLS:** Cada usuario ve solo sus transacciones. Solo admin puede crear y actualizar.
+
+### Datos de prueba (Seed)
+
+El archivo `supabase/seed.sql` incluye 6 servicios de ejemplo:
+
+| Servicio | Tipo | Precio | Duración |
+|---|---|---|---|
+| Manejo de Redes - Mensual | manejo_redes | $150.00 | 1 mes |
+| Manejo de Redes - Trimestral | manejo_redes | $400.00 | 3 meses |
+| Manejo de Redes - Anual | manejo_redes | $1,400.00 | 12 meses |
+| Auditoría de Redes Sociales | auditoria | $80.00 | 1 mes |
+| Auditoría + Estrategia Digital | auditoria | $200.00 | 3 meses |
+| Capacitación en Marketing Digital | capacitacion | $0.00 | 1 mes |
 
 ---
 
 ## 📁 Estructura del Proyecto
 
 ```
-├── app/
-│   ├── (auth)/                    # Route group: login, register
-│   ├── (public)/                  # Route group: catalogo, reservar, checkout, privacidad
-│   ├── (dashboard)/               # Route group: dashboard, reservas, servicios, transacciones
-│   ├── sw.ts                      # Service Worker (Serwist)
-│   ├── layout.tsx                 # Root layout con Providers
-│   ├── page.tsx                   # Landing page del emprendimiento
-│   └── globals.css                # Estilos globales (Tailwind + ShadCN)
+RNG-Vantage/
+├── app/                                  # ← Rutas de la aplicación (App Router de Next.js)
+│   ├── layout.tsx                        # Layout raíz: fuentes Geist, <Providers>, lang="es"
+│   ├── page.tsx                          # Landing page (hero + CTA buttons)
+│   ├── sw.ts                             # Service Worker de Serwist (PWA)
+│   ├── globals.css                       # Imports de Tailwind v4 + tokens del tema (light/dark)
+│   │
+│   ├── (auth)/                           # Grupo de rutas de autenticación
+│   │   ├── layout.tsx                    # Layout centrado (max-w-sm)
+│   │   ├── login/page.tsx                # [PLACEHOLDER] Página de login
+│   │   └── register/page.tsx             # [PLACEHOLDER] Página de registro
+│   │
+│   ├── (public)/                         # Grupo de rutas públicas
+│   │   ├── layout.tsx                    # [PARCIAL] Wrapper — falta navbar y footer
+│   │   ├── catalogo/page.tsx             # [PLACEHOLDER] Catálogo de servicios
+│   │   ├── reservar/page.tsx             # [PLACEHOLDER] Formulario de reserva
+│   │   ├── checkout/page.tsx             # [PLACEHOLDER] Flujo de contratación
+│   │   └── politica-privacidad/page.tsx  # [PARCIAL] Esqueleto — falta contenido LOPDP
+│   │
+│   └── (dashboard)/                      # Grupo de rutas de admin (protegidas por middleware)
+│       ├── layout.tsx                    # [PARCIAL] Wrapper — falta sidebar de admin
+│       ├── dashboard/page.tsx            # [PLACEHOLDER] Dashboard financiero
+│       ├── reservas/page.tsx             # [PLACEHOLDER] Gestión de reservas
+│       ├── servicios/page.tsx            # [PLACEHOLDER] Gestión de servicios
+│       ├── subscriptions/page.tsx        # [PLACEHOLDER] Gestión de suscripciones
+│       └── transacciones/page.tsx        # [PLACEHOLDER] Registro de transacciones
+│
 ├── components/
-│   ├── ui/                        # Componentes ShadCN/UI
-│   └── providers.tsx              # QueryClientProvider (TanStack Query)
-├── hooks/                         # Custom hooks (useSupabase, etc.)
+│   ├── ui/
+│   │   └── button.tsx                    # Componente ShadCN Button (CVA variants)
+│   └── providers.tsx                     # QueryClientProvider (TanStack Query, staleTime: 60s)
+│
+├── hooks/
+│   └── use-supabase.ts                   # Hook: useSupabase() → cliente de Supabase memoizado
+│
 ├── lib/
-│   ├── supabase/                  # Helpers de Supabase (client, server, middleware)
-│   ├── validators/                # Schemas de Zod reutilizables
-│   ├── design-tokens.ts           # Constantes de diseno (colores, espaciado, charts)
-│   └── utils.ts                   # Utilidades (cn para clases)
-├── types/                         # Tipos compartidos y tipos de DB
-├── e2e/                           # Tests E2E (Playwright)
+│   ├── supabase/
+│   │   ├── client.ts                     # createBrowserClient() — para Client Components
+│   │   ├── server.ts                     # createServerClient() — para Server Components
+│   │   └── middleware.ts                 # updateSession() — refresco de JWT en cada request
+│   ├── validators/                       # [VACÍO] Aquí van los schemas Zod (Alejandro)
+│   ├── design-tokens.ts                  # Constantes: BRAND, BREAKPOINTS, SPACING, CHART_COLORS
+│   └── utils.ts                          # cn() = clsx + twMerge (merge de clases CSS)
+│
+├── types/
+│   ├── database.ts                       # Tipos TypeScript para todas las tablas de la DB
+│   └── index.ts                          # Re-exports
+│
 ├── supabase/
-│   ├── migrations/                # Migraciones SQL con RLS
-│   ├── functions/                 # Edge Functions (Deno)
-│   ├── seed.sql                   # Datos de prueba
-│   └── config.toml                # Configuracion local de Supabase
-├── middleware.ts                  # Middleware: refresh de sesiones + proteccion de rutas por rol
-├── .env.example                   # Variables de entorno requeridas
-├── vitest.config.ts               # Configuracion de Vitest
-├── playwright.config.ts           # Configuracion de Playwright
-└── next.config.ts                 # Configuracion de Next.js + Serwist
+│   ├── migrations/
+│   │   └── 00000000000000_init.sql       # Schema completo: 5 tablas, RLS, triggers
+│   ├── functions/
+│   │   └── hello-world/                  # Edge Function de ejemplo (Deno)
+│   ├── seed.sql                          # 6 servicios de ejemplo
+│   └── config.toml                       # Config de Supabase CLI
+│
+├── e2e/
+│   └── example.spec.ts                   # 3 smoke tests básicos (Playwright)
+│
+├── middleware.ts                          # Refresco de sesión + protección de rutas admin
+├── .env.example                          # Template de variables de entorno
+├── vitest.config.ts                      # Config de Vitest (jsdom, @/ alias)
+├── playwright.config.ts                  # Config de Playwright (Chrome desktop + mobile)
+├── next.config.ts                        # Config de Next.js + Serwist PWA
+├── components.json                       # Config de ShadCN/UI (estilo base-nova)
+├── tsconfig.json                         # TypeScript strict, @/ alias, webworker lib
+├── eslint.config.mjs                     # ESLint con core-web-vitals + TypeScript
+├── PLAN_DE_DESARROLLO.md                 # Plan de desarrollo con roles, sprints y tareas
+└── README.md                             # Este archivo
 ```
 
-### Esquema de Base de Datos
-
-```
-profiles        → Usuarios (extiende auth.users) con campo role (admin/client) y consentimiento LOPDP
-services        → Catalogo de servicios/paquetes (manejo_redes, auditoria, capacitacion)
-reservations    → Reservas de capacitaciones con datos de contacto
-subscriptions   → Suscripciones activas (usuario ↔ servicio, fechas, auto_renew)
-transactions    → Registro de ventas/pagos
-```
+**Leyenda de estados:**
+- `[PLACEHOLDER]` = El archivo existe pero solo renderiza un `<h1>` con el título. Necesita implementación completa.
+- `[PARCIAL]` = La estructura existe pero le faltan partes (ej: falta navbar, falta contenido legal).
+- `[VACÍO]` = La carpeta existe con `.gitkeep` pero no tiene archivos de código.
 
 ---
 
 ## 🔑 Estrategia de Ramas (Git Flow Simplificado)
 
-*   `main` — Entorno de **Produccion**.
-*   `develop` — Entorno de **Staging / Pruebas**. Todo nace a partir de aqui.
+```
+main ─────────────────────────────── Producción (solo merges desde develop)
+  │
+  └── develop ────────────────────── Staging / Rama de integración
+        │
+        ├── feature/auth-registro-login ──── Carlos: autenticación
+        ├── feature/validators-zod-schemas ── Alejandro: schemas Zod
+        ├── feature/navbar-footer-publico ─── Juan: navegación pública
+        ├── feature/sistema-diseno-shadcn ─── Christian: design system
+        └── ...
+```
 
-#### Feature Branches
-1.  **Por caracteristica (Recomendado):**
-    *   `feature/nombre-de-la-tarea` (Ej. `feature/dashboard-graficos-nuevos`)
-    *   `bugfix/nombre-del-error` (Ej. `bugfix/solucion-login-auth`)
-    *   `hotfix/urgente` (Parches directos a main/develop)
-2.  **Por desarrollador (Teams pequenos/Learning):**
-    *   `nombre/feature-tarea` (Ej. `carlos/feature-renovaciones`)
+### Convenciones de Ramas
+
+| Tipo | Formato | Ejemplo |
+|---|---|---|
+| Feature nueva | `feature/nombre-de-la-tarea` | `feature/dashboard-graficos` |
+| Corrección de bug | `bugfix/nombre-del-error` | `bugfix/rls-permisos-admin` |
+| Parche urgente | `hotfix/descripcion` | `hotfix/fix-login-redirect` |
+
+### Reglas de Ramas
+
+1. **Nunca** hacer push directo a `main` ni a `develop`
+2. Todas las ramas nacen desde `develop` (`git checkout -b feature/mi-tarea` desde develop)
+3. Cuando termines una funcionalidad: push + crear Pull Request en GitHub hacia `develop`
+4. Un compañero debe revisar el PR antes de hacer merge
+5. `main` solo se actualiza cuando `develop` está estable y listo para producción
+
+---
+
+## 🔒 Cumplimiento Normativo (LOPDP)
+
+El sistema cumple con la **Ley Orgánica de Protección de Datos Personales (LOPDP)** de Ecuador:
+
+- **Consentimiento explícito:** Campo `data_consent` (boolean) en reservas y `data_consent_at` (timestamp) en perfiles. El checkbox es **obligatorio** en el formulario de registro y de reserva.
+- **Página de privacidad:** `/politica-privacidad` con información sobre datos recopilados, finalidad, derechos del titular y medidas de seguridad.
+- **Aislamiento de datos:** RLS en todas las tablas. Cada usuario solo puede acceder a SUS propios datos. El admin es la excepción controlada.
 
 ---
 
 ## 🛠️ Entorno de Desarrollo Local
 
 ### 1. Requisitos Previos
-- Node.js version `20+` (LTS recomendado).
-- Cuenta activa en un proyecto remoto de [Supabase](https://supabase.com).
-- Variables de entorno `.env.local` configuradas (ver `.env.example` como referencia).
 
-### 2. Instalacion
-```bash
-git clone https://github.com/carlitosgiovanniramos/RNG-Vantage.git
-cd RNG-Vantage
-npm install
-cp .env.example .env.local  # Configurar con tus claves de Supabase
-npx playwright install       # Instalar navegadores para E2E
-```
+| Herramienta | Versión Mínima | Para qué | Enlace |
+|---|---|---|---|
+| **Node.js** | v20+ (LTS) | Ejecutar Next.js, instalar dependencias | [nodejs.org](https://nodejs.org) |
+| **Git** | Cualquier versión reciente | Control de versiones | [git-scm.com](https://git-scm.com) |
+| **VS Code** | Última versión | Editor recomendado (extensiones auto-instalables) | [code.visualstudio.com](https://code.visualstudio.com) |
+| **Docker Desktop** | Última versión | **Opcional** — solo si quieres Supabase local | [docker.com](https://www.docker.com/products/docker-desktop) |
 
-### 3. Scripts Disponibles
-```bash
-npm run dev          # Servidor de desarrollo (http://localhost:3000)
-npm run build        # Build de produccion
-npm start            # Servidor de produccion
-npm run lint         # Ejecutar ESLint
-npm test             # Unit tests en modo watch (Vitest)
-npm run test:run     # Unit tests en modo CI
-npm run test:e2e     # Tests E2E (Playwright)
-npm run test:e2e:ui  # Tests E2E con UI interactiva
-```
-
-### 4. Supabase CLI (Base de datos y Funciones locales)
-```bash
-npx supabase start                                           # Levanta emuladores locales (requiere Docker)
-npx supabase db push                                         # Aplica migraciones pendientes
-npx supabase db reset                                        # Resetea BD y ejecuta seed.sql
-npx supabase functions serve hello-world --no-verify-jwt     # Server local de Edge Functions
-npx supabase gen types typescript --local > types/database.ts # Genera tipos de la DB
-```
-
----
-
-## 📘 Tutorial: Como iniciar el proyecto desde cero
-
-Esta guia detalla paso a paso como configurar el entorno de desarrollo completo para que cualquier integrante del equipo pueda trabajar en el proyecto.
-
----
-
-### Paso 1: Requisitos previos
-
-Antes de clonar el repositorio, asegurate de tener instalado lo siguiente en tu maquina:
-
-**1.1 Node.js (version 20 o superior)**
-
-Descargalo desde [https://nodejs.org](https://nodejs.org) (elige la version LTS). Para verificar que esta instalado correctamente, abre una terminal y ejecuta:
-
+Verifica tu instalación:
 ```bash
 node -v    # Debe mostrar v20.x.x o superior
 npm -v     # Debe mostrar 10.x.x o superior
-```
-
-**1.2 Git**
-
-Descargalo desde [https://git-scm.com](https://git-scm.com). Verifica con:
-
-```bash
 git --version
 ```
 
-**1.3 Visual Studio Code (recomendado)**
-
-Descargalo desde [https://code.visualstudio.com](https://code.visualstudio.com). Extensiones recomendadas que se instalaran automaticamente al abrir el proyecto:
-- ESLint
-- Tailwind CSS IntelliSense
-- Prettier
-
-**1.4 Docker Desktop (opcional, solo si vas a usar Supabase local)**
-
-Solo necesario si quieres levantar la base de datos PostgreSQL en tu maquina. Descargalo desde [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop).
-
-Si no instalas Docker, puedes trabajar directamente contra el proyecto remoto de Supabase en la nube.
-
----
-
-### Paso 2: Clonar el repositorio
-
-Abre una terminal y ejecuta:
+### 2. Instalación Paso a Paso
 
 ```bash
+# 1. Clonar el repositorio
 git clone https://github.com/carlitosgiovanniramos/RNG-Vantage.git
-```
-
-Entra a la carpeta del proyecto:
-
-```bash
 cd RNG-Vantage
-```
 
-Verifica que estas en la rama `develop` (es la rama de trabajo principal):
-
-```bash
+# 2. Verificar que estás en la rama develop
 git branch
 # Debe mostrar: * develop
-```
-
-Si no estas en `develop`, cambiate:
-
-```bash
+# Si no estás en develop:
 git checkout develop
-```
 
----
-
-### Paso 3: Instalar dependencias
-
-Ejecuta el siguiente comando para instalar todas las librerias del proyecto:
-
-```bash
+# 3. Instalar dependencias (puede tardar 1-3 minutos)
 npm install
-```
 
-Esto creara la carpeta `node_modules/` con todas las dependencias. Este proceso puede tardar entre 1 y 3 minutos dependiendo de tu conexion a internet.
-
----
-
-### Paso 4: Configurar variables de entorno (Supabase)
-
-> **CONCEPTO CLAVE:** Todo el equipo usa **el mismo proyecto de Supabase**. No crees tu propio proyecto. Las claves son compartidas y las va a proporcionar Carlos (gestor del proyecto). Todos apuntan a la misma base de datos para que los modulos se integren correctamente entre si.
-
-**4.1** Copia el archivo de ejemplo:
-
-```bash
+# 4. Configurar variables de entorno
+# En Windows (PowerShell):
+Copy-Item .env.example .env.local
+# En Windows (CMD):
+copy .env.example .env.local
+# En Linux/Mac:
 cp .env.example .env.local
+
+# 5. Editar .env.local con las claves reales (las da Carlos)
+# Abre .env.local en tu editor y reemplaza los valores de ejemplo
+
+# 6. Instalar navegadores para tests E2E (solo la primera vez)
+npx playwright install
 ```
 
-> En Windows (CMD) usa: `copy .env.example .env.local`
-> En Windows (PowerShell) usa: `Copy-Item .env.example .env.local`
+### 3. Configurar Variables de Entorno
 
-**4.2** Abre `.env.local` en tu editor de texto y pega las claves que Carlos compartio con el equipo:
+> ⚠️ **TODO EL EQUIPO usa el MISMO proyecto de Supabase.** No crees tu propio proyecto. Las claves las proporciona Carlos por mensaje directo (no por chat grupal ni GitHub).
+
+Abre `.env.local` y pega las claves reales:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxx.supabase.co
@@ -263,32 +486,20 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Reemplaza los valores `xxxxxxxx` y `eyJhb...` con los valores reales que recibiste. **No modifiques** `NEXT_PUBLIC_SITE_URL`, dejalo como `http://localhost:3000`.
+**Reglas importantes:**
+- ❌ **NUNCA** subas `.env.local` a Git (ya está en `.gitignore`)
+- ❌ **NUNCA** compartas claves por WhatsApp grupal ni GitHub Issues
+- ❌ **NUNCA** pongas comillas ni espacios alrededor del `=`
+- ✅ Después de modificar `.env.local`, **reinicia el servidor** (`Ctrl+C` → `npm run dev`)
 
-**4.3 Reglas importantes sobre las variables de entorno:**
-
-- **NUNCA** subas el archivo `.env.local` a Git (ya esta en `.gitignore`, pero verificalo)
-- **NUNCA** compartas las claves por un canal publico (no las pegues en el chat del grupo de WhatsApp ni en issues de GitHub)
-- **NUNCA** crees tu propio proyecto de Supabase para trabajar en el proyecto — todos usamos el mismo
-- Si necesitas las claves, pideselas directamente a Carlos por mensaje privado
-- El archivo `.env.example` que SI esta en el repositorio solo contiene valores de ejemplo, **no son las claves reales**
-
-**4.4 Verificar que `.env.local` se creo correctamente:**
-
-Abre el archivo y confirma que:
-- No tiene espacios antes o despues del `=`
-- No tiene comillas alrededor de los valores
-- La URL empieza con `https://` y termina en `.supabase.co`
-- La key es una cadena larga que empieza con `eyJ`
-
-Ejemplo de archivo **CORRECTO**:
+**Ejemplo CORRECTO:**
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://abcdefgh.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiY2RlZmdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MjAwMDAwMDAwMH0.xxxxx
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUz...larga...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Ejemplo de archivo **INCORRECTO** (no hagas esto):
+**Ejemplo INCORRECTO:**
 ```env
 # MAL: tiene comillas
 NEXT_PUBLIC_SUPABASE_URL="https://abcdefgh.supabase.co"
@@ -300,218 +511,127 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY = eyJhbGci...
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 ```
 
----
+### 4. Configurar la Base de Datos (Solo Carlos — Una Sola Vez)
 
-### Paso 5: Configurar la base de datos en Supabase
+> Si eres Alejandro, Juan o Christian, **salta al paso 5**. La base de datos ya estará configurada.
 
-> **IMPORTANTE:** Este paso solo lo hace **Carlos** (una sola vez para todo el equipo). Si eres Alejandro, Juan o Christian, **salta al Paso 6**. La base de datos ya estara configurada cuando clones el proyecto.
+1. Ve al **SQL Editor** de Supabase Dashboard → selecciona el proyecto
+2. Copia TODO el contenido de `supabase/migrations/00000000000000_init.sql` → pégalo y haz clic en **Run**
+   - Deberías ver "Success. No rows returned" (es normal — las migraciones crean tablas, no filas)
+3. Copia TODO el contenido de `supabase/seed.sql` → pégalo y haz clic en **Run**
+   - Deberías ver "Success. 6 rows affected"
+4. En **Table Editor**, verifica que existen 5 tablas: `profiles`, `services`, `reservations`, `subscriptions`, `transactions`
+5. Comparte las claves del proyecto con el equipo por mensaje **privado**:
+   - **Settings → API → Project URL** → es la `NEXT_PUBLIC_SUPABASE_URL`
+   - **Settings → API → anon public** → es la `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
-El proyecto incluye migraciones SQL que crean todas las tablas necesarias y un archivo de seed con datos de ejemplo.
+#### Opción alternativa: Supabase Local con Docker
 
-#### Instrucciones para Carlos (configuracion unica):
-
-**5.1** Ve al **SQL Editor** de tu proyecto en [https://supabase.com/dashboard](https://supabase.com/dashboard) → selecciona el proyecto del equipo → **SQL Editor** (icono de terminal en el menu izquierdo).
-
-**5.2** Abre el archivo `supabase/migrations/00000000000000_init.sql` desde tu copia local del proyecto. Selecciona **todo** el contenido del archivo (Ctrl+A), copialo (Ctrl+C) y pegalo (Ctrl+V) en el SQL Editor de Supabase. Haz clic en el boton verde **Run** (o presiona Ctrl+Enter).
-
-Si todo sale bien, veras el mensaje "Success. No rows returned". Esto es normal — las migraciones crean tablas, no devuelven filas.
-
-Esto crea las tablas: `profiles`, `services`, `reservations`, `subscriptions` y `transactions`, junto con todas las politicas de seguridad RLS y los triggers.
-
-**5.3** Ahora abre el archivo `supabase/seed.sql`, copia todo su contenido y pegalo en el SQL Editor (puedes abrir un nuevo query o borrar el anterior). Haz clic en **Run**.
-
-Deberia mostrar "Success. 6 rows affected" (son los 6 servicios de ejemplo).
-
-**5.4** Verifica que las tablas se crearon: en el menu izquierdo de Supabase Dashboard, haz clic en **Table Editor**. Deberias ver 5 tablas: `profiles`, `services`, `reservations`, `subscriptions`, `transactions`. Haz clic en `services` y confirma que hay 6 filas de datos.
-
-**5.5** Comparte las claves del proyecto con el equipo (por mensaje privado, no por canal publico):
-1. Ve a **Settings** → **API**
-2. Copia `Project URL` → esta es la `NEXT_PUBLIC_SUPABASE_URL`
-3. Copia `anon public` (bajo Project API keys) → esta es la `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. Envia ambos valores a cada companero por mensaje directo
-
-#### Opcion alternativa: Supabase local con Docker (para desarrollo aislado)
-
-Si algun integrante quiere experimentar sin afectar la base de datos compartida, puede levantar una instancia local. Esto **no es obligatorio** y requiere tener Docker Desktop instalado y corriendo.
+Si quieres experimentar sin afectar la BD compartida:
 
 ```bash
-npx supabase start
+npx supabase start                    # Levanta PostgreSQL + Auth + Studio local
+npx supabase db reset                 # Aplica migraciones + seed
+# Studio local en: http://127.0.0.1:54323
 ```
 
-Esto levantara una instancia local de PostgreSQL, Auth (GoTrue), Storage y Studio. La primera vez descargara las imagenes de Docker (puede tardar varios minutos).
+Actualiza `.env.local` con los valores locales que muestra el comando `supabase start`. Cuando termines, regresa a las claves del proyecto en la nube.
 
-Al terminar, el comando mostrara las URLs y claves locales en la terminal. Si eliges esta opcion, actualiza tu `.env.local` con esos valores locales en vez de los del proyecto en la nube:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<la clave anon que muestra el comando>
-```
-
-Aplica las migraciones y el seed:
-
-```bash
-npx supabase db reset
-```
-
-Este comando ejecuta las migraciones y luego el `seed.sql` automaticamente.
-
-Para acceder al panel visual de administracion de la base de datos local:
-
-```
-http://127.0.0.1:54323
-```
-
-> **Recuerda:** si usas Supabase local, tus datos son independientes y tus companeros no veran lo que hagas ahi. Cuando termines de experimentar, vuelve a poner las claves del proyecto en la nube en tu `.env.local`.
-
----
-
-### Paso 6: Levantar el servidor de desarrollo
+### 5. Levantar el Servidor
 
 ```bash
 npm run dev
 ```
 
-Abre tu navegador en [http://localhost:3000](http://localhost:3000). Deberias ver la landing page de RNG-Vantage con los links a "Ver Servicios" y "Reservar Capacitacion".
+Abre [http://localhost:3000](http://localhost:3000). Deberías ver la landing page.
 
-Navega por las rutas para verificar que todo funciona:
-
-| Ruta | Que deberias ver |
+| Ruta | Qué deberías ver |
 |---|---|
-| [http://localhost:3000](http://localhost:3000) | Landing page con el nombre del proyecto |
-| [http://localhost:3000/catalogo](http://localhost:3000/catalogo) | Placeholder "Catalogo de Servicios" |
-| [http://localhost:3000/reservar](http://localhost:3000/reservar) | Placeholder "Reservar Capacitacion" |
-| [http://localhost:3000/checkout](http://localhost:3000/checkout) | Placeholder "Checkout" |
-| [http://localhost:3000/login](http://localhost:3000/login) | Placeholder "Login" |
-| [http://localhost:3000/register](http://localhost:3000/register) | Placeholder "Register" |
-| [http://localhost:3000/politica-privacidad](http://localhost:3000/politica-privacidad) | Placeholder "Politica de Privacidad" |
+| `/` | Landing page con hero y CTA |
+| `/catalogo` | Placeholder "Catálogo de Servicios" |
+| `/reservar` | Placeholder "Reservar Capacitación" |
+| `/login` | Placeholder "Login" |
+| `/register` | Placeholder "Register" |
+| `/dashboard` | **Redirige a /login** (protección por rol ← esto es correcto) |
 
-> **Nota:** Las rutas de admin (`/dashboard`, `/reservas`, `/servicios`, `/transacciones`) redirigen a `/login` si no estas autenticado como admin. Esto es correcto — la proteccion por rol esta funcionando.
-
----
-
-### Paso 7: Instalar navegadores para tests E2E (una sola vez)
+### 6. Verificar que Todo Funciona
 
 ```bash
-npx playwright install
-```
-
-Esto descarga Chromium y otros navegadores necesarios para ejecutar los tests End-to-End. Solo se necesita hacer una vez.
-
----
-
-### Paso 8: Verificar que todo funciona
-
-Ejecuta los siguientes comandos para asegurarte de que el proyecto esta correctamente configurado:
-
-**8.1 Build de produccion:**
-
-```bash
-npm run build
-```
-
-Deberias ver un listado de las 12 rutas generadas sin errores.
-
-**8.2 Lint:**
-
-```bash
-npm run lint
-```
-
-No deberia mostrar errores.
-
-**8.3 Tests E2E (con el servidor de desarrollo corriendo):**
-
-```bash
-npm run test:e2e
-```
-
-Deberia correr 3 tests basicos (landing page, catalogo y reservar) y mostrar que pasan.
-
----
-
-### Paso 9: Crear tu rama de trabajo
-
-Una vez que todo esta funcionando, crea tu rama para empezar a desarrollar:
-
-```bash
-# Asegurate de estar en develop y actualizado
-git checkout develop
-git pull origin develop
-
-# Crea tu rama de trabajo
-git checkout -b feature/nombre-de-tu-tarea
-```
-
-Ejemplos de nombres de rama segun el modulo que te toque:
-
-```bash
-git checkout -b feature/catalogo-servicios-ui       # Frontend del catalogo
-git checkout -b feature/reservas-formulario          # Formulario de reservas
-git checkout -b feature/dashboard-metricas           # Dashboard financiero
-git checkout -b feature/auth-login-register          # Flujo de autenticacion
-git checkout -b feature/checkout-pagos               # Flujo de pagos
-git checkout -b feature/suscripciones-motor          # Motor de suscripciones (Edge Functions)
+npm run build      # Debe compilar sin errores (12 rutas generadas)
+npm run lint       # Debe pasar sin errores
+npm run test:e2e   # Debe pasar 3 smoke tests
 ```
 
 ---
 
-### Paso 10: Flujo de trabajo diario
+## 📋 Scripts Disponibles
 
-**Al iniciar tu jornada de trabajo:**
+| Comando | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo en `http://localhost:3000` |
+| `npm run build` | Build de producción (usa flag `--webpack` por Serwist) |
+| `npm start` | Sirve el build de producción |
+| `npm run lint` | Ejecuta ESLint |
+| `npm test` | Tests unitarios en modo watch (Vitest) |
+| `npm run test:run` | Tests unitarios una sola vez (para CI) |
+| `npm run test:e2e` | Tests E2E completos (Playwright) |
+| `npm run test:e2e:ui` | Tests E2E con interfaz visual interactiva |
+
+| Comando Supabase | Qué hace |
+|---|---|
+| `npx supabase start` | Levanta emuladores locales (requiere Docker) |
+| `npx supabase db push` | Aplica migraciones pendientes |
+| `npx supabase db reset` | Resetea BD + ejecuta migraciones + seed |
+| `npx supabase functions serve hello-world --no-verify-jwt` | Ejecuta una Edge Function localmente |
+| `npx supabase gen types typescript --local > types/database.ts` | Regenera tipos TS desde el esquema |
+
+| Comando ShadCN | Qué hace |
+|---|---|
+| `npx shadcn@latest add button` | Instala componente Button en `components/ui/` |
+| `npx shadcn@latest add input card table dialog form toast` | Instala múltiples componentes a la vez |
+
+---
+
+## 🔄 Flujo de Trabajo Diario
+
+### Al iniciar tu jornada
 
 ```bash
 git checkout develop
-git pull origin develop
-git checkout tu-rama
-git merge develop          # Trae los cambios mas recientes de tus companeros
+git pull origin develop                  # Trae los últimos cambios
+git checkout feature/mi-tarea            # Regresa a tu rama
+git merge develop                        # Integra los cambios de tus compañeros
 ```
 
-**Al terminar una funcionalidad:**
+### Al terminar una funcionalidad
 
 ```bash
 git add .
-git commit -m "feat: descripcion breve de lo que hiciste"
-git push origin tu-rama
+git commit -m "feat: descripción breve de lo que hiciste"
+git push origin feature/mi-tarea
 ```
 
-Luego ve a GitHub y crea un **Pull Request** desde tu rama hacia `develop`. Pide a un companero que lo revise antes de hacer merge.
+Luego en GitHub: crea un **Pull Request** desde tu rama hacia `develop`. Pide a un compañero que lo revise.
 
-**Convenciones de commits:**
+### Convenciones de Commits
 
-| Prefijo | Uso |
+| Prefijo | Cuándo usarlo |
 |---|---|
 | `feat:` | Nueva funcionalidad |
-| `fix:` | Correccion de bug |
-| `refactor:` | Cambio de codigo sin cambiar funcionalidad |
+| `fix:` | Corrección de bug |
+| `refactor:` | Cambio de código sin cambiar funcionalidad |
 | `style:` | Cambios de estilos/CSS |
-| `docs:` | Cambios en documentacion |
+| `docs:` | Cambios en documentación |
 | `test:` | Agregar o modificar tests |
 | `chore:` | Tareas de mantenimiento (dependencias, config) |
 
 ---
 
-### Paso 11: Agregar componentes de ShadCN/UI
+## 📖 Patrones de Código del Proyecto
 
-Cuando necesites un componente de interfaz (botones, formularios, tablas, modals, etc.), no lo crees desde cero. Usa ShadCN:
+### Cómo usar Supabase
 
-```bash
-npx shadcn@latest add button        # Agrega el componente Button
-npx shadcn@latest add input         # Agrega el componente Input
-npx shadcn@latest add card          # Agrega el componente Card
-npx shadcn@latest add table         # Agrega el componente Table
-npx shadcn@latest add dialog        # Agrega el componente Dialog/Modal
-npx shadcn@latest add form          # Agrega el componente Form (integrado con RHF)
-npx shadcn@latest add toast         # Agrega notificaciones toast
-```
-
-Los componentes se instalan en `components/ui/` y son totalmente editables. Consulta el catalogo completo en [https://ui.shadcn.com/docs/components](https://ui.shadcn.com/docs/components).
-
----
-
-### Paso 12: Consultar datos de Supabase desde el codigo
-
-**Desde un Server Component (paginas, layouts):**
-
+**Desde un Server Component** (páginas, layouts):
 ```tsx
 import { createClient } from "@/lib/supabase/server";
 
@@ -530,8 +650,7 @@ export default async function MiPagina() {
 }
 ```
 
-**Desde un Client Component (interactividad, formularios):**
-
+**Desde un Client Component** (interactividad, formularios):
 ```tsx
 "use client";
 
@@ -560,92 +679,109 @@ export function MiComponente() {
 }
 ```
 
----
+### Convenciones de Nombrado
 
-### Resumen rapido de comandos
+| Elemento | Convención | Ejemplo |
+|---|---|---|
+| Archivos | kebab-case | `use-supabase.ts`, `design-tokens.ts` |
+| Componentes | PascalCase | `Providers`, `StatusBadge` |
+| Tipos/Interfaces | PascalCase | `UserRole`, `Database` |
+| Variables/Funciones | camelCase | `createClient`, `handleSubmit` |
+| Columnas de BD | snake_case | `full_name`, `created_at` |
+| Rutas | kebab-case o lowercase | `/politica-privacidad`, `/catalogo` |
+| Route Groups | paréntesis | `(auth)`, `(public)`, `(dashboard)` |
+| Imports con alias | `@/` | `import { cn } from "@/lib/utils"` |
 
-| Que quieres hacer | Comando |
-|---|---|
-| Instalar dependencias | `npm install` |
-| Levantar servidor de desarrollo | `npm run dev` |
-| Build de produccion | `npm run build` |
-| Ejecutar lint | `npm run lint` |
-| Unit tests (watch) | `npm test` |
-| Unit tests (CI) | `npm run test:run` |
-| Tests E2E | `npm run test:e2e` |
-| Tests E2E con UI | `npm run test:e2e:ui` |
-| Levantar Supabase local | `npx supabase start` |
-| Resetear BD local + seed | `npx supabase db reset` |
-| Generar tipos de la BD | `npx supabase gen types typescript --local > types/database.ts` |
-| Agregar componente ShadCN | `npx shadcn@latest add nombre-componente` |
-| Crear rama de trabajo | `git checkout -b feature/mi-tarea` |
+### Reglas Importantes
 
----
-
-### Problemas comunes
-
-**"La pagina carga pero no muestra datos / sale un error de Supabase"**
-Tu archivo `.env.local` tiene claves incorrectas o no existe. Verifica lo siguiente:
-1. Que el archivo `.env.local` existe en la raiz del proyecto (al mismo nivel que `package.json`)
-2. Que las claves son las reales del proyecto compartidas por Carlos (no los valores de ejemplo)
-3. Que no hay comillas, espacios extra ni saltos de linea dentro de los valores
-4. Despues de modificar `.env.local`, **debes reiniciar el servidor** (`Ctrl+C` y luego `npm run dev` de nuevo). Next.js no detecta cambios en `.env.local` en caliente.
-
-**"No puedo acceder a /dashboard, me redirige a /login"**
-Esto es correcto. Las rutas de admin estan protegidas. Necesitas autenticarte con un usuario que tenga `role = 'admin'` en la tabla `profiles`. Pide a Carlos que ejecute lo siguiente en el SQL Editor de Supabase para darte acceso admin:
-```sql
--- Reemplaza 'tu-email@ejemplo.com' con el email con el que te registraste
-update profiles set role = 'admin'
-where id = (select id from auth.users where email = 'tu-email@ejemplo.com');
-```
-
-**"npm run dev no arranca"**
-Verifica lo siguiente en orden:
-1. `node -v` debe mostrar v20 o superior. Si no, descarga Node.js LTS desde https://nodejs.org
-2. Ejecutaste `npm install` despues de clonar? Si no, ejecutalo.
-3. Existe el archivo `.env.local`? Si no, crealo (ver Paso 4 del tutorial).
-4. Si el error dice "Module not found", borra `node_modules` y ejecuta `npm install` de nuevo:
-   ```bash
-   rm -rf node_modules
-   npm install
-   ```
-
-**"npm install falla o tarda demasiado"**
-- Verifica tu conexion a internet
-- Si estas en la red de la universidad, prueba con datos moviles (algunas redes bloquean registros de npm)
-- Intenta limpiar la cache: `npm cache clean --force` y luego `npm install`
-
-**"Error de tipos con Supabase"**
-Si ves errores de TypeScript relacionados con tablas o columnas, es posible que los tipos esten desactualizados. Solo aplica si tienes Supabase local con Docker:
-```bash
-npx supabase gen types typescript --local > types/database.ts
-```
-
-**"Los tests E2E fallan"**
-1. Asegurate de haber instalado los navegadores: `npx playwright install`
-2. Los tests E2E necesitan que el servidor este corriendo. Abre **otra terminal** y ejecuta `npm run dev`, luego en la terminal original ejecuta `npm run test:e2e`
-
-**"Git dice que no tengo permisos para hacer push"**
-Tu cuenta de GitHub no tiene acceso al repositorio. Pide a Carlos que te agregue como colaborador:
-1. Carlos va a GitHub → repositorio → Settings → Collaborators
-2. Hace clic en "Add people" y agrega tu usuario de GitHub
-3. Te llegara una invitacion por email o en GitHub, debes aceptarla
-
-**"Git dice que hay conflictos al hacer merge"**
-Esto pasa cuando dos personas modificaron el mismo archivo. No entres en panico:
-1. Abre los archivos marcados con conflicto en VS Code (aparecen con marcas `<<<<<<< HEAD`)
-2. VS Code te mostrara opciones: "Accept Current Change", "Accept Incoming Change", "Accept Both"
-3. Elige la opcion correcta segun el caso, o edita manualmente
-4. Despues de resolver: `git add .` y `git commit -m "fix: resolver conflictos con develop"`
-5. Si no sabes como resolverlo, pregunta en el grupo antes de hacer nada
-
-**"Me aparece el template de Next.js en vez de la landing de RNG-Vantage"**
-Estas en una rama desactualizada. Ejecuta:
-```bash
-git checkout develop
-git pull origin develop
-```
+- **Server Components** son el default — no pongas `"use client"` a menos que necesites interactividad
+- **CSS**: Solo clases utilitarias de Tailwind. No crear archivos CSS por componente
+- **Class merging**: Siempre usar `cn()` de `@/lib/utils` para combinar clases condicionalmente
+- **Iconos**: Importar desde `lucide-react` (ej: `import { Search } from "lucide-react"`)
+- **Formularios**: React Hook Form + Zod resolver. Schemas en `lib/validators/`
 
 ---
 
-> Proyecto reestructurado sobre la base inicial. Todo codigo del antiguo monolito de NestJS ha sido deprecado en favor de las tecnologias indicadas.
+## ⚠️ Restricciones Críticas
+
+Estos son puntos que **todos deben conocer** porque ignorarlos causa errores difíciles de diagnosticar:
+
+| # | Restricción | Por qué |
+|---|---|---|
+| 1 | **WEBPACK obligatorio** | Next.js 16 usa Turbopack por defecto, pero `@serwist/next` usa plugins de webpack. El flag `--webpack` ya está en los scripts de `package.json`. **No lo quites.** |
+| 2 | **Supabase compartido** | Los 4 miembros usan las MISMAS claves. No crear proyectos propios de Supabase. |
+| 3 | **RLS en TODAS las tablas** | Si agregas una tabla nueva, debes habilitarle RLS y crear sus policies. Sin esto, la tabla queda 100% abierta. |
+| 4 | **Edge Functions = Deno** | Las funciones en `supabase/functions/` corren en Deno, NO en Node.js. La carpeta está excluida de `tsconfig.json`. Cada función tiene su propio `deno.json`. |
+| 5 | **Tipos manuales** | `types/database.ts` se mantiene manualmente. Si cambias el esquema SQL, regenera: `npx supabase gen types typescript --local > types/database.ts` |
+| 6 | **PWA — archivos generados** | `public/sw.js` y `public/sw.js.map` son generados por Serwist al hacer build. Están en `.gitignore`. No editarlos manualmente. |
+| 7 | **lib webworker** | `tsconfig.json` incluye `"webworker"` en `lib` porque `app/sw.ts` usa `ServiceWorkerGlobalScope`. No quitarlo. |
+| 8 | **MVP sin pasarela real** | No hay integración con PayPal/Stripe. Los pagos se registran manualmente (cash, transferencia, tarjeta). El webhook es un placeholder para el futuro. |
+| 9 | **LOPDP obligatorio** | Los formularios de registro y reserva DEBEN incluir checkbox de consentimiento. Sin él, no se cumple la ley ecuatoriana. |
+
+---
+
+## 🐛 Problemas Comunes y Soluciones
+
+### "La página carga pero no muestra datos / error de Supabase"
+- Verifica que `.env.local` existe y tiene las claves **reales** (no los valores de ejemplo)
+- Verifica que no hay comillas, espacios ni saltos de línea dentro de los valores
+- **Reinicia el servidor** después de modificar `.env.local` (`Ctrl+C` → `npm run dev`)
+
+### "No puedo acceder a /dashboard, me redirige a /login"
+- Esto es correcto: las rutas admin están protegidas
+- Necesitas un usuario con `role = 'admin'` en la tabla `profiles`
+- Pide a Carlos que ejecute en el SQL Editor:
+  ```sql
+  UPDATE profiles SET role = 'admin'
+  WHERE id = (SELECT id FROM auth.users WHERE email = 'tu-email@ejemplo.com');
+  ```
+
+### "npm run dev no arranca"
+1. `node -v` → ¿es v20+? Si no, actualiza Node.js
+2. ¿Ejecutaste `npm install`? Si no, hazlo
+3. ¿Existe `.env.local`? Si no, créalo (ver sección de variables de entorno)
+4. Si el error dice "Module not found": `rm -rf node_modules && npm install`
+
+### "npm install falla"
+- Verifica tu conexión a internet
+- Si estás en la red de la universidad, prueba con datos móviles
+- Limpia la caché: `npm cache clean --force && npm install`
+
+### "Error de tipos con Supabase"
+- Los tipos pueden estar desactualizados. Regenera:
+  ```bash
+  npx supabase gen types typescript --local > types/database.ts
+  ```
+
+### "Tests E2E fallan"
+1. Instala navegadores: `npx playwright install`
+2. Los tests E2E necesitan el servidor corriendo. Abre **otra terminal** con `npm run dev`
+
+### "Git: no tengo permisos para push"
+- Pide a Carlos que te agregue como colaborador: GitHub → Settings → Collaborators → Add people
+
+### "Git: conflictos al hacer merge"
+1. VS Code marca los archivos con conflicto (`<<<<<<< HEAD`)
+2. Elige: "Accept Current Change", "Accept Incoming Change" o edita manualmente
+3. Después: `git add .` → `git commit -m "fix: resolver conflictos con develop"`
+4. Si no sabes cómo resolverlo, **pregunta antes de hacer nada**
+
+### "Aparece el template de Next.js en vez de la landing"
+- Estás en una rama desactualizada: `git checkout develop && git pull origin develop`
+
+---
+
+## 👥 Equipo de Desarrollo
+
+| Integrante | Rol | Área | Par de Trabajo |
+|---|---|---|---|
+| **Carlos Giovanni Ramos Jacome** | Backend Lead + PM | Auth, Seguridad, Edge Functions, Transacciones | Carlos + Alejandro |
+| **Edison Alejandro Andrade Ocana** | Backend + DB | Schemas Zod, CRUD, Migraciones, Seed | Carlos + Alejandro |
+| **Juan Pablo López Ramos** | Frontend Lead + UX | Páginas públicas, Formularios, Responsive | Juan + Christian |
+| **Christian Alexis Hurtado Torres** | Frontend + Dashboard | Admin UI, Gráficos, Design System, Auth UI | Juan + Christian |
+
+Para tareas detalladas, dependencias y cronograma completo, consulta el archivo `PLAN_DE_DESARROLLO.md`.
+
+---
+
+> Proyecto reestructurado sobre la base inicial. Todo código del antiguo monolito de NestJS ha sido deprecado en favor de las tecnologías indicadas.
