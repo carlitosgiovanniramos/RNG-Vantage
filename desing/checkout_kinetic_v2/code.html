@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#696c6a",
+              "error": "#b41340",
+              "on-surface-variant": "#595c5b",
+              "background": "#f5f7f5",
+              "secondary-container": "#e5e2e1",
+              "surface-container-highest": "#dadedb",
+              "on-primary-container": "#490b00",
+              "tertiary": "#595c5b",
+              "surface-variant": "#dadedb",
+              "on-surface": "#2c2f2e",
+              "secondary-fixed": "#e5e2e1",
+              "surface-tint": "#ae2900",
+              "error-container": "#f74b6d",
+              "surface-dim": "#d1d5d3",
+              "on-error": "#ffefef",
+              "primary-dim": "#992300",
+              "inverse-primary": "#fd582d",
+              "on-secondary-container": "#525151",
+              "on-primary-fixed-variant": "#591000",
+              "surface-container-low": "#eff1ef",
+              "primary-fixed-dim": "#ff5d32",
+              "surface-container-high": "#e0e3e1",
+              "on-error-container": "#510017",
+              "primary-fixed": "#ff7855",
+              "surface-container": "#e6e9e7",
+              "on-tertiary": "#f1f3f1",
+              "on-primary-fixed": "#000000",
+              "tertiary-container": "#fbfdfa",
+              "on-tertiary-container": "#5e6160",
+              "error-dim": "#a70138",
+              "tertiary-fixed": "#fbfdfa",
+              "inverse-on-surface": "#9b9d9c",
+              "on-secondary": "#f5f2f1",
+              "tertiary-fixed-dim": "#edeeec",
+              "secondary": "#5c5b5b",
+              "inverse-surface": "#0c0f0e",
+              "on-background": "#2c2f2e",
+              "surface": "#f5f7f5",
+              "on-secondary-fixed": "#403f3f",
+              "on-secondary-fixed-variant": "#5c5b5b",
+              "surface-bright": "#f5f7f5",
+              "tertiary-dim": "#4d504f",
+              "outline": "#747776",
+              "secondary-dim": "#504f4f",
+              "on-tertiary-fixed": "#4c4f4e",
+              "on-primary": "#ffefec",
+              "primary": "#ae2900",
+              "secondary-fixed-dim": "#d6d4d3",
+              "outline-variant": "#abaeac",
+              "primary-container": "#ff7855",
+              "surface-container-lowest": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Work Sans"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        .kinetic-text {
+            animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar (Hidden in focused checkout) -->
+<header class="bg-[#f5f7f5] dark:bg-[#2c2f2e] docked full-width top-0 z-50">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-[1440px] mx-auto">
+<div class="text-3xl font-black text-[#2c2f2e] dark:text-[#f5f7f5] tracking-tighter uppercase font-headline">
+                RNG-Vantage
+            </div>
+<a class="text-[#2c2f2e] dark:text-[#f5f7f5] opacity-80 flex items-center gap-2 hover:bg-[#ae2900] hover:text-white transition-colors duration-200 px-4 py-2" href="/">
+<span class="material-symbols-outlined">arrow_back</span>
+<span class="font-headline font-bold uppercase tracking-tighter">Volver</span>
+</a>
+</div>
+<div class="bg-[#dadedb] dark:bg-[#3d4140] h-[2px] w-full"></div>
+</header>
+<main class="min-h-screen pt-32 pb-20 px-6">
+<div class="max-w-6xl mx-auto">
+<!-- Page Title -->
+<div class="mb-16">
+<h1 class="text-6xl md:text-8xl font-black uppercase tracking-tighter leading-none mb-4">
+                    Confirmar <br/> <span class="text-primary">Contratación</span>
+</h1>
+<div class="h-2 w-32 bg-primary"></div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+<!-- Summary Column -->
+<div class="lg:col-span-7 space-y-8">
+<!-- Brutalist Summary Card -->
+<div class="bg-surface-container-lowest p-8 md:p-12 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-9xl">shopping_cart_checkout</span>
+</div>
+<div class="relative z-10">
+<span class="inline-block bg-primary text-on-primary font-label text-xs font-bold px-3 py-1 uppercase tracking-widest mb-6">Plan Premium Elite</span>
+<h2 class="text-4xl font-black uppercase tracking-tight mb-8">Resumen del Servicio</h2>
+<div class="space-y-6">
+<div class="flex justify-between items-end border-b border-outline-variant/30 pb-4">
+<div>
+<p class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Suscripción</p>
+<p class="text-xl font-bold">Vantage Connect Pro</p>
+</div>
+<div class="text-right">
+<p class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Precio</p>
+<p class="text-4xl font-black text-primary">€249.00</p>
+</div>
+</div>
+<div class="flex justify-between items-center py-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">calendar_month</span>
+<div>
+<p class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Duración</p>
+<p class="font-bold">12 Meses (Anual)</p>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">bolt</span>
+<div>
+<p class="font-label text-xs uppercase tracking-widest text-on-surface-variant">Activación</p>
+<p class="font-bold">Inmediata</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 mt-8">
+<label class="flex items-center gap-4 cursor-pointer group">
+<div class="relative flex items-center">
+<input checked="" class="w-6 h-6 border-2 border-on-surface text-primary focus:ring-primary rounded-none" type="checkbox"/>
+</div>
+<div>
+<p class="font-bold uppercase tracking-tight">Renovación Automática</p>
+<p class="text-sm text-on-surface-variant">El servicio se renovará automáticamente al finalizar el periodo actual.</p>
+</div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Payment Method Section -->
+<div class="bg-surface-container-low p-8">
+<h3 class="text-xl font-bold uppercase tracking-tight mb-6">Método de Pago</h3>
+<div class="flex items-center gap-6 p-4 bg-surface-container-lowest border border-outline-variant/20">
+<span class="material-symbols-outlined text-3xl">credit_card</span>
+<div class="flex-grow">
+<p class="font-bold">Visa terminada en **** 8829</p>
+<p class="text-sm text-on-surface-variant">Expira: 08/26</p>
+</div>
+<button class="text-primary font-label text-xs font-bold uppercase underline">Cambiar</button>
+</div>
+</div>
+</div>
+<!-- Action Column -->
+<div class="lg:col-span-5">
+<div class="sticky top-32 space-y-6">
+<div class="bg-on-surface text-surface p-8">
+<div class="mb-8">
+<div class="flex justify-between mb-2">
+<span class="font-label text-xs uppercase tracking-widest opacity-60">Subtotal</span>
+<span class="font-bold">€249.00</span>
+</div>
+<div class="flex justify-between mb-4">
+<span class="font-label text-xs uppercase tracking-widest opacity-60">Impuestos (21%)</span>
+<span class="font-bold">€52.29</span>
+</div>
+<div class="h-[1px] bg-surface/20 mb-4"></div>
+<div class="flex justify-between items-baseline">
+<span class="text-2xl font-black uppercase tracking-tighter">Total</span>
+<span class="text-5xl font-black text-primary-fixed">€301.29</span>
+</div>
+</div>
+<button class="w-full bg-primary hover:bg-primary-dim text-white font-headline font-black text-xl uppercase tracking-widest py-6 transition-all active:scale-[0.98] flex items-center justify-center gap-3">
+                                Confirmar Contratación
+                                <span class="material-symbols-outlined">chevron_right</span>
+</button>
+<p class="text-[10px] text-center mt-6 opacity-40 uppercase tracking-widest leading-relaxed">
+                                Al hacer clic en "Confirmar Contratación", aceptas nuestros términos de servicio y la política de privacidad de RNG-Vantage.
+                            </p>
+</div>
+<!-- Security Badge -->
+<div class="flex items-center justify-center gap-4 py-4 px-6 border border-outline-variant/20 grayscale opacity-60">
+<span class="material-symbols-outlined">verified_user</span>
+<p class="font-label text-[10px] uppercase tracking-widest font-bold">Pago Seguro Encriptado SSL 256-bit</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Success State (Hidden Mockup) -->
+<div class="mt-20 pt-20 border-t-8 border-primary">
+<div class="flex flex-col md:flex-row items-center gap-12 bg-surface-container-lowest p-12">
+<div class="bg-green-600 p-6 flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-7xl" data-weight="fill">check_circle</span>
+</div>
+<div class="flex-grow">
+<h2 class="text-4xl font-black uppercase tracking-tighter mb-2">¡Contratación Exitosa!</h2>
+<p class="text-lg mb-4 text-on-surface-variant">Tu suscripción ha sido activada correctamente. Ya tienes acceso total a todas las herramientas.</p>
+<div class="inline-flex flex-col bg-surface-container-high px-6 py-3">
+<span class="font-label text-[10px] uppercase tracking-widest opacity-60">Número de Suscripción</span>
+<span class="font-headline font-black text-2xl tracking-widest text-primary">#RNG-VANT-9920112</span>
+</div>
+</div>
+<div class="w-full md:w-auto">
+<button class="w-full md:w-auto bg-on-surface text-surface font-headline font-bold uppercase tracking-widest px-10 py-5 hover:bg-primary transition-colors">
+                            Ir al Dashboard
+                        </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Kinetic Marquee Branding -->
+<div class="w-full bg-primary-container overflow-hidden py-4 border-y border-primary/20">
+<div class="flex whitespace-nowrap kinetic-text">
+<span class="text-4xl font-black uppercase tracking-tighter text-on-primary-container mx-8">Performance Redefined</span>
+<span class="text-4xl font-black uppercase tracking-tighter text-on-primary-container mx-8">RNG-Vantage Control</span>
+<span class="text-4xl font-black uppercase tracking-tighter text-on-primary-container mx-8">Kinetic Power</span>
+<span class="text-4xl font-black uppercase tracking-tighter text-on-primary-container mx-8">Performance Redefined</span>
+<span class="text-4xl font-black uppercase tracking-tighter text-on-primary-container mx-8">RNG-Vantage Control</span>
+<span class="text-4xl font-black uppercase tracking-tighter text-on-primary-container mx-8">Kinetic Power</span>
+</div>
+</div>
+<!-- Footer Component -->
+<footer class="w-full mt-20">
+<div class="bg-[#ae2900] h-[8px]"></div>
+<div class="bg-[#2c2f2e] dark:bg-[#000000] flex flex-col md:flex-row justify-between items-center p-12 w-full">
+<div class="text-lg font-black text-white font-headline uppercase tracking-tighter mb-8 md:mb-0">
+                RNG-Vantage
+            </div>
+<div class="flex flex-col md:flex-row gap-8 items-center">
+<nav class="flex gap-8">
+<a class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">Privacy Policy</a>
+<a class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">Terms of Service</a>
+<a class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">Legal Notice</a>
+</nav>
+<div class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-40">
+                    © 2024 RNG-VANTAGE. ALL RIGHTS RESERVED.
+                </div>
+</div>
+</div>
+</footer>
+</body></html>

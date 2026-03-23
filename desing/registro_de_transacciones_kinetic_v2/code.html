@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#696c6a",
+              "error": "#b41340",
+              "on-surface-variant": "#595c5b",
+              "background": "#f5f7f5",
+              "secondary-container": "#e5e2e1",
+              "surface-container-highest": "#dadedb",
+              "on-primary-container": "#490b00",
+              "tertiary": "#595c5b",
+              "surface-variant": "#dadedb",
+              "on-surface": "#2c2f2e",
+              "secondary-fixed": "#e5e2e1",
+              "surface-tint": "#ae2900",
+              "error-container": "#f74b6d",
+              "surface-dim": "#d1d5d3",
+              "on-error": "#ffefef",
+              "primary-dim": "#992300",
+              "inverse-primary": "#fd582d",
+              "on-secondary-container": "#525151",
+              "on-primary-fixed-variant": "#591000",
+              "surface-container-low": "#eff1ef",
+              "primary-fixed-dim": "#ff5d32",
+              "surface-container-high": "#e0e3e1",
+              "on-error-container": "#510017",
+              "primary-fixed": "#ff7855",
+              "surface-container": "#e6e9e7",
+              "on-tertiary": "#f1f3f1",
+              "on-primary-fixed": "#000000",
+              "tertiary-container": "#fbfdfa",
+              "on-tertiary-container": "#5e6160",
+              "error-dim": "#a70138",
+              "tertiary-fixed": "#fbfdfa",
+              "inverse-on-surface": "#9b9d9c",
+              "on-secondary": "#f5f2f1",
+              "tertiary-fixed-dim": "#edeeec",
+              "secondary": "#5c5b5b",
+              "inverse-surface": "#0c0f0e",
+              "on-background": "#2c2f2e",
+              "surface": "#f5f7f5",
+              "on-secondary-fixed": "#403f3f",
+              "on-secondary-fixed-variant": "#5c5b5b",
+              "surface-bright": "#f5f7f5",
+              "tertiary-dim": "#4d504f",
+              "outline": "#747776",
+              "secondary-dim": "#504f4f",
+              "on-tertiary-fixed": "#4c4f4e",
+              "on-primary": "#ffefec",
+              "primary": "#ae2900",
+              "secondary-fixed-dim": "#d6d4d3",
+              "outline-variant": "#abaeac",
+              "primary-container": "#ff7855",
+              "surface-container-lowest": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Work Sans"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen">
+<!-- Sidebar Navigation -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r-0 bg-[#f5f7f5] dark:bg-[#2c2f2e] flex flex-col py-8 px-4 z-40">
+<div class="mb-12 px-4">
+<h1 class="text-xl font-bold text-[#ae2900] font-headline uppercase tracking-tight">Admin Panel</h1>
+<p class="text-[10px] text-on-surface-variant font-label tracking-widest opacity-60">v1.0.4</p>
+</div>
+<nav class="flex-grow space-y-1">
+<a class="text-[#2c2f2e] dark:text-[#f5f7f5] px-4 py-3 mb-2 hover:bg-[#dadedb] dark:hover:bg-[#3d4140] flex items-center gap-3 font-headline font-medium uppercase tracking-tight hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Dashboard</span>
+</a>
+<a class="text-[#2c2f2e] dark:text-[#f5f7f5] px-4 py-3 mb-2 hover:bg-[#dadedb] dark:hover:bg-[#3d4140] flex items-center gap-3 font-headline font-medium uppercase tracking-tight hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span>Reservas</span>
+</a>
+<a class="text-[#2c2f2e] dark:text-[#f5f7f5] px-4 py-3 mb-2 hover:bg-[#dadedb] dark:hover:bg-[#3d4140] flex items-center gap-3 font-headline font-medium uppercase tracking-tight hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">layers</span>
+<span>Servicios</span>
+</a>
+<a class="text-[#2c2f2e] dark:text-[#f5f7f5] px-4 py-3 mb-2 hover:bg-[#dadedb] dark:hover:bg-[#3d4140] flex items-center gap-3 font-headline font-medium uppercase tracking-tight hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">loyalty</span>
+<span>Suscripciones</span>
+</a>
+<a class="bg-[#ae2900] text-white font-bold px-4 py-3 mb-2 flex items-center gap-3 font-headline uppercase tracking-tight" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">payments</span>
+<span>Transacciones</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-outline-variant/20 pt-6">
+<a class="text-[#2c2f2e] dark:text-[#f5f7f5] px-4 py-3 mb-2 hover:bg-[#dadedb] dark:hover:bg-[#3d4140] flex items-center gap-3 font-headline font-medium uppercase tracking-tight hover:translate-x-1 transition-transform duration-150" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-12 min-h-screen">
+<!-- Header & Branding -->
+<header class="mb-16">
+<div class="flex justify-between items-end">
+<div>
+<span class="text-primary font-label font-bold tracking-[0.2em] uppercase text-xs">FINANCIAL ENGINE</span>
+<h2 class="text-6xl font-black font-headline tracking-tighter uppercase leading-none mt-2">Registro de Transacciones</h2>
+</div>
+<button class="bg-primary text-on-primary font-headline font-bold uppercase tracking-widest px-8 py-5 flex items-center gap-3 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">add_card</span>
+                    Registrar Pago
+                </button>
+</div>
+</header>
+<!-- Kinetic Summary Section -->
+<section class="grid grid-cols-12 gap-8 mb-12">
+<!-- Total Summary Card -->
+<div class="col-span-12 lg:col-span-4 bg-primary p-8 flex flex-col justify-between relative overflow-hidden">
+<div class="relative z-10">
+<h3 class="text-on-primary font-label uppercase tracking-widest text-sm opacity-80">Total Filtrado (USD)</h3>
+<p class="text-5xl font-black font-headline text-on-primary mt-4">$142,580.00</p>
+</div>
+<div class="mt-8 flex items-center gap-2 text-on-primary z-10">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span class="font-label text-xs font-bold">+12% VS MES ANTERIOR</span>
+</div>
+<!-- Abstract branding element -->
+<div class="absolute -right-10 -bottom-10 opacity-10">
+<span class="material-symbols-outlined text-[160px]" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+</div>
+<!-- Filters Bar -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest p-8 flex flex-wrap items-end gap-6">
+<div class="flex-1 min-w-[200px]">
+<label class="block font-label text-[10px] uppercase tracking-widest mb-2 text-on-surface-variant">Estado de Transacción</label>
+<select class="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 font-headline font-bold uppercase text-sm py-3">
+<option>Todos los estados</option>
+<option>Completado</option>
+<option>Pendiente</option>
+<option>Fallido</option>
+</select>
+</div>
+<div class="flex-1 min-w-[200px]">
+<label class="block font-label text-[10px] uppercase tracking-widest mb-2 text-on-surface-variant">Rango de Fechas</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 font-headline font-bold uppercase text-sm py-3 pr-10" placeholder="01/10/2023 - 31/10/2023" type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant">calendar_month</span>
+</div>
+</div>
+<button class="bg-surface-container-highest text-on-surface font-headline font-bold uppercase tracking-widest px-6 py-3.5 hover:bg-primary hover:text-white transition-colors">
+                    Filtrar
+                </button>
+</div>
+</section>
+<!-- Transaction Table - Brutalist List Style -->
+<section class="bg-surface-container-lowest overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full border-collapse">
+<thead>
+<tr class="bg-surface-container-high">
+<th class="px-8 py-6 text-left font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Fecha</th>
+<th class="px-8 py-6 text-left font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Cliente</th>
+<th class="px-8 py-6 text-left font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Monto</th>
+<th class="px-8 py-6 text-left font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Método</th>
+<th class="px-8 py-6 text-left font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Estado</th>
+<th class="px-8 py-6 text-right font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant font-black">Acción</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-bold text-sm">24 OCT 2023</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-container-highest flex items-center justify-center font-headline font-black text-xs">JD</div>
+<span class="font-headline font-bold uppercase tracking-tight">John Doe Enterprises</span>
+</div>
+</td>
+<td class="px-8 py-6 font-headline font-black text-lg">$1,200.00</td>
+<td class="px-8 py-6">
+<span class="bg-secondary-container text-on-secondary-container font-label text-[10px] font-black uppercase px-3 py-1 tracking-widest">Credit Card</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-green-600"></div>
+<span class="font-headline font-bold text-xs uppercase tracking-tighter">Completado</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">more_vert</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-bold text-sm">23 OCT 2023</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-container-highest flex items-center justify-center font-headline font-black text-xs">AS</div>
+<span class="font-headline font-bold uppercase tracking-tight">Alpha Solutions Co.</span>
+</div>
+</td>
+<td class="px-8 py-6 font-headline font-black text-lg">$450.50</td>
+<td class="px-8 py-6">
+<span class="bg-secondary-container text-on-secondary-container font-label text-[10px] font-black uppercase px-3 py-1 tracking-widest">Bank Transfer</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-yellow-500"></div>
+<span class="font-headline font-bold text-xs uppercase tracking-tighter">Pendiente</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">more_vert</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-bold text-sm">22 OCT 2023</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-container-highest flex items-center justify-center font-headline font-black text-xs">ME</div>
+<span class="font-headline font-bold uppercase tracking-tight">Modern Estates Ltd.</span>
+</div>
+</td>
+<td class="px-8 py-6 font-headline font-black text-lg">$3,400.00</td>
+<td class="px-8 py-6">
+<span class="bg-secondary-container text-on-secondary-container font-label text-[10px] font-black uppercase px-3 py-1 tracking-widest">PayPal</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-error"></div>
+<span class="font-headline font-bold text-xs uppercase tracking-tighter text-error">Fallido</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">more_vert</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors group">
+<td class="px-8 py-6 font-headline font-bold text-sm">21 OCT 2023</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-surface-container-highest flex items-center justify-center font-headline font-black text-xs">VM</div>
+<span class="font-headline font-bold uppercase tracking-tight">Vantage Marketing</span>
+</div>
+</td>
+<td class="px-8 py-6 font-headline font-black text-lg">$890.00</td>
+<td class="px-8 py-6">
+<span class="bg-secondary-container text-on-secondary-container font-label text-[10px] font-black uppercase px-3 py-1 tracking-widest">Credit Card</span>
+</td>
+<td class="px-8 py-6">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-green-600"></div>
+<span class="font-headline font-bold text-xs uppercase tracking-tighter">Completado</span>
+</div>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">more_vert</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="p-8 flex justify-between items-center bg-surface-container-low">
+<span class="font-label text-xs uppercase tracking-widest opacity-60">Mostrando 4 de 128 transacciones</span>
+<div class="flex gap-2">
+<button class="w-10 h-10 flex items-center justify-center bg-surface-container-highest hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center bg-primary text-white font-headline font-black">1</button>
+<button class="w-10 h-10 flex items-center justify-center bg-surface-container-highest hover:bg-primary hover:text-white transition-colors font-headline font-black">2</button>
+<button class="w-10 h-10 flex items-center justify-center bg-surface-container-highest hover:bg-primary hover:text-white transition-colors font-headline font-black">3</button>
+<button class="w-10 h-10 flex items-center justify-center bg-surface-container-highest hover:bg-primary hover:text-white transition-colors">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</main>
+<!-- Modal Overlay (Registrar Pago) - Active state simulation -->
+<div class="fixed inset-0 z-[60] flex items-center justify-center bg-on-surface/40 backdrop-blur-sm hidden" id="paymentModal">
+<div class="bg-surface w-full max-w-2xl relative">
+<div class="bg-primary p-8">
+<div class="flex justify-between items-center">
+<h2 class="text-on-primary font-headline text-3xl font-black uppercase tracking-tighter">Registrar Pago</h2>
+<button class="text-on-primary hover:rotate-90 transition-transform duration-300">
+<span class="material-symbols-outlined text-3xl">close</span>
+</button>
+</div>
+</div>
+<form class="p-12 grid grid-cols-2 gap-8">
+<div class="col-span-2">
+<label class="block font-label text-[10px] uppercase tracking-[0.2em] mb-2 font-black">Seleccionar Cliente</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 font-headline font-bold py-4" placeholder="Buscar cliente por nombre o ID..." type="text"/>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2">search</span>
+</div>
+</div>
+<div class="col-span-1">
+<label class="block font-label text-[10px] uppercase tracking-[0.2em] mb-2 font-black">Monto (USD)</label>
+<input class="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 font-headline font-black text-2xl py-4" placeholder="0.00" type="number"/>
+</div>
+<div class="col-span-1">
+<label class="block font-label text-[10px] uppercase tracking-[0.2em] mb-2 font-black">Método de Pago</label>
+<select class="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 font-headline font-bold uppercase py-5">
+<option>Credit Card</option>
+<option>Bank Transfer</option>
+<option>PayPal</option>
+<option>Crypto</option>
+</select>
+</div>
+<div class="col-span-2">
+<label class="block font-label text-[10px] uppercase tracking-[0.2em] mb-2 font-black">Referencia / Nota Interna</label>
+<textarea class="w-full bg-surface-container-low border-0 border-b-2 border-outline-variant focus:border-primary focus:ring-0 font-headline font-medium py-4 resize-none" placeholder="Detalles adicionales de la transacción..." rows="3"></textarea>
+</div>
+<div class="col-span-2 mt-4">
+<button class="w-full bg-primary text-on-primary font-headline font-black uppercase tracking-[0.3em] py-6 text-xl hover:bg-primary-dim transition-colors" type="submit">
+                        CONFIRMAR TRANSACCIÓN
+                    </button>
+</div>
+</form>
+</div>
+</div>
+<!-- Footer Component -->
+<footer class="w-full mt-20 bg-[#2c2f2e] dark:bg-[#000000] relative">
+<div class="bg-[#ae2900] h-[8px] w-full"></div>
+<div class="flex flex-col md:flex-row justify-between items-center p-12 w-full max-w-[1440px] mx-auto">
+<div class="mb-8 md:mb-0">
+<span class="text-lg font-black text-white font-headline tracking-tighter uppercase">RNG-VANTAGE</span>
+<p class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-60 mt-2">© 2024 RNG-VANTAGE. ALL RIGHTS RESERVED.</p>
+</div>
+<div class="flex gap-8">
+<a class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-all" href="#">Privacy Policy</a>
+<a class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-all" href="#">Terms of Service</a>
+<a class="font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-all" href="#">Legal Notice</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reservar Capacitación Gratuita | RNG-Vantage</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#696c6a",
+              "error": "#b41340",
+              "on-surface-variant": "#595c5b",
+              "background": "#f5f7f5",
+              "secondary-container": "#e5e2e1",
+              "surface-container-highest": "#dadedb",
+              "on-primary-container": "#490b00",
+              "tertiary": "#595c5b",
+              "surface-variant": "#dadedb",
+              "on-surface": "#2c2f2e",
+              "secondary-fixed": "#e5e2e1",
+              "surface-tint": "#ae2900",
+              "error-container": "#f74b6d",
+              "surface-dim": "#d1d5d3",
+              "on-error": "#ffefef",
+              "primary-dim": "#992300",
+              "inverse-primary": "#fd582d",
+              "on-secondary-container": "#525151",
+              "on-primary-fixed-variant": "#591000",
+              "surface-container-low": "#eff1ef",
+              "primary-fixed-dim": "#ff5d32",
+              "surface-container-high": "#e0e3e1",
+              "on-error-container": "#510017",
+              "primary-fixed": "#ff7855",
+              "surface-container": "#e6e9e7",
+              "on-tertiary": "#f1f3f1",
+              "on-primary-fixed": "#000000",
+              "tertiary-container": "#fbfdfa",
+              "on-tertiary-container": "#5e6160",
+              "error-dim": "#a70138",
+              "tertiary-fixed": "#fbfdfa",
+              "inverse-on-surface": "#9b9d9c",
+              "on-secondary": "#f5f2f1",
+              "tertiary-fixed-dim": "#edeeec",
+              "secondary": "#5c5b5b",
+              "inverse-surface": "#0c0f0e",
+              "on-background": "#2c2f2e",
+              "surface": "#f5f7f5",
+              "on-secondary-fixed": "#403f3f",
+              "on-secondary-fixed-variant": "#5c5b5b",
+              "surface-bright": "#f5f7f5",
+              "tertiary-dim": "#4d504f",
+              "outline": "#747776",
+              "secondary-dim": "#504f4f",
+              "on-tertiary-fixed": "#4c4f4e",
+              "on-primary": "#ffefec",
+              "primary": "#ae2900",
+              "secondary-fixed-dim": "#d6d4d3",
+              "outline-variant": "#abaeac",
+              "primary-container": "#ff7855",
+              "surface-container-lowest": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Work Sans"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-bottom: 2px solid #ae2900 !important;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<nav class="fixed top-0 z-50 w-full bg-[#f5f7f5] dark:bg-[#2c2f2e]">
+<div class="flex justify-between items-center px-8 py-6 w-full max-w-[1440px] mx-auto">
+<div class="text-3xl font-black text-[#2c2f2e] dark:text-[#f5f7f5] tracking-tighter font-['Space_Grotesk'] uppercase">
+                RNG-Vantage
+            </div>
+<div class="hidden md:flex gap-8 items-center font-['Space_Grotesk'] font-bold tracking-tighter uppercase">
+<a class="text-[#2c2f2e] dark:text-[#f5f7f5] opacity-80 hover:bg-[#ae2900] hover:text-white transition-colors duration-200 px-2 py-1" href="#">Servicios</a>
+<a class="text-[#ae2900] dark:text-[#ff7855] border-b-4 border-[#ae2900] px-2 py-1" href="#">Reservar</a>
+<button class="bg-primary text-on-primary px-6 py-3 font-bold scale-95 active:scale-90 transition-transform">
+                    Get Started
+                </button>
+</div>
+<div class="md:hidden">
+<span class="material-symbols-outlined text-4xl">menu</span>
+</div>
+</div>
+<div class="bg-[#dadedb] dark:bg-[#3d4140] h-[2px] w-full"></div>
+</nav>
+<!-- Hero / Header Section -->
+<main class="pt-32 pb-20 px-4 md:px-8 max-w-[1440px] mx-auto">
+<div class="flex flex-col md:flex-row gap-12 items-start">
+<!-- Left Column: Editorial Content -->
+<div class="w-full md:w-5/12 space-y-8">
+<div class="inline-block bg-primary text-on-primary px-4 py-1 font-label text-xs tracking-widest uppercase mb-4">
+                    Capacitación 2024
+                </div>
+<h1 class="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] uppercase">
+                    Reservar <span class="text-primary">Capacitación</span> Gratuita
+                </h1>
+<p class="text-xl text-on-surface-variant max-w-md font-body leading-relaxed">
+                    Potencia el rendimiento de tu infraestructura crítica con nuestros expertos. Sesiones personalizadas de alta intensidad.
+                </p>
+<!-- Kinetic Marquee Element (Simplified) -->
+<div class="overflow-hidden border-y border-outline-variant py-4 select-none">
+<div class="whitespace-nowrap flex gap-12 text-2xl font-black uppercase opacity-20 italic">
+<span>Eficiencia</span> <span>Control</span> <span>Poder</span> <span>RNG-Vantage</span> <span>Eficiencia</span> <span>Control</span>
+</div>
+</div>
+<div class="hidden md:block relative aspect-square w-full bg-surface-container-highest overflow-hidden">
+<img class="object-cover w-full h-full grayscale hover:grayscale-0 transition-all duration-700" data-alt="Modern high-tech workspace with multiple screens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsjYu9SP98TUReo85wQ3ixzAikItHErbNtBqM6DTwet4aq7xLs576IU_Lb4a-gVHW2loADAB0NE2e9CBKt3oPFQ_ucEKVjVUjbMmwicFFZAY3oyxc4PHnS7U_swdSmLSa6ILE305XGP5aRxzJN6M3CwKvn7g7TWk_k1EbVUdIdfNdKlt_0SQn7ku9fME296ZjcKtqXN4A0Fe6CuaZVeXeSCpalclQVv3nhWVawysas7ROBf6EZktF4Sj7WEY_VuBOaSI8EgFUBkQEg"/>
+<div class="absolute bottom-0 left-0 p-6 bg-primary text-white text-xs font-label uppercase tracking-widest">
+                        Infraestructura Crítica
+                    </div>
+</div>
+</div>
+<!-- Right Column: The Form -->
+<div class="w-full md:w-7/12">
+<div class="bg-surface-container-lowest p-8 md:p-12 relative">
+<!-- Subtle Glass Accent -->
+<div class="absolute -top-4 -right-4 w-24 h-24 bg-primary-container/20 glass-panel -z-10"></div>
+<form class="space-y-10">
+<!-- Form Row -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+<div class="flex flex-col gap-2">
+<label class="font-label text-xs uppercase font-bold tracking-widest text-primary">Nombre</label>
+<input class="bg-transparent border-0 border-b border-outline-variant py-3 font-body text-lg" placeholder="Tu nombre completo" type="text"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label text-xs uppercase font-bold tracking-widest text-primary">Email</label>
+<input class="bg-transparent border-0 border-b border-outline-variant py-3 font-body text-lg" placeholder="email@compañia.com" type="email"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+<div class="flex flex-col gap-2">
+<label class="font-label text-xs uppercase font-bold tracking-widest text-primary">Teléfono</label>
+<input class="bg-transparent border-0 border-b border-outline-variant py-3 font-body text-lg" placeholder="+34 000 000 000" type="tel"/>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label text-xs uppercase font-bold tracking-widest text-primary">Calendario de Fecha</label>
+<div class="relative">
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 font-body text-lg appearance-none" type="date"/>
+<span class="material-symbols-outlined absolute right-0 top-3 text-outline">calendar_today</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="font-label text-xs uppercase font-bold tracking-widest text-primary">Notas Especiales</label>
+<textarea class="bg-transparent border-0 border-b border-outline-variant py-3 font-body text-lg resize-none" placeholder="Cuéntanos más sobre tus necesidades..." rows="3"></textarea>
+</div>
+<div class="flex items-start gap-4 pt-4">
+<div class="relative flex items-center h-5">
+<input class="w-5 h-5 text-primary border-2 border-primary focus:ring-0 rounded-none" id="lopdp" type="checkbox"/>
+</div>
+<label class="font-body text-sm text-on-surface-variant leading-snug" for="lopdp">
+                                Acepto la Política de Protección de Datos (LOPDP) y autorizo el tratamiento de mi información personal para la gestión de esta reserva.
+                            </label>
+</div>
+<div class="pt-6">
+<button class="group relative w-full md:w-auto bg-primary text-on-primary px-12 py-5 font-headline font-black text-xl uppercase tracking-tighter overflow-hidden" type="button">
+<span class="relative z-10">Enviar Reserva</span>
+<div class="absolute inset-0 bg-primary-dim translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+</button>
+</div>
+</form>
+<!-- Success Toast (Mockup state) -->
+<div class="mt-12 p-6 bg-surface-container-high flex items-center gap-4 border-l-8 border-primary">
+<span class="material-symbols-outlined text-primary text-3xl" data-weight="fill">check_circle</span>
+<div>
+<p class="font-headline font-bold uppercase tracking-tight">¡Reserva Solicitada!</p>
+<p class="font-body text-sm opacity-70">Te contactaremos en menos de 24 horas.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-20 bg-[#2c2f2e] dark:bg-[#000000]">
+<div class="bg-[#ae2900] h-[8px] w-full"></div>
+<div class="flex flex-col md:flex-row justify-between items-center p-12 w-full max-w-[1440px] mx-auto">
+<div class="text-lg font-black text-white font-headline tracking-tighter uppercase mb-8 md:mb-0">
+                RNG-VANTAGE
+            </div>
+<div class="flex flex-wrap justify-center gap-8 font-['Space_Grotesk'] text-xs font-light tracking-widest uppercase">
+<a class="text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">Privacy Policy</a>
+<a class="text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">Terms of Service</a>
+<a class="text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">Legal Notice</a>
+</div>
+<div class="mt-8 md:mt-0 text-[#f5f7f5] opacity-40 text-[10px] tracking-[0.2em] font-light">
+                © 2024 RNG-VANTAGE. ALL RIGHTS RESERVED.
+            </div>
+</div>
+</footer>
+<!-- Bottom Mobile Nav (Only visible on mobile) -->
+<div class="md:hidden fixed bottom-0 w-full bg-surface-container-lowest border-t border-surface-container-highest z-50 flex justify-around p-4 shadow-2xl">
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-label uppercase">Inicio</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">calendar_month</span>
+<span class="text-[10px] font-label uppercase font-bold">Reservar</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-[10px] font-label uppercase">Servicios</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-on-surface-variant" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-label uppercase">Perfil</span>
+</a>
+</div>
+</body></html>
