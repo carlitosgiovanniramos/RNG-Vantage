@@ -3,39 +3,45 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="w-full bg-[#2c2f2e] dark:bg-[#f5f7f5] text-[#f5f7f5] dark:text-[#2c2f2e]">
-      <div className="container mx-auto px-4 py-8 sm:px-8 flex flex-col items-center justify-between gap-6 md:flex-row">
-        {/* Brand or Copyright */}
-        <p className="font-spaceGrotesk text-xs tracking-widest uppercase opacity-80">
-          © 2026 RNG-VANTAGE. ALL RIGHTS RESERVED.
-        </p>
+      <div className="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto px-8 py-12 gap-8 md:gap-0">
+        {/* Logo */}
+        <div className="font-spaceGrotesk text-lg font-black uppercase tracking-widest">
+          RNG-Vantage
+        </div>
 
         {/* Legal Links */}
-        <nav className="flex flex-wrap justify-center gap-4 sm:gap-8 font-spaceGrotesk text-xs tracking-widest uppercase opacity-80">
+        <nav className="flex flex-wrap justify-center gap-8 font-spaceGrotesk text-xs tracking-widest uppercase opacity-60">
           <Link
             href="/politica-privacidad"
-            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] transition-colors"
+            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
           >
-            POLÍTICA DE PRIVACIDAD
+            Política de Privacidad
+          </Link>
+          {/* TODO: Crear páginas para estas rutas cuando se implementen */}
+          <Link
+            href="#"
+            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
+          >
+            Términos de Servicio
           </Link>
           <Link
-            href="/terminos"
-            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] transition-colors"
+            href="#"
+            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
           >
-            TÉRMINOS DE SERVICIO
+            Seguridad
           </Link>
           <Link
-            href="/seguridad"
-            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] transition-colors"
+            href="#"
+            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
           >
-            SEGURIDAD
-          </Link>
-          <Link
-            href="/estado"
-            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] transition-colors"
-          >
-            ESTADO
+            Estado
           </Link>
         </nav>
+
+        {/* Copyright */}
+        <div className="font-spaceGrotesk text-xs tracking-widest uppercase opacity-60">
+          © 2026 RNG-Vantage. All rights reserved.
+        </div>
       </div>
     </footer>
   );
