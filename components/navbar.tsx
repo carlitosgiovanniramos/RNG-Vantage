@@ -28,14 +28,20 @@ export function Navbar() {
           >
             Reservar
           </Link>
+          <Link
+            href="/login"
+            className="transition-colors hover:text-primary text-foreground"
+          >
+            Iniciar Sesión
+          </Link>
 
-          {/* Authentication Action - TODO: Connect to Supabase Auth */}
-          <Link href="/login">
+          {/* Authentication Action - Primary CTA */}
+          <Link href="/register">
             <Button
               variant="default"
               className="rounded-none bg-[#ae2900] hover:bg-[#851e00] text-white font-bold"
             >
-              Iniciar Sesión
+              Comenzar
             </Button>
           </Link>
         </nav>
@@ -65,9 +71,15 @@ export function Navbar() {
                 >
                   Reservar
                 </Link>
-                <Link href="/login" className="mt-4">
+                <Link
+                  href="/login"
+                  className="text-lg font-medium hover:text-primary"
+                >
+                  Iniciar Sesión
+                </Link>
+                <Link href="/register" className="mt-4">
                   <Button className="w-full rounded-none bg-[#ae2900] hover:bg-[#851e00] text-white font-bold">
-                    Iniciar Sesión
+                    Comenzar
                   </Button>
                 </Link>
               </nav>
