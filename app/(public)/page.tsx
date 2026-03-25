@@ -74,6 +74,7 @@ export default function LandingPage() {
                 src="/images/hero-dashboard.webp"
                 fill
                 className="object-cover grayscale contrast-125 brightness-90"
+                sizes="(max-width: 1024px) 0vw, 25vw"
                 priority
               />
               <div className="absolute -bottom-6 -left-6 bg-primary p-8 text-primary-foreground">
