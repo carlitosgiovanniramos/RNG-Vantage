@@ -19,7 +19,7 @@ const mockServices = [
     name: "Auditoría Digital",
     description: "Análisis profundo de tus métricas y procesos para detectar fugas de capital.",
     price: 80,
-    unit: "/audit"
+    unit: "/auditoría"
   },
   {
     id: "03",
@@ -35,16 +35,16 @@ export default function LandingPage() {
   return (
     <main className="flex flex-col min-h-screen">
       {/* --- Hero Section --- */}
-      <section className="relative flex flex-col justify-center px-4 sm:px-8 py-20 overflow-hidden min-h-[calc(100vh-64px)] lg:min-h-[819px]">
+      <section className="relative px-4 sm:px-8 pt-12 pb-0 overflow-hidden">
         <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
 
           {/* Texto Principal */}
-          <div className="lg:col-span-8 z-10 pt-10">
+          <div className="lg:col-span-8 z-10">
             <div className="inline-block bg-primary text-white px-4 py-1 font-spaceGrotesk text-xs tracking-widest uppercase mb-6">
-              Digital Marketing Authority
+              Autoridad en Marketing Digital
             </div>
 
-            <h1 className="text-6xl sm:text-7xl md:text-9xl font-black tracking-tighter leading-[0.85] mb-8 uppercase text-foreground">
+            <h1 className="text-6xl sm:text-7xl md:text-9xl font-spaceGrotesk font-black tracking-tighter leading-[0.85] mb-8 uppercase text-foreground">
               RNG-Vantage
             </h1>
 
@@ -54,12 +54,12 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-6">
               <Link href="/catalogo">
-                <Button variant="default" className="w-full sm:w-auto rounded-none px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[8px_8px_0px_0px_rgba(44,47,46,1)] dark:shadow-[8px_8px_0px_0px_rgba(245,247,245,1)]">
+                <Button variant="default" className="h-auto w-full sm:w-auto rounded-none px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[8px_8px_0px_0px_rgba(44,47,46,1)] dark:shadow-[8px_8px_0px_0px_rgba(245,247,245,1)]">
                   Ver Servicios
                 </Button>
               </Link>
               <Link href="/reservar">
-                <Button variant="outline" className="w-full sm:w-auto rounded-none border-4 border-foreground text-foreground px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-foreground hover:text-background active:scale-95">
+                <Button variant="outline" className="h-auto w-full sm:w-auto rounded-none border-4 border-foreground text-foreground px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-foreground hover:text-background active:scale-95">
                   Reservar Capacitación
                 </Button>
               </Link>
@@ -70,10 +70,11 @@ export default function LandingPage() {
           <div className="lg:col-span-4 relative hidden lg:block">
             <div className="w-full aspect-square bg-muted relative">
               <Image
-                alt="Data visualization dashboard"
+                alt="Panel de visualización de datos"
                 src="/images/hero-dashboard.webp"
                 fill
                 className="object-cover grayscale contrast-125 brightness-90"
+                sizes="(max-width: 1024px) 0vw, 25vw"
                 priority
               />
               <div className="absolute -bottom-6 -left-6 bg-primary p-8 text-primary-foreground">
@@ -84,17 +85,17 @@ export default function LandingPage() {
         </div>
 
         {/* Kinetic Marquee */}
-        <div className="absolute bottom-0 left-0 w-full bg-foreground py-4 overflow-hidden whitespace-nowrap">
+        <div className="mt-36 -mx-4 sm:-mx-8 bg-foreground py-4 overflow-hidden whitespace-nowrap">
           <div className="flex space-x-20 animate-marquee items-center">
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Scale</span>
-            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Automate</span>
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Control</span>
-            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Growth</span>
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Efficiency</span>
+            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Escala</span>
+            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Automatiza</span>
+            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Controla</span>
+            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Crece</span>
+            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Eficiencia</span>
             <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Scale</span>
             <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Automate</span>
-            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Growth</span>
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Control</span>
+            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Crece</span>
+            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Controla</span>
           </div>
         </div>
       </section>
@@ -112,7 +113,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="font-spaceGrotesk text-sm uppercase tracking-widest text-primary font-bold">
-              Services / 2026
+              Servicios / 2026
             </div>
           </div>
 
@@ -209,7 +210,7 @@ export default function LandingPage() {
           </h2>
           <div className="flex justify-center">
             <Link href="/register">
-              <Button variant="default" className="rounded-none px-8 sm:px-16 py-6 sm:py-8 font-spaceGrotesk font-black text-xl sm:text-2xl uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[12px_12px_0px_0px_rgba(44,47,46,1)] dark:shadow-[12px_12px_0px_0px_rgba(245,247,245,1)]">
+              <Button variant="default" className="h-auto rounded-none px-8 sm:px-16 py-6 sm:py-8 font-spaceGrotesk font-black text-xl sm:text-2xl uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[12px_12px_0px_0px_rgba(44,47,46,1)] dark:shadow-[12px_12px_0px_0px_rgba(245,247,245,1)]">
                 Comenzar Ahora
               </Button>
             </Link>
