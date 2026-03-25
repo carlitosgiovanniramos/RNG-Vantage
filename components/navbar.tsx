@@ -18,7 +18,7 @@ export function Navbar() {
         <nav className="hidden md:flex items-center gap-8">
           <Link
             href="/catalogo"
-            className="font-spaceGrotesk text-sm font-bold tracking-tight text-foreground/80 hover:text-primary transition-colors duration-200"
+            className="font-spaceGrotesk text-sm font-bold tracking-tight text-primary border-b-2 border-primary pb-1 transition-colors duration-200"
           >
             Servicios
           </Link>
@@ -41,7 +41,7 @@ export function Navbar() {
           <Link href="/register" className="hidden md:block">
             <Button
               variant="default"
-              className="rounded-none bg-primary hover:bg-primary/85 text-primary-foreground font-spaceGrotesk font-bold text-sm px-6 py-3"
+              className="h-auto rounded-none bg-primary hover:bg-primary/85 text-primary-foreground font-spaceGrotesk font-bold text-sm px-6 py-3"
             >
               Comenzar
             </Button>
