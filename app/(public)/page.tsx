@@ -48,7 +48,7 @@ export default function LandingPage() {
               RNG-Vantage
             </h1>
 
-            <p className="text-lg sm:text-xl md:text-2xl font-inter max-w-2xl mb-12 text-muted-foreground leading-relaxed">
+            <p className="text-lg sm:text-xl md:text-2xl font-workSans max-w-2xl mb-12 text-muted-foreground leading-relaxed">
               Automatización de ventas, reservas y control financiero para tu emprendimiento de marketing digital. <span className="text-primary font-bold">Escala sin límites.</span>
             </p>
 
@@ -100,14 +100,14 @@ export default function LandingPage() {
       </section>
 
       {/* --- Nuestros Servicios (Bento Grid) --- */}
-      <section className="py-20 sm:py-32 px-4 sm:px-8 bg-muted/50">
+      <section className="py-20 sm:py-32 px-4 sm:px-8 bg-muted">
         <div className="max-w-[1440px] mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 sm:mb-20 gap-8">
             <div className="max-w-xl">
               <h2 className="text-4xl sm:text-5xl md:text-7xl font-spaceGrotesk font-black uppercase tracking-tighter mb-6 text-foreground">
                 Nuestros Servicios
               </h2>
-              <p className="text-muted-foreground font-inter text-base sm:text-lg">
+              <p className="text-muted-foreground font-workSans text-base sm:text-lg">
                 Estructuras sólidas para negocios digitales que buscan la excelencia operativa y el crecimiento medible.
               </p>
             </div>
@@ -123,7 +123,7 @@ export default function LandingPage() {
               return (
                 <div
                   key={service.id}
-                  className="bg-background p-8 sm:p-12 group hover:bg-primary transition-colors duration-500 relative"
+                  className="bg-card p-8 sm:p-12 group hover:bg-primary transition-colors duration-500 relative"
                 >
                   <Icon className="h-12 w-12 sm:h-16 sm:w-16 mb-8 sm:mb-12 text-primary group-hover:text-primary-foreground transition-colors" />
 
@@ -138,7 +138,7 @@ export default function LandingPage() {
                   <div className="text-3xl sm:text-4xl font-spaceGrotesk font-black text-foreground group-hover:text-primary-foreground transition-colors">
                     {service.price === 0 ? "Gratis" : `$${service.price}`}
                     {service.unit && (
-                      <span className="text-sm font-inter text-muted-foreground group-hover:text-primary-foreground/70 font-normal">
+                      <span className="text-sm font-workSans text-muted-foreground group-hover:text-primary-foreground/70 font-normal">
                         {service.unit}
                       </span>
                     )}
@@ -171,7 +171,7 @@ export default function LandingPage() {
               </div>
               <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
               <h3 className="text-2xl sm:text-3xl font-spaceGrotesk font-black uppercase mb-4">Reserva</h3>
-              <p className="text-background/70 font-inter leading-relaxed">
+              <p className="text-background/60 font-workSans leading-relaxed">
                 Agenda una sesión de diagnóstico inicial para entender tus cuellos de botella actuales.
               </p>
             </div>
@@ -182,7 +182,7 @@ export default function LandingPage() {
               </div>
               <Package className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
               <h3 className="text-2xl sm:text-3xl font-spaceGrotesk font-black uppercase mb-4">Elige</h3>
-              <p className="text-background/70 font-inter leading-relaxed">
+              <p className="text-background/60 font-workSans leading-relaxed">
                 Selecciona el plan de automatización o servicio que mejor se adapte a tu escala actual.
               </p>
             </div>
@@ -193,7 +193,7 @@ export default function LandingPage() {
               </div>
               <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
               <h3 className="text-2xl sm:text-3xl font-spaceGrotesk font-black uppercase mb-4">Crece</h3>
-              <p className="text-background/70 font-inter leading-relaxed">
+              <p className="text-background/60 font-workSans leading-relaxed">
                 Implementamos y monitoreamos tus resultados mientras tú te enfocas en el core del negocio.
               </p>
             </div>
@@ -209,7 +209,7 @@ export default function LandingPage() {
           </h2>
           <div className="flex justify-center">
             <Link href="/register">
-              <Button variant="default" className="rounded-none px-8 sm:px-16 py-6 sm:py-8 font-spaceGrotesk font-black text-xl sm:text-2xl uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[8px_8px_0px_0px_rgba(44,47,46,1)] dark:shadow-[8px_8px_0px_0px_rgba(245,247,245,1)]">
+              <Button variant="default" className="rounded-none px-8 sm:px-16 py-6 sm:py-8 font-spaceGrotesk font-black text-xl sm:text-2xl uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[12px_12px_0px_0px_rgba(44,47,46,1)] dark:shadow-[12px_12px_0px_0px_rgba(245,247,245,1)]">
                 Comenzar Ahora
               </Button>
             </Link>

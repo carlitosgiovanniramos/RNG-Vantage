@@ -5,8 +5,8 @@ import { Menu } from "lucide-react";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center justify-between w-full px-8 py-5 max-w-[1440px] mx-auto">
+    <header className="sticky top-0 z-50 w-full bg-background">
+      <div className="flex items-center justify-between w-full px-8 py-6 max-w-[1440px] mx-auto">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <span className="font-spaceGrotesk text-2xl font-black tracking-tighter uppercase text-foreground">
@@ -41,7 +41,7 @@ export function Navbar() {
           <Link href="/register" className="hidden md:block">
             <Button
               variant="default"
-              className="rounded-none bg-primary hover:bg-primary/85 text-primary-foreground font-spaceGrotesk font-bold text-sm"
+              className="rounded-none bg-primary hover:bg-primary/85 text-primary-foreground font-spaceGrotesk font-bold text-sm px-6 py-3"
             >
               Comenzar
             </Button>

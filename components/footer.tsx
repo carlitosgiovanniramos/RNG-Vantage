@@ -10,7 +10,7 @@ export function Footer() {
         </div>
 
         {/* Legal Links */}
-        <nav className="flex flex-wrap justify-center gap-8 font-spaceGrotesk text-xs tracking-widest uppercase opacity-60">
+        <nav className="flex flex-wrap justify-center gap-8 font-spaceGrotesk text-xs tracking-widest uppercase text-border opacity-60">
           <Link
             href="/politica-privacidad"
             className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
