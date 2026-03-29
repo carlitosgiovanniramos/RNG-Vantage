@@ -56,9 +56,6 @@ public/workbox-*.js
 /blob-report/
 /playwright/.cache/
 
-# MCP servers (tokens personales, no compartir)
-.mcp.json
-
 # IDE
 .vscode/*
 !.vscode/settings.json
