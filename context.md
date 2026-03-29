@@ -2,7 +2,7 @@
 
 > This file is machine-readable project context optimized for LLM/AI agent consumption.
 > It describes the full state of the project so an agent can understand it without reading other files.
-> Last updated: 2026-03-24
+> Last updated: 2026-03-20
 
 ---
 
@@ -17,9 +17,9 @@ academic_period: January 2026 - July 2026 (8th semester)
 team_size: 4
 repository: GitHub (private)
 branching_model: Git Flow Simplified (main → develop → feature/*)
-current_branch: feature/landing-page
+current_branch: develop
 version: 0.1.0
-status: SPRINT_1_IN_PROGRESS — Navbar, Footer, and Landing Page implemented and corrected. Reservation form next.
+status: BASE_STRUCTURE_COMPLETE — no business logic implemented yet
 
 </PROJECT_IDENTITY>
 
@@ -93,18 +93,17 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 ```
 /
 ├── app/
-│   ├── layout.tsx                          [DONE] Root layout: Space Grotesk + Inter fonts, <Providers>, lang="es"
-│   ├── page.tsx                            [DELETED] Moved to (public)/page.tsx
+│   ├── layout.tsx                          [DONE] Root layout: Geist fonts, <Providers>, lang="es"
+│   ├── page.tsx                            [DONE] Landing page: hero, CTA buttons, footer links
 │   ├── sw.ts                               [DONE] Serwist Service Worker: precache + runtime caching
-│   ├── globals.css                         [DONE] Tailwind v4 imports + ShadCN theme tokens (light/dark) + marquee animation
+│   ├── globals.css                         [DONE] Tailwind v4 imports + ShadCN theme tokens (light/dark)
 │   ├── favicon.ico                         [DONE] Default favicon
 │   ├── (auth)/
 │   │   ├── layout.tsx                      [DONE] Centered wrapper (max-w-sm, min-h-screen)
 │   │   ├── login/page.tsx                  [PLACEHOLDER] Only renders <h1>Login</h1>
 │   │   └── register/page.tsx               [PLACEHOLDER] Only renders <h1>Register</h1>
 │   ├── (public)/
-│   │   ├── layout.tsx                      [DONE] Navbar + Footer wrapper, CSS tokens, responsive
-│   │   ├── page.tsx                        [DONE] Landing page: hero, services grid, how-it-works, CTA. Uses next/image, ShadCN Button, seed-aligned prices
+│   │   ├── layout.tsx                      [PARTIAL] Wraps children — TODO: navbar, footer
 │   │   ├── catalogo/page.tsx               [PLACEHOLDER] Only renders <h1>Catalogo de Servicios</h1>
 │   │   ├── reservar/page.tsx               [PLACEHOLDER] Only renders <h1>Reservar Capacitacion</h1>
 │   │   ├── checkout/page.tsx               [PLACEHOLDER] Only renders <h1>Checkout</h1>
@@ -117,11 +116,9 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 │       ├── subscriptions/page.tsx          [PLACEHOLDER] Only renders heading
 │       └── transacciones/page.tsx          [PLACEHOLDER] Only renders heading
 ├── components/
-│   ├── navbar.tsx                          [DONE] Sticky navbar: logo, nav links, CTA button, mobile Sheet menu. Design system aligned.
-│   ├── footer.tsx                          [DONE] 3-column footer: logo, legal links, copyright. Inverted colors.
 │   ├── providers.tsx                       [DONE] QueryClientProvider (staleTime: 60s, refetchOnWindowFocus: false)
 │   └── ui/
-│       └── button.tsx                      [DONE] ShadCN Button component (CVA variants: default, outline, secondary, ghost, destructive, link)
+│       └── button.tsx                      [DONE] ShadCN Button component (CVA variants)
 ├── hooks/
 │   └── use-supabase.ts                     [DONE] useMemo(() => createClient(), [])
 ├── lib/
@@ -148,8 +145,6 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 ├── e2e/
 │   └── example.spec.ts                     [DONE] 3 basic smoke tests (landing, catalogo, reservar)
 ├── public/
-│   ├── images/
-│   │   └── hero-dashboard.webp             [DONE] Hero section image (local, optimized via next/image)
 │   ├── sw.js                               [GENERATED] Built by Serwist (gitignored)
 │   └── *.svg                               [DONE] Default Next.js assets
 ├── .vscode/
@@ -398,7 +393,7 @@ jwt_expiry: 1 hour (configured in supabase/config.toml)
 ## Public Routes (no auth required)
 | Path | Route Group | Page File | Status |
 |---|---|---|---|
-| / | (public) | app/(public)/page.tsx | DONE |
+| / | root | app/page.tsx | DONE |
 | /catalogo | (public) | app/(public)/catalogo/page.tsx | PLACEHOLDER |
 | /reservar | (public) | app/(public)/reservar/page.tsx | PLACEHOLDER |
 | /checkout | (public) | app/(public)/checkout/page.tsx | PLACEHOLDER |
@@ -465,10 +460,9 @@ Matches all paths EXCEPT: _next/static, _next/image, favicon.ico, *.svg/png/jpg/
 - [x] TypeScript types for all DB tables
 - [x] PWA setup (Serwist service worker)
 - [x] TanStack Query provider
-- [x] Navbar + Footer (responsive, design-system aligned, mobile Sheet menu)
-- [x] Landing page (hero with next/image, services bento grid, how-it-works, CTA — prices aligned with seed.sql, ShadCN Button, CSS tokens, marquee in globals.css)
+- [x] Landing page (basic hero + CTA)
 - [x] Design tokens (brand, breakpoints, spacing, chart colors)
-- [x] ShadCN/UI config + Button component (+ Sheet for mobile nav)
+- [x] ShadCN/UI config + Button component
 - [x] Utility function cn()
 - [x] useSupabase() hook
 - [x] Vitest + Playwright configs
@@ -491,6 +485,7 @@ Matches all paths EXCEPT: _next/static, _next/image, favicon.ico, *.svg/png/jpg/
 - [ ] /transacciones admin → needs: transaction table, manual payment registration
 
 ## PARTIAL (structure exists, needs completion)
+- [ ] Public layout → needs: responsive navbar + footer
 - [ ] Dashboard layout → needs: admin sidebar with navigation
 - [ ] Privacy policy page → needs: full LOPDP legal content
 
@@ -504,7 +499,7 @@ Matches all paths EXCEPT: _next/static, _next/image, favicon.ico, *.svg/png/jpg/
 - [ ] Edge Function: payment-webhook (placeholder for payment gateway)
 - [ ] Supabase Realtime integration (live updates on dashboard)
 - [ ] Custom components: StatusBadge, DataCard, DataTable
-- [ ] Additional ShadCN components: input, textarea, form, card, table, dialog, toast, badge, tabs, separator, popover, calendar, checkbox, select, dropdown-menu, avatar (sheet already installed)
+- [ ] Additional ShadCN components: input, textarea, form, card, table, dialog, sheet, toast, badge, tabs, separator, popover, calendar, checkbox, select, dropdown-menu, avatar
 - [ ] Unit tests (none written yet)
 - [ ] Comprehensive E2E tests (only 3 smoke tests exist)
 - [ ] Dark mode toggle (theme tokens exist but no toggle UI)
@@ -784,7 +779,7 @@ Shared Supabase project — all team members use the SAME credentials.
 
 6. **RLS EVERYWHERE**: Row Level Security is enabled on ALL tables. Every query goes through RLS policies. If a new table is added, RLS MUST be enabled and policies MUST be created.
 
-7. **SPRINT 1 IN PROGRESS**: Landing page, Navbar, and Footer are done. All other pages beyond landing are still placeholders. Next: Reservation form UI (Juan), Login/Register UI (Christian).
+7. **NO BUSINESS LOGIC YET**: All pages beyond the landing page are placeholders. The project is in "base structure complete" phase. Development of actual features starts in Sprint 1 (weeks 5-6).
 
 8. **MANUAL TYPES**: `types/database.ts` is manually maintained. When the schema changes, it must be regenerated: `npx supabase gen types typescript --local > types/database.ts`
 
@@ -822,15 +817,18 @@ Priority order based on dependency chain. Items marked [BLOCKS: X] must be compl
    - Create StatusBadge, DataCard components
    - [BLOCKS: all UI implementation]
 
-4. ~~**Public layout navigation** (Juan)~~ ✅ DONE — Navbar, Footer, Landing page implemented and corrected
+4. **Public layout navigation** (Juan)
+   - Responsive navbar (logo, Servicios, Reservar, Login/Avatar)
+   - Footer (privacy policy link, copyright)
+   - Mobile hamburger menu
 
 ## Priority 2 — Sprint 1 Features
 
 5. **Login/Register pages UI** (Christian) — depends on #1, #2, #3
-6. **Reservation form UI** (Juan) — depends on #2; Navbar/Footer done
+6. **Reservation form UI** (Juan) — depends on #2, #4
 7. **Reservations CRUD Server Actions** (Alejandro) — depends on #1, #2
 8. **Services CRUD Server Actions** (Alejandro) — depends on #1, #2
-9. ~~**Landing page redesign** (Juan)~~ ✅ DONE — Hero, services grid, how-it-works, CTA all implemented
+9. **Landing page redesign** (Juan) — depends on #4
 
 ## Priority 3 — Sprint 2 Features
 
