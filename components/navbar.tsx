@@ -3,12 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
+const navLinks = [
+  { href: "/catalogo", label: "Servicios" },
+  { href: "/reservar", label: "Reservar" },
+  { href: "/login", label: "Iniciar Sesión" },
+];
+
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-50 w-full bg-background">
@@ -29,24 +37,22 @@ export function Navbar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <Link
-            href="/catalogo"
-            className="font-spaceGrotesk text-sm font-bold tracking-tight text-primary border-b-2 border-primary pb-1 transition-colors duration-200"
-          >
-            Servicios
-          </Link>
-          <Link
-            href="/reservar"
-            className="font-spaceGrotesk text-sm font-bold tracking-tight text-foreground/80 hover:text-primary transition-colors duration-200"
-          >
-            Reservar
-          </Link>
-          <Link
-            href="/login"
-            className="font-spaceGrotesk text-sm font-bold tracking-tight text-foreground/80 hover:text-primary transition-colors duration-200"
-          >
-            Iniciar Sesión
-          </Link>
+          {navLinks.map(({ href, label }) => {
+            const isActive = pathname === href || pathname.startsWith(href + "/");
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`font-spaceGrotesk text-sm font-bold tracking-tight transition-colors duration-200 ${
+                  isActive
+                    ? "text-primary border-b-2 border-primary pb-1"
+                    : "text-foreground/80 hover:text-primary"
+                }`}
+              >
+                {label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* CTA + Mobile Menu */}
@@ -89,27 +95,21 @@ export function Navbar() {
 
                 {/* Links */}
                 <nav className="flex flex-col px-8 pt-8">
-                  <Link
-                    href="/catalogo"
-                    onClick={() => setOpen(false)}
-                    className="font-spaceGrotesk text-lg font-bold tracking-tight text-foreground hover:text-primary transition-colors py-4 border-b border-border"
-                  >
-                    Servicios
-                  </Link>
-                  <Link
-                    href="/reservar"
-                    onClick={() => setOpen(false)}
-                    className="font-spaceGrotesk text-lg font-bold tracking-tight text-foreground hover:text-primary transition-colors py-4 border-b border-border"
-                  >
-                    Reservar
-                  </Link>
-                  <Link
-                    href="/login"
-                    onClick={() => setOpen(false)}
-                    className="font-spaceGrotesk text-lg font-bold tracking-tight text-foreground hover:text-primary transition-colors py-4 border-b border-border"
-                  >
-                    Iniciar Sesión
-                  </Link>
+                  {navLinks.map(({ href, label }) => {
+                    const isActive = pathname === href || pathname.startsWith(href + "/");
+                    return (
+                      <Link
+                        key={href}
+                        href={href}
+                        onClick={() => setOpen(false)}
+                        className={`font-spaceGrotesk text-lg font-bold tracking-tight transition-colors py-4 border-b border-border ${
+                          isActive ? "text-primary" : "text-foreground hover:text-primary"
+                        }`}
+                      >
+                        {label}
+                      </Link>
+                    );
+                  })}
 
                   {/* CTA */}
                   <Link href="/register" onClick={() => setOpen(false)} className="mt-8">
