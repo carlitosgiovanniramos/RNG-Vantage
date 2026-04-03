@@ -19,6 +19,23 @@ Estado funcional actual:
 - Fix de politica RLS admin en profiles aplicado
 - Migracion full_name -> first_name/last_name aplicada
 
+## Estabilizacion Post-Merge (Abril 2026)
+
+Adicional a los cambios funcionales, se completo una estabilizacion tecnica despues del merge de ramas para dejar develop listo para continuar:
+
+- Conflictos de merge resueltos en catalogo, validadores, landing y service worker.
+- Dependencias faltantes agregadas para compilacion:
+  - date-fns
+  - sonner
+  - react-day-picker
+  - next-themes
+- Ajustes de calidad aplicados:
+  - app/(public)/reservar/page.tsx: reemplazo de watch() por useWatch().
+  - components/ui/sheet.tsx: eliminacion de import no usado.
+- Validacion final ejecutada:
+  - npm run lint: OK
+  - npm run build: OK
+
 ## Actualizacion De Negocio Aplicada (Abril 2026)
 
 Se aplicaron todos los cambios solicitados para alinear el sistema con la operacion real.

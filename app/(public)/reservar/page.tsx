@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -29,8 +29,8 @@ export default function ReservarPage() {
   const {
     register,
     handleSubmit,
+    control,
     setValue,
-    watch,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<ReservationFormData>({
@@ -44,7 +44,10 @@ export default function ReservarPage() {
     },
   });
 
-  const dataConsent = watch("data_consent");
+  const dataConsent = useWatch({
+    control,
+    name: "data_consent",
+  });
 
   async function onSubmit(data: ReservationFormData) {
     const result = await createReservation(data);
