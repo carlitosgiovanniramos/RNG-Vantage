@@ -15,7 +15,8 @@ export type Database = {
       profiles: {
         Row: {
           id: string;
-          full_name: string | null;
+          first_name: string | null;
+          last_name: string | null;
           avatar_url: string | null;
           role: UserRole;
           data_consent_at: string | null;
@@ -24,13 +25,15 @@ export type Database = {
         };
         Insert: {
           id: string;
-          full_name?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
           avatar_url?: string | null;
           role?: UserRole;
           data_consent_at?: string | null;
         };
         Update: {
-          full_name?: string | null;
+          first_name?: string | null;
+          last_name?: string | null;
           avatar_url?: string | null;
           role?: UserRole;
           data_consent_at?: string | null;
@@ -69,7 +72,8 @@ export type Database = {
         Row: {
           id: string;
           user_id: string | null;
-          full_name: string;
+          first_name: string;
+          last_name: string;
           email: string;
           phone: string | null;
           preferred_date: string;
@@ -81,7 +85,8 @@ export type Database = {
         };
         Insert: {
           user_id?: string | null;
-          full_name: string;
+          first_name: string;
+          last_name: string;
           email: string;
           phone?: string | null;
           preferred_date: string;
@@ -90,7 +95,8 @@ export type Database = {
           data_consent: boolean;
         };
         Update: {
-          full_name?: string;
+          first_name?: string;
+          last_name?: string;
           email?: string;
           phone?: string | null;
           preferred_date?: string;
