@@ -8,7 +8,8 @@ export default async function CatalogoPage() {
     .from("services")
     .select("*")
     .eq("is_active", true)
-    .order("created_at", { ascending: true });
+    .order("type", { ascending: true })
+    .order("price", { ascending: true });
 
   if (error) {
     console.warn("[CatalogoPage] No se pudieron cargar los servicios:", error.message);
@@ -28,6 +29,12 @@ export default async function CatalogoPage() {
             Elige el servicio que mejor se adapta a tu negocio. Sin contratos forzosos ni letras pequeñas.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-8 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+            No se pudieron cargar los servicios. Verifica la conexion con Supabase.
+          </div>
+        )}
 
         <CatalogoGrid services={safeServices} />
       </div>

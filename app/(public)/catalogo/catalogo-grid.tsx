@@ -13,8 +13,8 @@ type Service = Database["public"]["Tables"]["services"]["Row"];
 const TYPE_LABELS: Record<ServiceType | "Todos", string> = {
   Todos: "Todos",
   manejo_redes: "Redes Sociales",
-  auditoria: "Auditoría",
-  capacitacion: "Capacitación",
+  auditoria: "Auditoria",
+  capacitacion: "Capacitacion",
   otro: "Otro",
 };
 
@@ -27,15 +27,12 @@ const TYPE_ICONS: Record<ServiceType, LucideIcon> = {
 
 function getPriceDisplay(service: Service): { main: string; unit: string } {
   if (service.price === 0) return { main: "Gratis", unit: "" };
-  const units: Record<ServiceType, string> = {
-    manejo_redes: "/mes",
-    auditoria: "/auditoría",
-    capacitacion: "/sesión",
-    otro: "",
-  };
+
+  const unit = service.type === "manejo_redes" ? "/mes" : "";
+
   return {
     main: `$${service.price}`,
-    unit: units[service.type],
+    unit,
   };
 }
 
