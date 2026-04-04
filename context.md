@@ -2,7 +2,7 @@
 
 > This file is machine-readable project context optimized for LLM/AI agent consumption.
 > It describes the full state of the project so an agent can understand it without reading other files.
-> Last updated: 2026-03-24
+> Last updated: 2026-04-04
 
 ---
 
@@ -17,9 +17,15 @@ academic_period: January 2026 - July 2026 (8th semester)
 team_size: 4
 repository: GitHub (private)
 branching_model: Git Flow Simplified (main → develop → feature/*)
-current_branch: feature/landing-page
-version: 0.1.0
-status: SPRINT_1_IN_PROGRESS — Navbar, Footer, and Landing Page implemented and corrected. Reservation form next.
+current_branch: develop
+version: 0.2.0
+status: SPRINT_2_IN_PROGRESS — Sprint 1 complete (Navbar, Footer, Landing, Reservar form). Sprint 2: Catálogo done. Checkout UI pending Carlos's Server Action.
+
+real_client: Ruth Noemi Gómez Lescano
+client_business: RGL ESTUDIO (también operando como GMZ ESTUDIO)
+client_business_type: Agencia de manejo estratégico de redes sociales y producción audiovisual B2B
+client_target_market: Empresarios 35-55 años, sector servicios (hotelería, turismo, gastronomía), Baños de Agua Santa y Ambato, Ecuador
+client_note: RNG-Vantage ES la "Intranet de gestión financiera y de clientes" mencionada en el plan de negocios de Ruth. Los estudiantes de UTA (este equipo) son los aliados estratégicos de desarrollo citados en dicho plan.
 
 </PROJECT_IDENTITY>
 
@@ -71,9 +77,16 @@ description: Serverless architecture. No custom backend server. All backend logi
 
 ```
 Register → Supabase Auth signUp() → trigger: handle_new_user() → auto-create profile (role='client')
+                                                                → sets raw_app_meta_data.role='client' en auth.users
 Login → Supabase Auth signInWithPassword() → JWT token stored in cookie
+                                           → JWT incluye app_metadata.role desde raw_app_meta_data
 Every Request → middleware.ts → updateSession() → refresh JWT if needed
 Admin Routes → middleware.ts → check profiles.role === 'admin' → allow or redirect
+
+IMPORTANTE: El JWT role para RLS se lee de app_metadata, NO de auth.jwt() ->> 'role'.
+- CORRECTO: (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+- INCORRECTO: (auth.jwt() ->> 'role') = 'admin'  ← siempre retorna 'authenticated'
+Cuando un admin actualiza profiles.role → trigger trg_sync_profile_role → propaga a raw_app_meta_data → JWT actualizado en el siguiente login.
 ```
 
 ## Deployment Target
@@ -93,10 +106,10 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 ```
 /
 ├── app/
-│   ├── layout.tsx                          [DONE] Root layout: Space Grotesk + Inter fonts, <Providers>, lang="es"
+│   ├── layout.tsx                          [DONE] Root layout: Space Grotesk + Work Sans + Inter fonts, <Providers>, <Toaster>, lang="es"
 │   ├── page.tsx                            [DELETED] Moved to (public)/page.tsx
 │   ├── sw.ts                               [DONE] Serwist Service Worker: precache + runtime caching
-│   ├── globals.css                         [DONE] Tailwind v4 imports + ShadCN theme tokens (light/dark) + marquee animation
+│   ├── globals.css                         [DONE] Tailwind v4 + full design system tokens (--background:#f5f7f5, --foreground:#2c2f2e, --primary:#ae2900, --radius:0px) + marquee animation
 │   ├── favicon.ico                         [DONE] Default favicon
 │   ├── (auth)/
 │   │   ├── layout.tsx                      [DONE] Centered wrapper (max-w-sm, min-h-screen)
@@ -104,11 +117,15 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 │   │   └── register/page.tsx               [PLACEHOLDER] Only renders <h1>Register</h1>
 │   ├── (public)/
 │   │   ├── layout.tsx                      [DONE] Navbar + Footer wrapper, CSS tokens, responsive
-│   │   ├── page.tsx                        [DONE] Landing page: hero, services grid, how-it-works, CTA. Uses next/image, ShadCN Button, seed-aligned prices
-│   │   ├── catalogo/page.tsx               [PLACEHOLDER] Only renders <h1>Catalogo de Servicios</h1>
-│   │   ├── reservar/page.tsx               [PLACEHOLDER] Only renders <h1>Reservar Capacitacion</h1>
-│   │   ├── checkout/page.tsx               [PLACEHOLDER] Only renders <h1>Checkout</h1>
-│   │   └── politica-privacidad/page.tsx    [PARTIAL] Skeleton — TODO: LOPDP legal content
+│   │   ├── page.tsx                        [DONE] Landing page: hero, services grid (mock data), how-it-works, CTA. Uses next/image, Work Sans body, Space Grotesk headlines
+│   │   ├── catalogo/
+│   │   │   ├── page.tsx                    [DONE] Async Server Component — fetches active services from Supabase, passes to CatalogoGrid
+│   │   │   └── catalogo-grid.tsx           [DONE] Client Component — filter tabs by type, brutalist card grid (hover→primary), price display, "Contratar" → /checkout?service_id=xxx
+│   │   ├── reservar/
+│   │   │   ├── page.tsx                    [DONE] Reservation form: React Hook Form + zodResolver(createReservationSchema), 6 fields, Calendar popover, LOPDP checkbox, sonner toast
+│   │   │   └── actions.ts                  [DONE] Server Action createReservation() — validates with Zod, inserts into reservations table via Supabase server client
+│   │   ├── checkout/page.tsx               [PLACEHOLDER] Only renders <h1>Checkout</h1> — pending Carlos's checkout/actions.ts
+│   │   └── politica-privacidad/page.tsx    [PLACEHOLDER] Skeleton — TODO: LOPDP legal content (Tarea 6 Juan)
 │   └── (dashboard)/
 │       ├── layout.tsx                      [PARTIAL] Basic wrapper — TODO: admin sidebar/nav
 │       ├── dashboard/page.tsx              [PLACEHOLDER] Only renders <h1>Dashboard</h1>
@@ -117,11 +134,18 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 │       ├── subscriptions/page.tsx          [PLACEHOLDER] Only renders heading
 │       └── transacciones/page.tsx          [PLACEHOLDER] Only renders heading
 ├── components/
-│   ├── navbar.tsx                          [DONE] Sticky navbar: logo, nav links, CTA button, mobile Sheet menu. Design system aligned.
+│   ├── navbar.tsx                          [DONE] Sticky navbar: logo, dynamic active state (usePathname), CTA button, mobile Sheet menu. Design system aligned.
 │   ├── footer.tsx                          [DONE] 3-column footer: logo, legal links, copyright. Inverted colors.
 │   ├── providers.tsx                       [DONE] QueryClientProvider (staleTime: 60s, refetchOnWindowFocus: false)
 │   └── ui/
-│       └── button.tsx                      [DONE] ShadCN Button component (CVA variants: default, outline, secondary, ghost, destructive, link)
+│       ├── button.tsx                      [DONE] ShadCN Button (CVA variants: default, outline, secondary, ghost, destructive, link)
+│       ├── input.tsx                       [DONE] Base UI InputPrimitive wrapper
+│       ├── textarea.tsx                    [DONE] Native textarea wrapper
+│       ├── label.tsx                       [DONE] ShadCN Label
+│       ├── checkbox.tsx                    [DONE] Base UI Checkbox wrapper
+│       ├── calendar.tsx                    [DONE] react-day-picker Calendar (date-fns, es locale)
+│       ├── popover.tsx                     [DONE] Base UI Popover (Positioner + Popup pattern)
+│       └── sonner.tsx                      [DONE] Sonner toast wrapper (used in layout.tsx via <Toaster />)
 ├── hooks/
 │   └── use-supabase.ts                     [DONE] useMemo(() => createClient(), [])
 ├── lib/
@@ -129,7 +153,12 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 │   │   ├── client.ts                       [DONE] createBrowserClient() factory
 │   │   ├── server.ts                       [DONE] createServerClient() factory (cookie-based)
 │   │   └── middleware.ts                   [DONE] updateSession() — JWT refresh via getUser()
-│   ├── validators/                         [EMPTY] .gitkeep only — needs Zod schemas
+│   ├── validators/
+│   │   ├── auth.ts                         [DONE] Alejandro — loginSchema (email, password), registerSchema (first_name, last_name, email, password, confirm_password, data_consent)
+│   │   ├── reservation.ts                  [DONE] Alejandro — createReservationSchema (full_name, email, phone?, preferred_date ISO string, notes?, data_consent)
+│   │   ├── service.ts                      [DONE] Alejandro — createServiceSchema, updateServiceSchema
+│   │   ├── subscription.ts                 [DONE] Alejandro — subscription schema
+│   │   └── transaction.ts                  [DONE] Alejandro — transaction schema
 │   ├── design-tokens.ts                    [DONE] BRAND, BREAKPOINTS, SPACING, CHART_COLORS constants
 │   └── utils.ts                            [DONE] cn() = clsx + twMerge
 ├── types/
@@ -137,12 +166,15 @@ Status legend: DONE = fully implemented, PLACEHOLDER = only has heading/stub, PA
 │   └── index.ts                            [DONE] Re-exports all types from database.ts
 ├── supabase/
 │   ├── migrations/
-│   │   └── 00000000000000_init.sql         [DONE] Full schema: 5 tables, RLS, triggers
+│   │   ├── 20260325120000_init.sql         [DONE] Alejandro — Full schema: 5 tables, RLS, triggers (schema base)
+│   │   ├── 20260402000000_split_full_name.sql [DONE] Alejandro — full_name → first_name + last_name en profiles y reservations
+│   │   ├── 20260403010000_fix_profiles_admin_policy.sql [DONE] Alejandro — fix recursión infinita en profiles (path parcial)
+│   │   └── 20260404000000_fix_security_and_business_logic.sql [DONE] Juan — Auditoría completa: RLS app_metadata, auto_renew trigger, subscriptions DEFAULT, índices, sync JWT, escalada de privilegios, reservas anónimas
 │   ├── functions/
 │   │   └── hello-world/
 │   │       ├── index.ts                    [DONE] Template Edge Function (Deno.serve)
 │   │       └── deno.json                   [DONE] Deno config for function
-│   ├── seed.sql                            [DONE] 6 example services
+│   ├── seed.sql                            [DONE] 10 servicios reales de RGL ESTUDIO con precios correctos (actualizado por Alejandro + aplicado a DB el 2026-04-04)
 │   ├── config.toml                         [DONE] Supabase CLI config (PostgreSQL 17, ports, auth, etc.)
 │   └── .gitignore                          [DONE] Supabase temp files
 ├── e2e/
@@ -188,7 +220,8 @@ Extends auth.users. Auto-created on user signup via trigger.
 | Column | Type | Nullable | Default | Constraint |
 |---|---|---|---|---|
 | id | uuid (PK) | NOT NULL | — | FK → auth.users ON DELETE CASCADE |
-| full_name | text | YES | NULL | — |
+| first_name | text | YES | NULL | — (migrado desde full_name — ver nota) |
+| last_name | text | YES | NULL | — |
 | avatar_url | text | YES | NULL | — |
 | role | text | NOT NULL | 'client' | CHECK: 'admin' \| 'client' |
 | data_consent_at | timestamptz | YES | NULL | LOPDP compliance timestamp |
@@ -197,13 +230,17 @@ Extends auth.users. Auto-created on user signup via trigger.
 
 RLS:
 - SELECT own: auth.uid() = id
-- SELECT all: role = 'admin'
-- UPDATE own: auth.uid() = id
-- INSERT own: auth.uid() = id
+- SELECT all (admin): (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+- UPDATE own: auth.uid() = id WITH CHECK (role = 'client') — previene escalada de privilegios
+- UPDATE all (admin): (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'
+- INSERT own: auth.uid() = id WITH CHECK (role = 'client') — previene registro con role='admin'
 
 Triggers:
-- on_auth_user_created → handle_new_user() → auto-insert profile with full_name, avatar_url from auth metadata
+- on_auth_user_created → handle_new_user() → auto-insert profile con first_name, last_name, avatar_url + inicializa raw_app_meta_data.role='client' en auth.users
 - on_profiles_updated → handle_updated_at()
+- trg_sync_profile_role (AFTER UPDATE OF role) → sync_profile_role_to_auth() → propaga role a raw_app_meta_data en auth.users para que el JWT lo refleje
+
+NOTE: profiles originally had full_name. Migration applied to split into first_name + last_name. Carlos must update signUp() to pass first_name and last_name in options.data instead of full_name.
 
 ## Table: services
 Catalog of service packages offered by the agency.
@@ -232,7 +269,8 @@ Training session reservation requests from prospects/clients.
 |---|---|---|---|---|
 | id | uuid (PK) | NOT NULL | uuid_generate_v4() | — |
 | user_id | uuid | YES | NULL | FK → auth.users ON DELETE SET NULL |
-| full_name | text | NOT NULL | — | — |
+| first_name | text | NOT NULL | — | — (migrado desde full_name) |
+| last_name | text | NOT NULL | — | — |
 | email | text | NOT NULL | — | — |
 | phone | text | YES | NULL | — |
 | preferred_date | timestamptz | NOT NULL | — | — |
@@ -301,16 +339,28 @@ services   (1) ←──── (N) subscriptions
 subscriptions (1) ←── (N) transactions
 ```
 
-## Seed Data (6 services)
+## Seed Data — Servicios reales de RGL ESTUDIO (Ruth Gómez Lescano)
 
-| name | type | price | duration_months |
-|---|---|---|---|
-| Manejo de Redes - Mensual | manejo_redes | 150.00 | 1 |
-| Manejo de Redes - Trimestral | manejo_redes | 400.00 | 3 |
-| Manejo de Redes - Anual | manejo_redes | 1400.00 | 12 |
-| Auditoria de Redes Sociales | auditoria | 80.00 | 1 |
-| Auditoria + Estrategia Digital | auditoria | 200.00 | 3 |
-| Capacitacion en Marketing Digital | capacitacion | 0.00 | 1 |
+IMPORTANTE: El seed original tenía precios incorrectos. Los precios reales provienen del plan de negocios oficial de la cliente (T9_F3 + T15_RUTH_GOMEZ_LESCANO).
+
+Distinción crítica de negocio:
+- SUSCRIPCIÓN MENSUAL (manejo_redes): se cobra mensualmente, auto_renew posible, genera MRR (Monthly Recurring Revenue)
+- SERVICIO ÚNICO (auditoria, capacitacion, otro): pago único, auto_renew = false siempre, no cuenta para MRR
+
+| name | type | price | duration_months | es_suscripcion |
+|---|---|---|---|---|
+| Redes Sociales Inicial | manejo_redes | 299.99 | 1 | SÍ |
+| Redes Sociales Work | manejo_redes | 319.99 | 1 | SÍ |
+| Redes Sociales Premium | manejo_redes | 555.00 | 1 | SÍ |
+| Auditoría de Marca | auditoria | 70.00 | 1 | NO |
+| Curso x 3 Meses | capacitacion | 500.00 | 3 | NO |
+| Sesión Fotográfica | otro | 130.00 | 1 | NO |
+| Sesión Audiovisual (2 videos) | otro | 150.00 | 1 | NO |
+| Sesión Audiovisual (6 videos) | otro | 230.00 | 1 | NO |
+| Sesión Audiovisual (15 videos) | otro | 500.00 | 1 | NO |
+| Modelo por 1 hora | otro | 25.00 | 1 | NO |
+
+Responsable de actualizar seed.sql: Alejandro
 
 </DATABASE_SCHEMA>
 
@@ -770,13 +820,82 @@ Shared Supabase project — all team members use the SAME credentials.
 
 ---
 
+<BUSINESS_CONTEXT>
+
+## Cliente real: RGL ESTUDIO — Ruth Noemi Gómez Lescano
+
+RNG-Vantage es la "Intranet de gestión financiera y de clientes" citada en el plan de negocios oficial de Ruth. El equipo de UTA es el aliado estratégico de desarrollo mencionado en dicho plan.
+
+## Modelo de negocio de la cliente
+
+**Tipo:** B2B — Agencia de redes sociales y producción audiovisual de alta gama
+**Mercado objetivo:** Empresarios 35-55 años, hotelería/turismo/gastronomía, Baños de Agua Santa y Ambato
+**Ingresos recurrentes:** Retainers mensuales (paquetes de redes sociales)
+**Servicios únicos:** Auditorías, sesiones fotográficas/audiovisuales, cursos, modelos
+
+## Catálogo real de servicios
+
+### Suscripciones mensuales (generan MRR)
+| Paquete | Precio | Descripción |
+|---|---|---|
+| Redes Sociales Inicial | $299.99/mes | Propuestas, creación de contenido, informe mensual |
+| Redes Sociales Work | $319.99/mes | Planificación, automatizaciones ManyChat, informes detallados |
+| Redes Sociales Premium | $555.00/mes | Auditoría, automatización completa, capacitación gerencial |
+
+### Servicios únicos (pago único, no se renuevan)
+| Servicio | Precio | Notas |
+|---|---|---|
+| Auditoría de Marca | $70 | Análisis profundo, un solo pago |
+| Sesión Fotográfica | $130 | Servicio de campo |
+| Sesión Audiovisual (2 videos) | $150 | Producción audiovisual |
+| Sesión Audiovisual (6 videos) | $230 | Producción audiovisual |
+| Sesión Audiovisual (15 videos) | $500 | Producción audiovisual |
+| Curso x 3 Meses | $500 | Capacitación grupal |
+| Modelo por 1 hora | $25 | Costo variable: $12.50 |
+
+## Implicaciones técnicas por rol
+
+### Para Alejandro
+- seed.sql DEBE usar los precios reales arriba listados (el seed original tenía precios incorrectos)
+- Los servicios `auditoria` y `otro` son de pago único — el Server Action de checkout debe forzar `auto_renew = false`
+
+### Para Carlos
+- checkout/actions.ts: si `service.type === 'auditoria' || service.type === 'otro'` → `auto_renew = false` hardcodeado, ignorar lo que venga del form
+- Edge Function de renovación: NO debe renovar suscripciones de tipo `auditoria` u `otro`
+- La lógica de MRR del dashboard solo debe sumar servicios `manejo_redes`
+
+### Para Juan
+- Landing page: las 3 cards mock deben mostrar Redes Inicial ($299.99), Auditoría ($70), y Sesión Fotográfica ($130) — NO los precios inventados actuales
+- Catálogo: la unidad de precio ya está bien implementada (`/mes` para manejo_redes, precio único para el resto)
+- Checkout: mostrar claramente si es "pago mensual" o "pago único" según el tipo de servicio
+
+### Para Christian
+- Dashboard: separar métricas de MRR (solo manejo_redes activos) de ingresos totales
+- Tabla de suscripciones admin: indicar visualmente si es recurrente o servicio único
+
+## Indicadores financieros clave (año 1, proyección real de Ruth)
+| KPI | Valor proyectado |
+|---|---|
+| Capital inicial | $5,000 |
+| Clientes inicio | 2 |
+| Tasa crecimiento mensual | 8% |
+| Clientes mes 12 | 5 |
+| Ingresos año 1 | $14,764 |
+| Margen operativo | 44.36% |
+| CAC | $366.67 |
+| Saldo caja año 1 | $11,549 |
+
+</BUSINESS_CONTEXT>
+
+---
+
 <CRITICAL_CONSTRAINTS>
 
 1. **WEBPACK MODE REQUIRED**: Next.js 16 defaults to Turbopack, but @serwist/next uses webpack plugins. The `--webpack` flag is mandatory in dev/build scripts. Removing it breaks the PWA build.
 
-2. **SHARED SUPABASE PROJECT**: All 4 team members connect to the SAME Supabase cloud instance. Carlos manages the Supabase project and shares credentials. Everyone uses identical .env.local values.
+2. **SHARED SUPABASE PROJECT**: All 4 team members connect to the SAME Supabase cloud instance. URL: https://uzsasdbcewymviuelcsi.supabase.co. Everyone uses identical .env.local values.
 
-3. **LOPDP COMPLIANCE (Ecuador)**: Ecuador's data protection law requires explicit consent for data processing. The `data_consent_at` field in profiles and `data_consent` boolean in reservations exist for this purpose. Registration and reservation forms MUST include a consent checkbox.
+3. **LOPDP COMPLIANCE (Ecuador)**: Ecuador's data protection law requires explicit consent for data processing. The `data_consent_at` field in profiles and `data_consent` boolean in reservations exist for this purpose. Registration and reservation forms MUST include a consent checkbox. La página /politica-privacidad es OBLIGATORIA antes de producción.
 
 4. **DENO FOR EDGE FUNCTIONS**: Supabase Edge Functions run on Deno, not Node.js. The `supabase/functions/` directory is excluded from tsconfig.json. Edge Functions have their own deno.json config.
 
@@ -784,13 +903,27 @@ Shared Supabase project — all team members use the SAME credentials.
 
 6. **RLS EVERYWHERE**: Row Level Security is enabled on ALL tables. Every query goes through RLS policies. If a new table is added, RLS MUST be enabled and policies MUST be created.
 
-7. **SPRINT 1 IN PROGRESS**: Landing page, Navbar, and Footer are done. All other pages beyond landing are still placeholders. Next: Reservation form UI (Juan), Login/Register UI (Christian).
+7. **RLS — PATH CORRECTO EN SUPABASE**: Todas las políticas admin usan `(auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'`. NUNCA usar `auth.jwt() ->> 'role'` para roles personalizados — siempre retorna 'authenticated'. El role personalizado vive en `raw_app_meta_data` y se sincroniza automáticamente vía trigger `trg_sync_profile_role` cuando se actualiza `profiles.role`. Para crear un admin: `UPDATE profiles SET role = 'admin' WHERE id = 'uuid'` — el trigger hace el resto. ✅ RESUELTO en migración 20260404000000.
 
-8. **MANUAL TYPES**: `types/database.ts` is manually maintained. When the schema changes, it must be regenerated: `npx supabase gen types typescript --local > types/database.ts`
+8. **SPRINT 2 IN PROGRESS**: Sprint 1 complete. Juan: Navbar ✅, Footer ✅, Landing ✅, Reservar ✅, Catálogo ✅. Pending: Checkout (esperando Carlos), Política Privacidad. Alejandro: validators ✅, migración ✅. Carlos: Auth UI PENDIENTE. Christian: Login/Register/Dashboard PENDIENTE.
 
-9. **PWA GENERATED FILES**: `public/sw.js` and `public/sw.js.map` are generated by Serwist at build time. They are gitignored and should never be manually edited.
+9. **MANUAL TYPES**: `types/database.ts` is manually maintained. When the schema changes, it must be regenerated: `npx supabase gen types typescript --local > types/database.ts`
 
-10. **MVP — NO REAL PAYMENT GATEWAY**: The transaction system records payments but does not integrate with a real payment processor. Payment method options (cash, transfer, card) are for manual admin entry. A webhook placeholder will be created for future integration.
+10. **PWA GENERATED FILES**: `public/sw.js` and `public/sw.js.map` are generated by Serwist at build time. They are gitignored and should never be manually edited.
+
+11. **MVP — NO REAL PAYMENT GATEWAY**: El sistema registra pagos manualmente. El admin marca transacciones como completed/failed desde el dashboard. Un webhook placeholder se creará para futura integración con pasarela real. Los clientes de Ruth pagan por transferencia bancaria o efectivo.
+
+12. **LANDING PAGE CON MOCK DATA**: `app/(public)/page.tsx` tiene 3 cards de servicios hardcodeadas con precios inventados ($150, $80, gratis). Deben ser reemplazadas con fetch real a Supabase o actualizadas con precios reales ($299.99, $70, $130). INCONSISTENCIA ACTIVA entre landing y catálogo.
+
+13. **SEED.SQL ACTUALIZADO** ✅: `supabase/seed.sql` ya tiene los 10 servicios reales de RGL ESTUDIO con precios correctos. La DB de producción también fue actualizada el 2026-04-04.
+
+14. **AUTH.TS ACTUALIZADO** ✅: `lib/validators/auth.ts` ya usa `first_name` + `last_name` (Alejandro lo corrigió).
+
+16. **CHECKOUT USA SERVICE ROLE PARA TRANSACTIONS**: El Server Action `createSubscription` en `checkout/actions.ts` DEBE usar el cliente de servicio (service role) para insertar en `transactions`, NO la sesión del usuario. La política RLS de transactions solo permite INSERT a admins. Las suscripciones sí pueden insertarse con sesión de usuario normal.
+
+17. **ADMIN USER CREATION**: No existe ningún usuario admin en producción aún. Para crear un admin: registrar cuenta normalmente → ejecutar `UPDATE profiles SET role = 'admin' WHERE id = 'uuid-del-usuario'` en SQL Editor → el trigger sincroniza automáticamente al JWT.
+
+15. **NAVBAR SIN DETECCIÓN DE AUTH**: El navbar siempre muestra "Iniciar Sesión". Cuando el usuario esté autenticado debe mostrar "Dashboard" (admin) o "Mi cuenta" (client). Pendiente hasta que Carlos entregue el auth.
 
 </CRITICAL_CONSTRAINTS>
 
@@ -798,52 +931,82 @@ Shared Supabase project — all team members use the SAME credentials.
 
 <PENDING_WORK>
 
-Priority order based on dependency chain. Items marked [BLOCKS: X] must be completed before X can start.
+Priority order based on dependency chain. Estado al 2026-04-03.
 
-## Priority 1 — Sprint 1 Blockers
+## DB — AUDITADA Y CORREGIDA ✅ (2026-04-04)
 
-1. **Auth system implementation** (Carlos)
-   - Implement signUp with full_name + LOPDP consent
-   - Implement signInWithPassword
-   - Post-login redirect by role
-   - [BLOCKS: Login/Register UI, all Server Actions]
+- [x] **Fix RLS recursión infinita** — Resuelto. Todas las políticas admin usan `app_metadata` path correcto
+- [x] **Fix escalada de privilegios en profiles** — WITH CHECK previene auto-promoción a admin
+- [x] **Fix reservas anónimas bloqueadas** — Política abierta a público con data_consent=true
+- [x] **Fix subscriptions.status DEFAULT** — Cambiado de 'active' a 'pending'
+- [x] **Trigger auto_renew** — trg_enforce_auto_renew garantiza regla de negocio a nivel DB
+- [x] **Trigger sync JWT** — trg_sync_profile_role propaga role a raw_app_meta_data
+- [x] **handle_new_user actualizado** — inicializa role='client' en JWT desde el registro
+- [x] **9 índices de rendimiento** — FKs y columnas de filtro frecuente cubiertos
+- [x] **seed.sql aplicado** — 10 servicios reales en DB de producción
+- [x] **Tablas Prisma eliminadas** — public.User y _prisma_migrations removidas
+- [x] **Migración creada** — 20260404000000_fix_security_and_business_logic.sql captura todos los cambios
 
-2. **Zod validation schemas** (Alejandro)
-   - lib/validators/auth.ts — login, register schemas
-   - lib/validators/reservation.ts — createReservation schema
-   - lib/validators/service.ts — service CRUD schema
-   - lib/validators/subscription.ts — subscription schema
-   - lib/validators/transaction.ts — transaction schema
-   - [BLOCKS: all forms, all Server Actions]
+## URGENTE — Pendiente del equipo
 
-3. **Design system setup** (Christian)
-   - Install remaining ShadCN components (input, form, card, table, dialog, sheet, toast, badge, tabs, etc.)
-   - Finalize color palette in globals.css
-   - Create StatusBadge, DataCard components
-   - [BLOCKS: all UI implementation]
+- [ ] **Crear usuario admin de Ruth** — registrar cuenta → `UPDATE profiles SET role = 'admin' WHERE id = '...'`
+- [ ] **Checkout service role** (Alejandro) — usar admin client para INSERT en transactions en createSubscription
 
-4. ~~**Public layout navigation** (Juan)~~ ✅ DONE — Navbar, Footer, Landing page implemented and corrected
+## Sprint 1 — COMPLETADO ✅ (excepto auth)
 
-## Priority 2 — Sprint 1 Features
+| Tarea | Responsable | Estado |
+|---|---|---|
+| Zod validators (auth, reservation, service, subscription, transaction) | Alejandro | ✅ DONE |
+| Migración SQL inicial (5 tablas, RLS, triggers) | Alejandro | ✅ DONE |
+| Design system (globals.css, tokens, fuentes) | Juan | ✅ DONE |
+| Navbar (sticky, active state, mobile Sheet) | Juan | ✅ DONE |
+| Footer | Juan | ✅ DONE |
+| Landing page | Juan | ✅ DONE (mock data pendiente actualizar) |
+| Formulario de reserva + Server Action | Juan | ✅ DONE |
+| Sistema de autenticación (signUp/signIn) | Carlos | ❌ PENDIENTE |
 
-5. **Login/Register pages UI** (Christian) — depends on #1, #2, #3
-6. **Reservation form UI** (Juan) — depends on #2; Navbar/Footer done
-7. **Reservations CRUD Server Actions** (Alejandro) — depends on #1, #2
-8. **Services CRUD Server Actions** (Alejandro) — depends on #1, #2
-9. ~~**Landing page redesign** (Juan)~~ ✅ DONE — Hero, services grid, how-it-works, CTA all implemented
+## Sprint 2 — EN PROGRESO
 
-## Priority 3 — Sprint 2 Features
+| Tarea | Responsable | Estado | Bloqueado por |
+|---|---|---|---|
+| Catálogo de servicios UI | Juan | ✅ DONE | — |
+| checkout/actions.ts Server Action | Carlos | ❌ PENDIENTE | Auth |
+| Checkout UI | Juan | ❌ PENDIENTE | checkout/actions.ts |
+| Política de Privacidad LOPDP | Juan | ❌ PENDIENTE | Nada |
+| Login UI | Christian | ❌ PENDIENTE | Carlos Auth |
+| Register UI | Christian | ❌ PENDIENTE | Carlos Auth |
+| Dashboard KPI cards | Christian | ❌ PENDIENTE | Carlos Auth |
+| Admin Reservas UI | Christian | ❌ PENDIENTE | Carlos Auth |
+| Admin Servicios CRUD UI | Christian | ❌ PENDIENTE | Carlos Auth |
+| Admin Transacciones UI | Christian | ❌ PENDIENTE | Carlos Auth |
+| Dashboard layout con sidebar | Christian | ❌ PENDIENTE | Carlos Auth |
 
-10. **Catalog UI** (Juan) — depends on #8
-11. **Checkout UI + subscription creation** (Juan + Alejandro) — depends on #1, #8
-12. **Dashboard with KPI cards + charts** (Christian) — depends on #3
-13. **Reservations admin UI** (Christian) — depends on #7
-14. **Edge Function: subscription-renewal** (Carlos) — depends on #1
+## Sprint 3 — PENDIENTE
 
-## Priority 4 — Sprint 3 Features
+| Tarea | Responsable | Estado |
+|---|---|---|
+| Edge Function subscription-renewal | Carlos | ❌ PENDIENTE |
+| Edge Function dashboard-metrics | Carlos | ❌ PENDIENTE |
+| Supabase Realtime en dashboard | Christian | ❌ PENDIENTE |
+| Responsive polish todas las páginas | Juan | ❌ PENDIENTE |
+| Navbar con detección de auth | Juan | ❌ PENDIENTE |
 
-15. **Edge Function: dashboard-metrics** (Carlos) — depends on #14
-16. **Services admin UI** (Christian) — depends on #8
+## Sprint 4 — PENDIENTE
+
+| Tarea | Responsable | Estado |
+|---|---|---|
+| Seed data final completo | Alejandro | ❌ PENDIENTE |
+| Tests unitarios | Todos | ❌ PENDIENTE |
+| E2E tests Playwright | Juan | ❌ PENDIENTE |
+| Documentación técnica | Carlos | ❌ PENDIENTE |
+| Landing page: reemplazar mock data con Supabase | Juan | ❌ PENDIENTE |
+
+## Inconsistencias activas a resolver
+
+1. **Landing mock data** — 3 cards con precios inventados ($150, $80, gratis) vs precios reales ($299.99, $70, $130)
+2. **Navbar sin auth detection** — siempre muestra "Iniciar Sesión" independiente del estado de sesión
+3. **Política de privacidad vacía** — riesgo legal LOPDP Ecuador, bloqueador para producción
+4. **Sin usuario admin en producción** — Ruth no tiene cuenta con role='admin' todavía
 17. **Transactions admin UI** (Christian) — depends on #1
 18. **Privacy policy LOPDP page** (Juan)
 19. **Supabase Realtime integration** (Alejandro + Christian)

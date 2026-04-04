@@ -1,6 +1,8 @@
 # Plan de Desarrollo — RNG-Vantage
 
-> Sistema integral de automatización de ventas, reservas y control financiero para un emprendimiento de marketing digital.
+> Sistema integral de automatización de ventas, reservas y control financiero para RGL ESTUDIO — agencia de manejo estratégico de redes sociales y producción audiovisual B2B de Ruth Noemi Gómez Lescano (Baños de Agua Santa / Ambato, Ecuador).
+>
+> **Contexto:** RNG-Vantage es la "Intranet de gestión financiera y de clientes" citada en el plan de negocios oficial de la cliente. El equipo de UTA (estos 4 integrantes) son los aliados estratégicos de desarrollo mencionados en dicho plan.
 
 ---
 
@@ -89,13 +91,18 @@ Implementar el flujo completo de autenticación usando Supabase Auth: registro c
 
 **Lógica detallada del registro:**
 ```
-1. Recibir: email, password, full_name, data_consent (boolean)
+1. Recibir: email, password, first_name, last_name, data_consent (boolean)
 2. Verificar que data_consent === true (si no, rechazar con error)
-3. Llamar: supabase.auth.signUp({ email, password, options: { data: { full_name } } })
-4. El trigger handle_new_user() en la BD crea automáticamente el perfil con role='client'
+3. Llamar: supabase.auth.signUp({ email, password, options: { data: { first_name, last_name } } })
+4. El trigger handle_new_user() en la BD:
+   - Crea automáticamente el perfil con role='client'
+   - Inicializa raw_app_meta_data.role='client' en auth.users para el JWT
 5. Guardar data_consent_at = now() en el perfil recién creado
 6. JWT se almacena en cookie vía @supabase/ssr
 7. Redirigir a /catalogo
+
+NOTA: Es OBLIGATORIO pasar first_name y last_name separados en options.data (no full_name).
+El trigger los lee de raw_user_meta_data->>'first_name' y raw_user_meta_data->>'last_name'.
 ```
 
 **Lógica detallada del login:**
@@ -132,14 +139,22 @@ Implementar el flujo completo de autenticación usando Supabase Auth: registro c
 #### Tarea 2: Validación y Refinamiento de Políticas RLS
 
 **Sprint:** 1–2 (Semanas 5–8, en paralelo) · **Rama:** `feature/rls-politicas-seguridad`
+**Estado:** ✅ COMPLETADO — Auditoría completa aplicada el 2026-04-04
 **Dependencias:** Tarea 1 (auth debe funcionar para probar con diferentes roles)
 
-**¿Qué hay que hacer?**
-Revisar y probar TODAS las políticas Row Level Security de cada tabla para garantizar que los clientes solo ven sus datos y los admins ven todo. Corregir cualquier brecha encontrada.
+**Resumen de correcciones aplicadas (migración 20260404000000):**
+- 12 políticas admin reescritas con path correcto: `(auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'`
+- Escalada de privilegios en profiles corregida (WITH CHECK role='client')
+- Política INSERT de reservations abierta a anónimos con data_consent=true
+- Política admin UPDATE en profiles agregada (faltaba)
+- Trigger trg_sync_profile_role: sincroniza profiles.role → raw_app_meta_data → JWT
+- handle_new_user: inicializa role='client' en JWT desde el registro
+- 9 índices de rendimiento creados
+- subscriptions.status DEFAULT corregido: 'active' → 'pending'
+- Trigger trg_enforce_auto_renew: fuerza auto_renew=false para servicios únicos a nivel DB
 
-**Archivos a modificar:**
-- `supabase/migrations/00000000000000_init.sql` — corregir políticas si se encuentran problemas
-- Nueva migración `supabase/migrations/00000000000001_rls_fix.sql` — si el esquema cambia
+**Archivos de referencia:**
+- `supabase/migrations/20260404000000_fix_security_and_business_logic.sql` — todos los cambios documentados
 
 **Matriz de pruebas RLS (probar cada combinación):**
 
@@ -419,10 +434,18 @@ Implementar toda la lógica del servidor para el sistema de reservas: creación 
    - Si no está autenticado → retornar { error: "Debes iniciar sesión", redirect: "/login" }
 4. Obtener el servicio: SELECT * FROM services WHERE id = service_id
    - Si no existe o is_active = false → retornar { error: "Servicio no disponible" }
-5. Calcular ends_at = now() + servicio.duration_months
-6. INSERTAR en subscriptions: { user_id, service_id, starts_at: now(), ends_at, status: 'active', auto_renew }
-7. INSERTAR en transactions: { user_id, subscription_id, amount: servicio.price, payment_method: 'pending', status: 'pending' }
-8. Retornar { success: true, subscription_id }
+5. REGLA DE NEGOCIO: si service.type === 'auditoria' || 'capacitacion' || 'otro'
+   → forzar auto_renew = false (son servicios únicos, nunca se renuevan)
+   → solo los servicios type === 'manejo_redes' pueden tener auto_renew = true
+6. Calcular ends_at = now() + servicio.duration_months
+7. INSERTAR en subscriptions: { user_id, service_id, starts_at: now(), ends_at, status: 'pending', auto_renew }
+   NOTA: status inicial es 'pending' — el trigger trg_enforce_auto_renew en DB fuerza auto_renew=false si el servicio no es manejo_redes
+   NOTA: La DB ya garantiza status='pending' por DEFAULT — no es necesario enviarlo explícitamente
+8. INSERTAR en transactions: { user_id, subscription_id, amount: servicio.price, payment_method: 'pending', status: 'pending' }
+   ⚠️ CRÍTICO: Este INSERT debe hacerse con el cliente de servicio (service role / admin client), NO con la sesión del usuario.
+   La política RLS de transactions solo permite INSERT a admins. Usar createClient() normal fallará.
+   Ejemplo: const supabaseAdmin = createClient(url, SERVICE_ROLE_KEY)
+9. Retornar { success: true, subscription_id }
 ```
 
 **Criterios de aceptación:**
@@ -431,6 +454,8 @@ Implementar toda la lógica del servidor para el sistema de reservas: creación 
 - [ ] Se crea automáticamente una transacción pendiente con el monto del servicio
 - [ ] Un cliente NO puede contratar un servicio desactivado
 - [ ] Un usuario no autenticado recibe un error con redirect a login
+- [ ] Servicios de tipo auditoria/capacitacion/otro SIEMPRE se crean con auto_renew = false
+- [ ] Solo servicios de tipo manejo_redes pueden tener auto_renew = true
 
 ---
 
@@ -444,7 +469,24 @@ Implementar toda la lógica del servidor para el sistema de reservas: creación 
 - Mantener `supabase/seed.sql` actualizado con datos que permitan probar todos los flujos
 - Crear vistas SQL si Carlos las necesita para las métricas del dashboard
 
-**Seed data final (Sprint 4):** Al menos 2 usuarios (1 admin, 1 client), los 6+ servicios, 10+ reservas con diferentes estados, 5+ suscripciones (activas, expiradas, canceladas), 10+ transacciones con diferentes estados y métodos de pago.
+**Seed data final (Sprint 4):** Al menos 2 usuarios (1 admin, 1 client), los 10 servicios reales de RGL ESTUDIO (ver tabla abajo), 10+ reservas con diferentes estados, 5+ suscripciones (activas, expiradas, canceladas), 10+ transacciones con diferentes estados y métodos de pago.
+
+**SERVICIOS REALES DE LA CLIENTE (usar estos precios exactos en seed.sql):**
+
+| name | type | price | duration_months | Notas |
+|---|---|---|---|---|
+| Redes Sociales Inicial | manejo_redes | 299.99 | 1 | Suscripción mensual |
+| Redes Sociales Work | manejo_redes | 319.99 | 1 | Suscripción mensual |
+| Redes Sociales Premium | manejo_redes | 555.00 | 1 | Suscripción mensual |
+| Auditoría de Marca | auditoria | 70.00 | 1 | Pago único |
+| Curso x 3 Meses | capacitacion | 500.00 | 3 | Pago único |
+| Sesión Fotográfica | otro | 130.00 | 1 | Pago único |
+| Sesión Audiovisual (2 videos) | otro | 150.00 | 1 | Pago único |
+| Sesión Audiovisual (6 videos) | otro | 230.00 | 1 | Pago único |
+| Sesión Audiovisual (15 videos) | otro | 500.00 | 1 | Pago único |
+| Modelo por 1 hora | otro | 25.00 | 1 | Pago único, costo variable $12.50 |
+
+**REGLA DE NEGOCIO CRÍTICA:** Los servicios `manejo_redes` son suscripciones mensuales renovables. Los servicios `auditoria`, `capacitacion` y `otro` son pagos únicos — `auto_renew` debe ser `false` siempre para estos tipos.
 
 ---
 
