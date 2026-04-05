@@ -13,6 +13,7 @@ type CheckoutPageProps = {
 const ERROR_MESSAGES: Record<string, string> = {
   "service-not-found": "El servicio no existe o no esta activo.",
   "create-failed": "No se pudo crear la suscripcion. Intenta nuevamente.",
+  "transaction-failed": "No se pudo registrar la transaccion. Intenta nuevamente.",
 };
 
 function formatCurrency(value: number): string {

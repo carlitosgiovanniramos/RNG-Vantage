@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import type { ServiceType } from "@/types";
 
@@ -40,7 +41,7 @@ export async function createSubscriptionAction(formData: FormData) {
 
   const { data: service, error: serviceError } = await supabase
     .from("services")
-    .select("id, type, duration_months, is_active")
+    .select("id, type, price, duration_months, is_active")
     .eq("id", serviceId)
     .maybeSingle();
 
@@ -53,17 +54,42 @@ export async function createSubscriptionAction(formData: FormData) {
   const startsAt = new Date();
   const endsAt = addMonths(startsAt, Math.max(service.duration_months, 1));
 
-  const { error: subscriptionError } = await supabase.from("subscriptions").insert({
+  let supabaseAdmin: ReturnType<typeof createAdminClient>;
+  try {
+    supabaseAdmin = createAdminClient();
+  } catch {
+    redirect(buildCheckoutUrl(serviceId, { error: "create-failed" }));
+  }
+
+  const { data: createdSubscription, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .insert({
+      user_id: user.id,
+      service_id: service.id,
+      starts_at: startsAt.toISOString(),
+      ends_at: endsAt.toISOString(),
+      status: "pending", // Flujo correcto: pending -> admin confirma pago -> active
+      auto_renew: autoRenew,
+    })
+    .select("id")
+    .single();
+
+  if (subscriptionError || !createdSubscription) {
+    redirect(buildCheckoutUrl(serviceId, { error: "create-failed" }));
+  }
+
+  const { error: transactionError } = await supabaseAdmin.from("transactions").insert({
     user_id: user.id,
-    service_id: service.id,
-    starts_at: startsAt.toISOString(),
-    ends_at: endsAt.toISOString(),
-    status: "pending", // Flujo correcto: pending → admin confirma pago → active
-    auto_renew: autoRenew,
+    subscription_id: createdSubscription.id,
+    amount: service.price,
+    payment_method: "pending",
+    status: "pending",
+    notes: "Transaccion creada automaticamente desde checkout",
   });
 
-  if (subscriptionError) {
-    redirect(buildCheckoutUrl(serviceId, { error: "create-failed" }));
+  if (transactionError) {
+    await supabaseAdmin.from("subscriptions").delete().eq("id", createdSubscription.id);
+    redirect(buildCheckoutUrl(serviceId, { error: "transaction-failed" }));
   }
 
   redirect(buildCheckoutUrl(serviceId, { success: "1" }));
