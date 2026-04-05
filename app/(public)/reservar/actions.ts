@@ -16,10 +16,17 @@ export async function createReservation(data: unknown): Promise<ActionResult> {
 
   const { full_name, email, phone, preferred_date, notes, data_consent } = parsed.data;
 
+  // La DB usa first_name + last_name (migración 20260402). Dividimos aquí para no
+  // cambiar el formulario público que muestra un único campo "Nombre completo".
+  const nameParts = full_name.trim().split(/\s+/);
+  const first_name = nameParts[0];
+  const last_name = nameParts.slice(1).join(" ") || "";
+
   const supabase = await createClient();
 
   const { error } = await supabase.from("reservations").insert({
-    full_name,
+    first_name,
+    last_name,
     email,
     phone: phone || null,
     preferred_date,

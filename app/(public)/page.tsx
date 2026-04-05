@@ -1,39 +1,38 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Network, BarChart, GraduationCap, TrendingUp, Calendar, Package } from "lucide-react";
+import { Network, BarChart, GraduationCap, Settings2, TrendingUp, Calendar, Package, type LucideIcon } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import type { Database, ServiceType } from "@/types/database";
 
-// MOCK DATA: Simula la respuesta futura de Supabase
-const mockServices = [
-  {
-    id: "01",
-    icon: Network,
-    name: "Manejo de Redes",
-    description: "Estrategia de contenido y gestión de comunidades con enfoque en conversión.",
-    price: 150,
-    unit: "/mes"
-  },
-  {
-    id: "02",
-    icon: BarChart,
-    name: "Auditoría Digital",
-    description: "Análisis profundo de tus métricas y procesos para detectar fugas de capital.",
-    price: 80,
-    unit: "/auditoría"
-  },
-  {
-    id: "03",
-    icon: GraduationCap,
-    name: "Capacitación",
-    description: "Formación técnica para equipos de ventas y gestión administrativa.",
-    price: 0,
-    unit: ""
-  }
-];
+type Service = Database["public"]["Tables"]["services"]["Row"];
 
-export default function LandingPage() {
+const TYPE_ICONS: Record<ServiceType, LucideIcon> = {
+  manejo_redes: Network,
+  auditoria: BarChart,
+  capacitacion: GraduationCap,
+  otro: Settings2,
+};
+
+function getPriceDisplay(service: Service): string {
+  if (service.price === 0) return "Gratis";
+  if (service.type === "manejo_redes") return `$${service.price}/mes`;
+  return `$${service.price}`;
+}
+
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("services")
+    .select("*")
+    .eq("is_active", true)
+    .order("type", { ascending: true })
+    .order("price", { ascending: true })
+    .limit(3);
+
+  const landingServices: Service[] = data ?? [];
   return (
-    <main className="flex flex-col min-h-screen">
+    <div className="flex flex-col">
       {/* --- Hero Section --- */}
       <section className="relative px-4 sm:px-8 pt-12 pb-0 overflow-hidden">
         <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -101,59 +100,56 @@ export default function LandingPage() {
       </section>
 
       {/* --- Nuestros Servicios (Bento Grid) --- */}
-      <section className="py-20 sm:py-32 px-4 sm:px-8 bg-muted">
-        <div className="max-w-[1440px] mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 sm:mb-20 gap-8">
-            <div className="max-w-xl">
-              <h2 className="text-4xl sm:text-5xl md:text-7xl font-spaceGrotesk font-black uppercase tracking-tighter mb-6 text-foreground">
-                Nuestros Servicios
-              </h2>
-              <p className="text-muted-foreground font-workSans text-base sm:text-lg">
-                Estructuras sólidas para negocios digitales que buscan la excelencia operativa y el crecimiento medible.
-              </p>
+      {landingServices.length > 0 && (
+        <section className="py-20 sm:py-32 px-4 sm:px-8 bg-muted">
+          <div className="max-w-[1440px] mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 sm:mb-20 gap-8">
+              <div className="max-w-xl">
+                <h2 className="text-4xl sm:text-5xl md:text-7xl font-spaceGrotesk font-black uppercase tracking-tighter mb-6 text-foreground">
+                  Nuestros Servicios
+                </h2>
+                <p className="text-muted-foreground font-workSans text-base sm:text-lg">
+                  Estructuras sólidas para negocios digitales que buscan la excelencia operativa y el crecimiento medible.
+                </p>
+              </div>
+              <div className="font-spaceGrotesk text-sm uppercase tracking-widest text-primary font-bold">
+                Servicios / 2026
+              </div>
             </div>
-            <div className="font-spaceGrotesk text-sm uppercase tracking-widest text-primary font-bold">
-              Servicios / 2026
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-muted">
+              {landingServices.map((service, i) => {
+                const Icon = TYPE_ICONS[service.type] ?? Settings2;
+                const priceStr = getPriceDisplay(service);
+                return (
+                  <div
+                    key={service.id}
+                    className="bg-card p-8 sm:p-12 group hover:bg-primary transition-colors duration-500 relative"
+                  >
+                    <Icon className="h-12 w-12 sm:h-16 sm:w-16 mb-8 sm:mb-12 text-primary group-hover:text-primary-foreground transition-colors" />
+
+                    <h3 className="text-2xl sm:text-3xl font-spaceGrotesk font-black uppercase mb-4 text-foreground group-hover:text-primary-foreground transition-colors">
+                      {service.name}
+                    </h3>
+
+                    <p className="text-muted-foreground mb-8 sm:mb-12 group-hover:text-primary-foreground/80 transition-colors">
+                      {service.description ?? "Servicio disponible bajo consulta."}
+                    </p>
+
+                    <div className="text-3xl sm:text-4xl font-spaceGrotesk font-black text-foreground group-hover:text-primary-foreground transition-colors">
+                      {priceStr}
+                    </div>
+
+                    <div className="absolute top-8 right-8 text-muted-foreground/20 font-spaceGrotesk font-black text-5xl sm:text-6xl group-hover:text-primary-foreground/10 select-none">
+                      {String(i + 1).padStart(2, "0")}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-
-          {/* Grid de Servicios Mocks — sin borders, separación via gap + fondo */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-muted">
-            {mockServices.map((service) => {
-              const Icon = service.icon;
-              return (
-                <div
-                  key={service.id}
-                  className="bg-card p-8 sm:p-12 group hover:bg-primary transition-colors duration-500 relative"
-                >
-                  <Icon className="h-12 w-12 sm:h-16 sm:w-16 mb-8 sm:mb-12 text-primary group-hover:text-primary-foreground transition-colors" />
-
-                  <h3 className="text-2xl sm:text-3xl font-spaceGrotesk font-black uppercase mb-4 text-foreground group-hover:text-primary-foreground transition-colors">
-                    {service.name}
-                  </h3>
-
-                  <p className="text-muted-foreground mb-8 sm:mb-12 group-hover:text-primary-foreground/80 transition-colors">
-                    {service.description}
-                  </p>
-
-                  <div className="text-3xl sm:text-4xl font-spaceGrotesk font-black text-foreground group-hover:text-primary-foreground transition-colors">
-                    {service.price === 0 ? "Gratis" : `$${service.price}`}
-                    {service.unit && (
-                      <span className="text-sm font-workSans text-muted-foreground group-hover:text-primary-foreground/70 font-normal">
-                        {service.unit}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="absolute top-8 right-8 text-muted-foreground/20 font-spaceGrotesk font-black text-5xl sm:text-6xl group-hover:text-primary-foreground/10 select-none">
-                    {service.id}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* --- Cómo Funciona --- */}
       <section className="py-20 sm:py-32 px-4 sm:px-8 bg-foreground text-background">
@@ -221,6 +217,6 @@ export default function LandingPage() {
         <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-primary/20 blur-[80px] sm:blur-[120px] rounded-full"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-primary/10 blur-[80px] sm:blur-[120px] rounded-full"></div>
       </section>
-    </main>
+    </div>
   );
 }
