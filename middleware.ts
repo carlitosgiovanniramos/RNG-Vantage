@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { createServerClient } from "@supabase/ssr";
 
-const ADMIN_ROUTES = ["/dashboard", "/reservas", "/servicios", "/transacciones", "/suscripciones", "/subscriptions"];
+const ADMIN_ROUTES = ["/dashboard", "/reservas", "/servicios", "/transacciones", "/subscriptions"];
 
 export async function middleware(request: NextRequest) {
   // 1. Refresh session tokens
@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
       .from("profiles")
       .select("role")
       .eq("id", user.id)
-      .single();
+      .maybeSingle(); // .single() lanza error si no existe el perfil; maybeSingle() devuelve null
 
     if (!profile || profile.role !== "admin") {
       return NextResponse.redirect(new URL("/", request.url));

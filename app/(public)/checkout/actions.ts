@@ -58,7 +58,7 @@ export async function createSubscriptionAction(formData: FormData) {
     service_id: service.id,
     starts_at: startsAt.toISOString(),
     ends_at: endsAt.toISOString(),
-    status: "active",
+    status: "pending", // Flujo correcto: pending → admin confirma pago → active
     auto_renew: autoRenew,
   });
 
