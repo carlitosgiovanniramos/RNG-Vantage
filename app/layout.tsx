@@ -20,7 +20,7 @@ const workSans = Work_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "RNG-Vantage",
+  title: "RGL Estudio",
   description: "Plataforma moderna de gestion financiera y suscripciones",
 };
 

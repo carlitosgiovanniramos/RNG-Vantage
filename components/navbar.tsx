@@ -25,13 +25,13 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-3">
           <Image
             src="/images/logo-rng.webp"
-            alt="RNG-Vantage Logo"
+            alt="RGL Estudio Logo"
             width={42}
             height={42}
             className="rounded-none"
           />
           <span className="font-spaceGrotesk text-2xl font-black tracking-tighter uppercase text-foreground">
-            RNG-Vantage
+            RGL Estudio
           </span>
         </Link>
 
@@ -82,13 +82,13 @@ export function Navbar() {
                 <div className="px-8 pt-8 pb-6 flex items-center gap-3">
                   <Image
                     src="/images/logo-rng.webp"
-                    alt="RNG-Vantage Logo"
+                    alt="RGL Estudio Logo"
                     width={28}
                     height={28}
                     className="rounded-none"
                   />
                   <span className="font-spaceGrotesk text-xl font-black tracking-tighter uppercase text-foreground">
-                    RNG-Vantage
+                    RGL Estudio
                   </span>
                 </div>
                 <div className="h-[1px] w-full bg-border" />

@@ -1,4 +1,4 @@
-# RNG-Vantage
+# RGL Estudio
 
 Sistema web para automatizacion de ventas, reservas y control financiero de un emprendimiento de marketing digital.
 

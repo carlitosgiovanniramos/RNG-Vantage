@@ -1,21 +1,21 @@
-# Prompt para Google Stitch — RNG-Vantage
+# Prompt para Google Stitch — RGL Estudio
 
 > Copiar todo el contenido debajo de la linea y pegarlo en Google Stitch.
 
 ---
 
-Diseña una aplicacion web completa llamada **RNG-Vantage** — una plataforma de automatizacion de ventas, reservas y control financiero para una agencia de marketing digital en Ecuador. La aplicacion debe ser moderna, profesional, limpia y con estilo SaaS. Mobile-first. El idioma de toda la interfaz es español.
+Diseña una aplicacion web completa llamada **RGL Estudio** — una plataforma de automatizacion de ventas, reservas y control financiero para una agencia de marketing digital en Ecuador. La aplicacion debe ser moderna, profesional, limpia y con estilo SaaS. Mobile-first. El idioma de toda la interfaz es español.
 
 ## Paginas a diseñar
 
 ### 1. Landing Page (pagina principal publica)
 
-- **Hero section**: Titulo grande "RNG-Vantage", subtitulo "Automatizacion de ventas, reservas y control financiero para tu emprendimiento de marketing digital". Dos botones CTA: "Ver Servicios" (primario, redondeado) y "Reservar Capacitacion" (secundario, outline).
+- **Hero section**: Titulo grande "RGL Estudio", subtitulo "Automatizacion de ventas, reservas y control financiero para tu emprendimiento de marketing digital". Dos botones CTA: "Ver Servicios" (primario, redondeado) y "Reservar Capacitacion" (secundario, outline).
 - **Seccion "Nuestros Servicios"**: 3 cards en grid mostrando los servicios destacados. Cada card tiene: icono, nombre del servicio, descripcion corta, precio (ej: "$150/mes"), duracion, y un boton "Contratar". Servicios de ejemplo: "Manejo de Redes Sociales", "Auditoria Digital", "Capacitacion en Marketing".
 - **Seccion "Como Funciona"**: 3 pasos ilustrados con iconos numerados: 1) "Reserva una cita" 2) "Elige tu paquete" 3) "Comienza a crecer".
 - **Seccion CTA final**: Fondo sutil, texto "Empieza a transformar tu negocio hoy" con boton "Comenzar Ahora".
-- **Navbar sticky** en la parte superior: Logo "RNG-Vantage" a la izquierda, links de navegacion "Servicios", "Reservar" al centro, boton "Iniciar Sesion" a la derecha. En mobile: menu hamburguesa que abre un panel lateral.
-- **Footer**: Links a "Politica de Privacidad", "Contacto", copyright "© 2026 RNG-Vantage".
+- **Navbar sticky** en la parte superior: Logo "RGL Estudio" a la izquierda, links de navegacion "Servicios", "Reservar" al centro, boton "Iniciar Sesion" a la derecha. En mobile: menu hamburguesa que abre un panel lateral.
+- **Footer**: Links a "Politica de Privacidad", "Contacto", copyright "© 2026 RGL Estudio".
 
 ### 2. Catalogo de Servicios (/catalogo)
 
@@ -64,7 +64,7 @@ Diseña una aplicacion web completa llamada **RNG-Vantage** — una plataforma d
 
 - Centrado vertical y horizontalmente en la pantalla.
 - Card con:
-  - Logo o nombre "RNG-Vantage" arriba
+  - Logo o nombre "RGL Estudio" arriba
   - Titulo "Iniciar Sesion"
   - Campo "Correo electronico"
   - Campo "Contraseña" (con toggle para mostrar/ocultar)
@@ -76,7 +76,7 @@ Diseña una aplicacion web completa llamada **RNG-Vantage** — una plataforma d
 
 - Misma estructura centrada que Login.
 - Card con:
-  - Logo o nombre "RNG-Vantage" arriba
+  - Logo o nombre "RGL Estudio" arriba
   - Titulo "Crear Cuenta"
   - Campo "Nombre completo"
   - Campo "Correo electronico"
@@ -89,7 +89,7 @@ Diseña una aplicacion web completa llamada **RNG-Vantage** — una plataforma d
 ### 7. Dashboard Administrativo (/dashboard)
 
 - **Layout con sidebar** a la izquierda (colapsable en mobile):
-  - Logo "RNG-Vantage" arriba
+  - Logo "RGL Estudio" arriba
   - Links de navegacion con iconos: "Dashboard", "Reservas", "Servicios", "Suscripciones", "Transacciones"
   - Separador
   - Nombre del usuario admin abajo con avatar y boton "Cerrar Sesion"

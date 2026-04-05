@@ -22,8 +22,8 @@ export default function PoliticaPrivacidadPage() {
               1. Responsable del Tratamiento
             </h2>
             <p className="font-workSans text-base text-muted-foreground leading-relaxed">
-              El responsable del tratamiento de sus datos personales es <strong className="text-foreground">RNG-Vantage</strong>, con domicilio en Ecuador. Para cualquier consulta relacionada con el tratamiento de sus datos puede contactarnos en:{" "}
-              <span className="font-medium text-foreground">privacidad@rngvantage.com</span>
+              El responsable del tratamiento de sus datos personales es <strong className="text-foreground">RGL Estudio</strong>, con domicilio en Ecuador. Para cualquier consulta relacionada con el tratamiento de sus datos puede contactarnos en:{" "}
+              <span className="font-medium text-foreground">privacidad@rglestudio.com</span>
             </p>
           </section>
 
@@ -143,7 +143,7 @@ export default function PoliticaPrivacidadPage() {
             </h2>
             <p className="font-workSans text-base text-muted-foreground leading-relaxed">
               Para ejercer cualquiera de los derechos descritos, envíe un correo a{" "}
-              <span className="font-medium text-foreground">privacidad@rngvantage.com</span>{" "}
+              <span className="font-medium text-foreground">privacidad@rglestudio.com</span>{" "}
               con el asunto <em>&quot;Ejercicio de derechos LOPDP&quot;</em> e indique su nombre completo, el derecho que desea ejercer y, si corresponde, los datos específicos a los que hace referencia su solicitud. Responderemos en un plazo máximo de 15 días hábiles.
             </p>
           </section>
@@ -174,7 +174,7 @@ export default function PoliticaPrivacidadPage() {
 
         {/* Footer legal */}
         <div className="mt-16 border-t border-border pt-8 font-workSans text-sm text-muted-foreground">
-          RNG-Vantage · Ecuador · <span className="text-foreground">privacidad@rngvantage.com</span>
+          RGL Estudio · Ecuador · <span className="text-foreground">privacidad@rglestudio.com</span>
         </div>
 
       </div>

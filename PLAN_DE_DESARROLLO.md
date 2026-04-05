@@ -1,8 +1,8 @@
-# Plan de Desarrollo — RNG-Vantage
+# Plan de Desarrollo — RGL Estudio
 
 > Sistema integral de automatización de ventas, reservas y control financiero para RGL ESTUDIO — agencia de manejo estratégico de redes sociales y producción audiovisual B2B de Ruth Noemi Gómez Lescano (Baños de Agua Santa / Ambato, Ecuador).
 >
-> **Contexto:** RNG-Vantage es la "Intranet de gestión financiera y de clientes" citada en el plan de negocios oficial de la cliente. El equipo de UTA (estos 4 integrantes) son los aliados estratégicos de desarrollo mencionados en dicho plan.
+> **Contexto:** RGL Estudio es la "Intranet de gestión financiera y de clientes" citada en el plan de negocios oficial de la cliente. El equipo de UTA (estos 4 integrantes) son los aliados estratégicos de desarrollo mencionados en dicho plan.
 
 ---
 
@@ -508,7 +508,7 @@ Implementar toda la lógica del servidor para el sistema de reservas: creación 
 - `components/footer.tsx` — componente de pie de página
 
 **Especificación de la Navbar:**
-- Logo/nombre "RNG-Vantage" (link a `/`)
+- Logo/nombre "RGL Estudio" (link a `/`)
 - Links: Servicios (`/catalogo`), Reservar (`/reservar`)
 - Botón: "Iniciar Sesión" (`/login`) — o nombre del usuario + avatar si está autenticado
 - **Mobile (< 768px):** Los links se colapsan en hamburger menu → panel lateral (usar ShadCN `Sheet`)

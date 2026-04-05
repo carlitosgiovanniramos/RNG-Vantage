@@ -44,7 +44,7 @@ export default async function LandingPage() {
             </div>
 
             <h1 className="text-6xl sm:text-7xl md:text-9xl font-spaceGrotesk font-black tracking-tighter leading-[0.85] mb-8 uppercase text-foreground">
-              RNG-Vantage
+              RGL Estudio
             </h1>
 
             <p className="text-lg sm:text-xl md:text-2xl font-workSans max-w-2xl mb-12 text-muted-foreground leading-relaxed">

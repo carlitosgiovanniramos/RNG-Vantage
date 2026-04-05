@@ -6,7 +6,7 @@ export function Footer() {
       <div className="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto px-8 py-12 gap-8 md:gap-0">
         {/* Logo */}
         <div className="font-spaceGrotesk text-lg font-black uppercase tracking-widest">
-          RNG-Vantage
+          RGL Estudio
         </div>
 
         {/* Legal Links */}
@@ -40,7 +40,7 @@ export function Footer() {
 
         {/* Copyright */}
         <div className="font-spaceGrotesk text-xs tracking-widest uppercase opacity-60">
-          © 2026 RNG-Vantage. All rights reserved.
+          © 2026 RGL Estudio. All rights reserved.
         </div>
       </div>
     </footer>
