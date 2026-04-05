@@ -1,5 +1,5 @@
 -- =============================================================
--- RNG-Vantage: Seed data (datos de prueba)
+-- RGL Estudio: Seed data (datos de prueba)
 -- =============================================================
 
 -- Catalogo real de Ruth (10 servicios)

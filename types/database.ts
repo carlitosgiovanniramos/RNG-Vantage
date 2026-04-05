@@ -1,4 +1,4 @@
-// Tipos de la base de datos de RNG-Vantage
+// Tipos de la base de datos de RGL Estudio
 // Generado manualmente. Para tipos auto-generados ejecutar:
 // npx supabase gen types typescript --local > types/database.ts
 

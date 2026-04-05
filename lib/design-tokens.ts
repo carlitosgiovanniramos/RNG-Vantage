@@ -1,5 +1,5 @@
 /**
- * RNG-Vantage Design Tokens
+ * RGL Estudio Design Tokens
  *
  * Referencia centralizada de constantes de diseno para el equipo de frontend.
  * Los colores CSS variables estan definidos en app/globals.css (ShadCN theme).
@@ -7,7 +7,7 @@
  */
 
 export const BRAND = {
-  name: "RNG-Vantage",
+  name: "RGL Estudio",
   tagline: "Automatizacion de ventas, reservas y control financiero",
 } as const;
 

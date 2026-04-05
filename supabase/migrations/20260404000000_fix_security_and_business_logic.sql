@@ -1,5 +1,5 @@
 -- =============================================================
--- RNG-Vantage: Correcciones de seguridad y lógica de negocio
+-- RGL Estudio: Correcciones de seguridad y lógica de negocio
 -- Aplicado el 2026-04-04 vía Supabase MCP
 -- Cubre todos los cambios post-auditoría de la DB
 -- =============================================================

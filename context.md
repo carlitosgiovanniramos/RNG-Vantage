@@ -1,4 +1,4 @@
-# RNG-Vantage — AI Agent Context File
+# RGL Estudio — AI Agent Context File
 
 > This file is machine-readable project context optimized for LLM/AI agent consumption.
 > It describes the full state of the project so an agent can understand it without reading other files.
@@ -8,7 +8,7 @@
 
 <PROJECT_IDENTITY>
 
-name: RNG-Vantage
+name: RGL Estudio
 type: academic-project
 domain: sales-automation, reservations, financial-control for digital-marketing-agency
 language_code: es (Spanish — all UI text, variable names in English, comments in Spanish)
@@ -25,7 +25,7 @@ real_client: Ruth Noemi Gómez Lescano
 client_business: RGL ESTUDIO (también operando como GMZ ESTUDIO)
 client_business_type: Agencia de manejo estratégico de redes sociales y producción audiovisual B2B
 client_target_market: Empresarios 35-55 años, sector servicios (hotelería, turismo, gastronomía), Baños de Agua Santa y Ambato, Ecuador
-client_note: RNG-Vantage ES la "Intranet de gestión financiera y de clientes" mencionada en el plan de negocios de Ruth. Los estudiantes de UTA (este equipo) son los aliados estratégicos de desarrollo citados en dicho plan.
+client_note: RGL Estudio ES la "Intranet de gestión financiera y de clientes" mencionada en el plan de negocios de Ruth. Los estudiantes de UTA (este equipo) son los aliados estratégicos de desarrollo citados en dicho plan.
 
 </PROJECT_IDENTITY>
 
@@ -824,7 +824,7 @@ Shared Supabase project — all team members use the SAME credentials.
 
 ## Cliente real: RGL ESTUDIO — Ruth Noemi Gómez Lescano
 
-RNG-Vantage es la "Intranet de gestión financiera y de clientes" citada en el plan de negocios oficial de Ruth. El equipo de UTA es el aliado estratégico de desarrollo mencionado en dicho plan.
+RGL Estudio es la "Intranet de gestión financiera y de clientes" citada en el plan de negocios oficial de Ruth. El equipo de UTA es el aliado estratégico de desarrollo mencionado en dicho plan.
 
 ## Modelo de negocio de la cliente
 
