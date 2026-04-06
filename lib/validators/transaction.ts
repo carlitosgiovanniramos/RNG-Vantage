@@ -4,8 +4,8 @@ const paymentMethods = ["cash", "transfer", "card", "pending"] as const;
 const transactionStatuses = ["pending", "completed", "failed", "refunded"] as const;
 
 export const createTransactionSchema = z.object({
-  user_id: z.string().uuid().optional(),
-  subscription_id: z.string().uuid().optional(),
+  user_id: z.uuid().optional(),
+  subscription_id: z.uuid().optional(),
   amount: z.number().min(0, "El monto no puede ser negativo"),
   payment_method: z.enum(paymentMethods).default("pending"),
   status: z.enum(transactionStatuses).default("pending"),

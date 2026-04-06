@@ -41,8 +41,8 @@ export async function createService(formData: unknown) {
   if (error) return { error: error.message };
 
   // 3. Refrescar el dashboard y el catálogo público
-  revalidatePath("/(dashboard)/servicios");
-  revalidatePath("/(public)/catalogo");
+  revalidatePath("/servicios");
+  revalidatePath("/catalogo");
   
   return { success: true };
 }
@@ -67,8 +67,8 @@ export async function updateService(id: string, formData: unknown) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/(dashboard)/servicios");
-  revalidatePath("/(public)/catalogo");
+  revalidatePath("/servicios");
+  revalidatePath("/catalogo");
   
   return { success: true };
 }
@@ -86,8 +86,8 @@ export async function deleteService(id: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath("/(dashboard)/servicios");
-  revalidatePath("/(public)/catalogo");
+  revalidatePath("/servicios");
+  revalidatePath("/catalogo");
   
   return { success: true };
 }

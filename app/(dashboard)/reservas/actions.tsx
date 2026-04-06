@@ -39,7 +39,7 @@ export async function updateReservationStatus(id: string, status: ReservationSta
   if (error) return { error: error.message };
 
   // 4. Revalidar la caché de Next.js para que la tabla se actualice en pantalla
-  revalidatePath("/(dashboard)/reservas");
+  revalidatePath("/reservas");
   
   return { success: true };
 }

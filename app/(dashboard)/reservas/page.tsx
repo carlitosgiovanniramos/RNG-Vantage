@@ -61,7 +61,7 @@ export default function ReservasAdminPage() {
                 <tr key={res.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{res.id.substring(0, 8)}...</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="font-medium">{res.full_name}</div>
+                    <div className="font-medium">{res.first_name} {res.last_name}</div>
                     <div className="text-xs text-gray-500">{res.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
