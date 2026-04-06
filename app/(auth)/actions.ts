@@ -2,10 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type AuthFormState = {
   error: string;
   values?: {
+    full_name?: string;
     first_name?: string;
     last_name?: string;
     email?: string;
@@ -23,6 +25,21 @@ type ResendConfirmationState = {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+function splitFullName(fullName: string) {
+  const normalized = fullName.trim().replace(/\s+/g, " ");
+
+  if (!normalized) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const [firstName, ...rest] = normalized.split(" ");
+
+  return {
+    firstName,
+    lastName: rest.join(" "),
+  };
+}
 
 function mapSupabaseAuthError(errorMessage: string): string {
   const normalized = errorMessage.toLowerCase();
@@ -66,14 +83,6 @@ export async function login(_prevState: AuthFormState, formData: FormData) {
   if (!EMAIL_REGEX.test(email)) {
     return {
       error: "Ingresa un correo electrónico válido",
-      values: { email },
-    };
-  }
-
-  if (!STRONG_PASSWORD_REGEX.test(password)) {
-    return {
-      error:
-        "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
       values: { email },
     };
   }
@@ -139,34 +148,78 @@ export async function signup(_prevState: AuthFormState, formData: FormData) {
   const password = formData.get("password") as string;
   const first_name = ((formData.get("first_name") as string) ?? "").trim();
   const last_name = ((formData.get("last_name") as string) ?? "").trim();
+  const full_name = ((formData.get("full_name") as string) ?? "").trim();
   const data_consent = formData.get("data_consent") as string;
   const acceptedConsent = data_consent === "on" || data_consent === "true";
+  const normalizedFullName =
+    full_name || `${first_name} ${last_name}`.replace(/\s+/g, " ").trim();
+  const parsedFromFullName = splitFullName(normalizedFullName);
+  const normalizedFirstName = first_name || parsedFromFullName.firstName;
+  const normalizedLastName = last_name || parsedFromFullName.lastName;
 
-  if (!email || !password || !first_name || !last_name) {
+  if (!email || !password || !normalizedFirstName || !normalizedLastName) {
     return {
       error: "Por favor, completa todos los campos requeridos",
-      values: { first_name, last_name, email, data_consent: acceptedConsent },
+      values: {
+        full_name: normalizedFullName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
+        email,
+        data_consent: acceptedConsent,
+      },
     };
   }
 
-  if (first_name.length < 2) {
+  if (normalizedFirstName.length < 2) {
     return {
       error: "El nombre debe tener al menos 2 caracteres",
-      values: { first_name, last_name, email, data_consent: acceptedConsent },
+      values: {
+        full_name: normalizedFullName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
+        email,
+        data_consent: acceptedConsent,
+      },
     };
   }
 
-  if (last_name.length < 2) {
+  if (normalizedLastName.length < 2) {
     return {
       error: "El apellido debe tener al menos 2 caracteres",
-      values: { first_name, last_name, email, data_consent: acceptedConsent },
+      values: {
+        full_name: normalizedFullName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
+        email,
+        data_consent: acceptedConsent,
+      },
     };
   }
 
   if (!acceptedConsent) {
     return {
       error: "Debes aceptar la política de tratamiento de datos (LOPDP)",
-      values: { first_name, last_name, email, data_consent: false },
+      values: {
+        full_name: normalizedFullName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
+        email,
+        data_consent: false,
+      },
+    };
+  }
+
+  if (!STRONG_PASSWORD_REGEX.test(password)) {
+    return {
+      error:
+        "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial",
+      values: {
+        full_name: normalizedFullName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
+        email,
+        data_consent: acceptedConsent,
+      },
     };
   }
 
@@ -175,8 +228,9 @@ export async function signup(_prevState: AuthFormState, formData: FormData) {
     password,
     options: {
       data: {
-        first_name,
-        last_name,
+        full_name: normalizedFullName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
       },
     },
   });
@@ -197,22 +251,47 @@ export async function signup(_prevState: AuthFormState, formData: FormData) {
 
     return {
       error: signupError,
-      values: { first_name, last_name, email, data_consent: acceptedConsent },
+      values: {
+        full_name: normalizedFullName,
+        first_name: normalizedFirstName,
+        last_name: normalizedLastName,
+        email,
+        data_consent: acceptedConsent,
+      },
     };
   }
 
-  if (data.user && data.session) {
-    // Record LOPDP consent timestamp in the profile
-    await supabase.from("profiles").upsert(
-      {
-        id: data.user.id,
-        first_name,
-        last_name,
-        role: "client",
-        data_consent_at: new Date().toISOString(),
-      },
-      { onConflict: "id" }
-    );
+  if (data.user) {
+    const consentTimestamp = new Date().toISOString();
+
+    try {
+      const adminClient = createAdminClient();
+
+      await adminClient.from("profiles").upsert(
+        {
+          id: data.user.id,
+          first_name: normalizedFirstName,
+          last_name: normalizedLastName,
+          role: "client",
+          data_consent_at: consentTimestamp,
+        },
+        { onConflict: "id" }
+      );
+    } catch {
+      // Fallback when service role key is not available in local env.
+      if (data.session) {
+        await supabase.from("profiles").upsert(
+          {
+            id: data.user.id,
+            first_name: normalizedFirstName,
+            last_name: normalizedLastName,
+            role: "client",
+            data_consent_at: consentTimestamp,
+          },
+          { onConflict: "id" }
+        );
+      }
+    }
   }
 
   // If no session is returned, email confirmation is required by Supabase.
@@ -262,8 +341,8 @@ export async function resendSignupConfirmation(
     email,
     options: redirectUrl
       ? {
-          emailRedirectTo: redirectUrl,
-        }
+        emailRedirectTo: redirectUrl,
+      }
       : undefined,
   });
 

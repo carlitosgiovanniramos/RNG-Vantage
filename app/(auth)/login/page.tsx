@@ -4,6 +4,17 @@ import { useActionState, Suspense, useState } from "react";
 import { login, resendSignupConfirmation } from "@/app/(auth)/actions";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import {
+  ArrowRight,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  Mail,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const initialState = {
   error: "",
@@ -30,7 +41,7 @@ function LoginForm() {
   const [state, formAction, isPending] = useActionState(login, initialState);
   const [resendState, resendAction, isResending] = useActionState(
     resendSignupConfirmation,
-    initialResendState
+    initialResendState,
   );
   const shouldShowResend =
     hint === "confirm-or-login" ||
@@ -38,105 +49,163 @@ function LoginForm() {
     state?.error?.toLowerCase().includes("email not confirmed");
 
   return (
-    <div className="flex flex-col gap-4">
-      <form action={formAction} className="flex flex-col gap-4">
-      {wasRegistered && (
-        <div className="p-3 text-sm text-green-800 bg-green-100 rounded-md">
-          Cuenta creada. Revisa tu correo para confirmarlo antes de iniciar sesión.
+    <div className="space-y-6">
+      <div className="space-y-3 text-center">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <Sparkles className="size-3.5" />
+          Acceso seguro
         </div>
-      )}
 
-      {hint === "confirm-or-login" && (
-        <div className="p-3 text-sm text-amber-900 bg-amber-100 rounded-md">
-          Si ya te registraste, revisa tu correo y luego inicia sesión. Evita reenviar varias veces seguidas.
+        <div className="space-y-2">
+          <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+            Iniciar sesión
+          </h1>
+          <p className="mx-auto max-w-sm text-sm leading-6 text-muted-foreground">
+            Ingresa con tu correo y contraseña para continuar al área
+            correspondiente.
+          </p>
         </div>
-      )}
-
-      {resendState?.success && (
-        <div className="p-3 text-sm text-green-800 bg-green-100 rounded-md">
-          {resendState.success}
-        </div>
-      )}
-
-      {resendState?.error && (
-        <div className="p-3 text-sm text-white bg-red-500 rounded-md">
-          {resendState.error}
-        </div>
-      )}
-
-      {state?.error && (
-        <div className="p-3 text-sm text-white bg-red-500 rounded-md">
-          {state.error}
-        </div>
-      )}
-
-      <input type="hidden" name="redirect" value={redirectParams} />
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor="email" className="text-sm font-medium">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          defaultValue={state?.values?.email ?? prefillEmail}
-          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          placeholder="correo@ejemplo.com"
-        />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor="password" className="text-sm font-medium">Contraseña</label>
-        <div className="relative">
-          <input
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            required
-            minLength={8}
-            pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$"
-            title="Debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-20 text-sm"
-            placeholder="••••••"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground hover:text-foreground"
-            aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+      <form action={formAction} className="space-y-5">
+        {wasRegistered && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+            Cuenta creada. Revisa tu correo para confirmarlo antes de iniciar
+            sesión.
+          </div>
+        )}
+
+        {hint === "confirm-or-login" && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+            Si ya te registraste, revisa tu correo y luego inicia sesión. Evita
+            reenviar varias veces seguidas.
+          </div>
+        )}
+
+        {resendState?.success && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+            {resendState.success}
+          </div>
+        )}
+
+        {resendState?.error && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+            {resendState.error}
+          </div>
+        )}
+
+        {state?.error && (
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+            {state.error}
+          </div>
+        )}
+
+        <input type="hidden" name="redirect" value={redirectParams} />
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="email"
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
           >
-            {showPassword ? "Ocultar" : "Mostrar"}
-          </button>
+            Correo electrónico
+          </Label>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              defaultValue={state?.values?.email ?? prefillEmail}
+              className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
+              placeholder="correo@ejemplo.com"
+            />
+          </div>
         </div>
-      </div>
 
-        <button
+        <div className="space-y-2">
+          <div className="flex items-end justify-between gap-3">
+            <Label
+              htmlFor="password"
+              className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+            >
+              Contraseña
+            </Label>
+          </div>
+          <div className="relative">
+            <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              required
+              className="h-12 rounded-2xl border-border/70 bg-background pl-10 pr-12 text-sm"
+              placeholder="••••••••"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+              aria-label={
+                showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+              }
+            >
+              {showPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <Button
           type="submit"
           disabled={isPending}
-          className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="flex h-12 w-full items-center justify-between rounded-2xl bg-primary px-5 text-sm font-semibold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
         >
-          {isPending ? "Iniciando sesión..." : "Ingresar"}
-        </button>
+          <span>{isPending ? "Iniciando sesión..." : "Ingresar"}</span>
+          <ArrowRight className="size-4" />
+        </Button>
       </form>
 
       {shouldShowResend && (
-        <form action={resendAction} className="flex flex-col gap-3 rounded-md border p-3">
-          <p className="text-sm font-medium">¿No te llegó el correo de confirmación?</p>
-          <input
+        <form
+          action={resendAction}
+          className="space-y-3 rounded-2xl border border-dashed border-border/70 bg-muted/30 p-4"
+        >
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              ¿No te llegó el correo de confirmación?
+            </p>
+            <p className="text-xs leading-5 text-muted-foreground">
+              Puedes pedir un nuevo enlace usando el mismo correo con el que te
+              registraste.
+            </p>
+          </div>
+          <Input
             name="email"
             type="email"
             required
-            defaultValue={state?.values?.email ?? prefillEmail ?? resendState?.values?.email ?? ""}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            defaultValue={
+              state?.values?.email ??
+              prefillEmail ??
+              resendState?.values?.email ??
+              ""
+            }
+            className="h-12 rounded-2xl border-border/70 bg-background text-sm"
             placeholder="correo@ejemplo.com"
           />
-          <button
+          <Button
             type="submit"
             disabled={isResending}
-            className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium h-10 px-4 py-2 border border-input hover:bg-accent disabled:opacity-50"
+            variant="outline"
+            className="h-12 w-full rounded-2xl border-border/70 bg-background text-sm font-semibold uppercase tracking-[0.16em]"
           >
-            {isResending ? "Reenviando..." : "Reenviar correo de confirmación"}
-          </button>
+            {isResending ? "Reenviando..." : "Reenviar confirmación"}
+          </Button>
         </form>
       )}
     </div>
@@ -145,24 +214,22 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col gap-6 w-full">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold">Iniciar Sesión</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Ingresa tus credenciales para continuar
-        </p>
-      </div>
-
-      <Suspense fallback={<div className="text-center">Cargando formulario...</div>}>
+    <div className="space-y-6">
+      <Suspense
+        fallback={<div className="text-center">Cargando formulario...</div>}
+      >
         <LoginForm />
       </Suspense>
 
-      <div className="text-center text-sm">
+      <p className="text-center text-sm text-muted-foreground">
         ¿No tienes una cuenta?{" "}
-        <Link href="/register" className="underline underline-offset-4 hover:text-primary">
+        <Link
+          href="/register"
+          className="font-semibold text-foreground underline underline-offset-4 hover:text-primary"
+        >
           Regístrate aquí
         </Link>
-      </div>
+      </p>
     </div>
   );
 }
