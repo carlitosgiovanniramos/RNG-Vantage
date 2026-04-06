@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 
 type ServiceJoin = {
   type: string;
@@ -9,6 +10,10 @@ type ActiveSubscriptionRow = {
   id: string;
   auto_renew: boolean;
   services: ServiceJoin | ServiceJoin[] | null;
+};
+
+type CompletedTransactionRow = {
+  amount: number | null;
 };
 
 function normalizeService(service: ServiceJoin | ServiceJoin[] | null): ServiceJoin | null {
@@ -66,8 +71,8 @@ export default async function DashboardPage() {
   }).length;
 
   const oneTimeSubscriptions = activeSubscriptions.length - recurringSubscriptions;
-  const monthlyIncome = (completedTransactions ?? []).reduce(
-    (sum, transaction) => sum + Number(transaction.amount ?? 0),
+  const monthlyIncome = ((completedTransactions ?? []) as CompletedTransactionRow[]).reduce(
+    (sum: number, transaction: CompletedTransactionRow) => sum + Number(transaction.amount ?? 0),
     0
   );
 
@@ -103,6 +108,21 @@ export default async function DashboardPage() {
       <div className="mt-4 rounded-xl border border-border bg-card p-5">
         <p className="text-sm text-muted-foreground">Reservas pendientes</p>
         <p className="mt-2 text-2xl font-bold">{pendingReservations ?? 0}</p>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link
+          href="/reservas"
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+        >
+          Ir a Reservas
+        </Link>
+        <Link
+          href="/servicios"
+          className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+        >
+          Ir a Servicios
+        </Link>
       </div>
     </section>
   );
