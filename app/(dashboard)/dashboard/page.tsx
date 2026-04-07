@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { CalendarClock, CreditCard, Repeat, TrendingUp } from "lucide-react";
+import { DataCard } from "@/components/data-card";
 
 type ServiceJoin = {
   type: string;
@@ -16,7 +18,9 @@ type CompletedTransactionRow = {
   amount: number | null;
 };
 
-function normalizeService(service: ServiceJoin | ServiceJoin[] | null): ServiceJoin | null {
+function normalizeService(
+  service: ServiceJoin | ServiceJoin[] | null,
+): ServiceJoin | null {
   if (!service) {
     return null;
   }
@@ -53,7 +57,8 @@ export default async function DashboardPage() {
     .select("id", { count: "exact", head: true })
     .eq("status", "pending");
 
-  const activeSubscriptions = (subscriptionsData ?? []) as ActiveSubscriptionRow[];
+  const activeSubscriptions = (subscriptionsData ??
+    []) as ActiveSubscriptionRow[];
 
   const mrr = activeSubscriptions.reduce((total, subscription) => {
     const service = normalizeService(subscription.services);
@@ -70,10 +75,14 @@ export default async function DashboardPage() {
     return service?.type === "manejo_redes";
   }).length;
 
-  const oneTimeSubscriptions = activeSubscriptions.length - recurringSubscriptions;
-  const monthlyIncome = ((completedTransactions ?? []) as CompletedTransactionRow[]).reduce(
-    (sum: number, transaction: CompletedTransactionRow) => sum + Number(transaction.amount ?? 0),
-    0
+  const oneTimeSubscriptions =
+    activeSubscriptions.length - recurringSubscriptions;
+  const monthlyIncome = (
+    (completedTransactions ?? []) as CompletedTransactionRow[]
+  ).reduce(
+    (sum: number, transaction: CompletedTransactionRow) =>
+      sum + Number(transaction.amount ?? 0),
+    0,
   );
 
   return (
@@ -84,30 +93,34 @@ export default async function DashboardPage() {
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article className="rounded-xl border border-border bg-card p-5">
-          <p className="text-sm text-muted-foreground">MRR (solo manejo_redes)</p>
-          <p className="mt-2 text-2xl font-bold">{formatCurrency(mrr)}</p>
-        </article>
-
-        <article className="rounded-xl border border-border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Ingresos del mes</p>
-          <p className="mt-2 text-2xl font-bold">{formatCurrency(monthlyIncome)}</p>
-        </article>
-
-        <article className="rounded-xl border border-border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Suscripciones activas recurrentes</p>
-          <p className="mt-2 text-2xl font-bold">{recurringSubscriptions}</p>
-        </article>
-
-        <article className="rounded-xl border border-border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Servicios unicos activos</p>
-          <p className="mt-2 text-2xl font-bold">{oneTimeSubscriptions}</p>
-        </article>
+        <DataCard
+          title="MRR (solo manejo_redes)"
+          value={formatCurrency(mrr)}
+          icon={<Repeat className="size-4" />}
+        />
+        <DataCard
+          title="Ingresos del mes"
+          value={formatCurrency(monthlyIncome)}
+          icon={<TrendingUp className="size-4" />}
+        />
+        <DataCard
+          title="Suscripciones recurrentes"
+          value={recurringSubscriptions}
+          icon={<CreditCard className="size-4" />}
+        />
+        <DataCard
+          title="Servicios únicos activos"
+          value={oneTimeSubscriptions}
+          icon={<CalendarClock className="size-4" />}
+        />
       </div>
 
-      <div className="mt-4 rounded-xl border border-border bg-card p-5">
-        <p className="text-sm text-muted-foreground">Reservas pendientes</p>
-        <p className="mt-2 text-2xl font-bold">{pendingReservations ?? 0}</p>
+      <div className="mt-4 max-w-sm">
+        <DataCard
+          title="Reservas pendientes"
+          value={pendingReservations ?? 0}
+          icon={<CalendarClock className="size-4" />}
+        />
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">

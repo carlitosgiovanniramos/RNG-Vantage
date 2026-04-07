@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { signup } from "@/app/(auth)/actions";
 import Link from "next/link";
 import {
@@ -15,6 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
 
 const initialState = {
   error: "",
@@ -22,13 +25,49 @@ const initialState = {
     first_name: "",
     last_name: "",
     email: "",
+    confirm_password: "",
     data_consent: false,
   },
 };
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [state, formAction, isPending] = useActionState(signup, initialState);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      first_name: state?.values?.first_name ?? "",
+      last_name: state?.values?.last_name ?? "",
+      email: state?.values?.email ?? "",
+      password: "",
+      confirm_password: "",
+      data_consent: Boolean(state?.values?.data_consent),
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      first_name: state?.values?.first_name ?? "",
+      last_name: state?.values?.last_name ?? "",
+      email: state?.values?.email ?? "",
+      password: "",
+      confirm_password: "",
+      data_consent: Boolean(state?.values?.data_consent),
+    });
+  }, [
+    reset,
+    state?.values?.data_consent,
+    state?.values?.email,
+    state?.values?.first_name,
+    state?.values?.last_name,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -49,7 +88,18 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <form action={formAction} className="space-y-5">
+      <form
+        action={formAction}
+        className="space-y-5"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          const formElement = event.currentTarget;
+          void handleSubmit(() => {
+            formElement.submit();
+          })(event);
+        }}
+      >
         {state?.error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
             {state.error}
@@ -71,11 +121,16 @@ export default function RegisterPage() {
                 name="first_name"
                 type="text"
                 required
-                defaultValue={state?.values?.first_name ?? ""}
+                {...register("first_name")}
                 className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
                 placeholder="Juan Pablo"
               />
             </div>
+            {errors.first_name ? (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                {errors.first_name.message}
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-2 sm:col-span-1">
@@ -92,11 +147,16 @@ export default function RegisterPage() {
                 name="last_name"
                 type="text"
                 required
-                defaultValue={state?.values?.last_name ?? ""}
+                {...register("last_name")}
                 className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
                 placeholder="López Ramos"
               />
             </div>
+            {errors.last_name ? (
+              <p className="text-xs text-red-600 dark:text-red-400">
+                {errors.last_name.message}
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -114,11 +174,16 @@ export default function RegisterPage() {
               name="email"
               type="email"
               required
-              defaultValue={state?.values?.email ?? ""}
+              {...register("email")}
               className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
               placeholder="correo@ejemplo.com"
             />
           </div>
+          {errors.email ? (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {errors.email.message}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-2">
@@ -138,6 +203,7 @@ export default function RegisterPage() {
               minLength={8}
               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$"
               title="Debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
+              {...register("password")}
               className="h-12 rounded-2xl border-border/70 bg-background pl-10 pr-12 text-sm"
               placeholder="••••••••"
             />
@@ -158,10 +224,59 @@ export default function RegisterPage() {
               )}
             </Button>
           </div>
+          {errors.password ? (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {errors.password.message}
+            </p>
+          ) : null}
           <p className="text-xs leading-5 text-muted-foreground">
             Usa una contraseña segura de al menos 8 caracteres para mantener tu
             acceso protegido.
           </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label
+            htmlFor="confirm_password"
+            className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+          >
+            Confirmar contraseña
+          </Label>
+          <div className="relative">
+            <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="confirm_password"
+              name="confirm_password"
+              type={showConfirmPassword ? "text" : "password"}
+              required
+              {...register("confirm_password")}
+              className="h-12 rounded-2xl border-border/70 bg-background pl-10 pr-12 text-sm"
+              placeholder="••••••••"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+              aria-label={
+                showConfirmPassword
+                  ? "Ocultar confirmación"
+                  : "Mostrar confirmación"
+              }
+            >
+              {showConfirmPassword ? (
+                <EyeOff className="size-4" />
+              ) : (
+                <Eye className="size-4" />
+              )}
+            </Button>
+          </div>
+          {errors.confirm_password ? (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {errors.confirm_password.message}
+            </p>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
@@ -171,7 +286,7 @@ export default function RegisterPage() {
               id="data_consent"
               name="data_consent"
               required
-              defaultChecked={Boolean(state?.values?.data_consent)}
+              {...register("data_consent")}
               className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
             />
             <div className="space-y-1">
@@ -193,6 +308,11 @@ export default function RegisterPage() {
               </Link>
             </div>
           </div>
+          {errors.data_consent ? (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {errors.data_consent.message}
+            </p>
+          ) : null}
         </div>
 
         <Button

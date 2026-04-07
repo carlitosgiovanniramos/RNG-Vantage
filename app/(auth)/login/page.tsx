@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, Suspense, useState } from "react";
+import { useActionState, Suspense, useEffect, useState } from "react";
 import { login, resendSignupConfirmation } from "@/app/(auth)/actions";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -15,6 +15,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 
 const initialState = {
   error: "",
@@ -48,6 +51,26 @@ function LoginForm() {
     state?.error?.toLowerCase().includes("confirmar tu correo") ||
     state?.error?.toLowerCase().includes("email not confirmed");
 
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: state?.values?.email ?? prefillEmail,
+      password: "",
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      email: state?.values?.email ?? prefillEmail,
+      password: "",
+    });
+  }, [prefillEmail, reset, state?.values?.email]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-3 text-center">
@@ -67,7 +90,18 @@ function LoginForm() {
         </div>
       </div>
 
-      <form action={formAction} className="space-y-5">
+      <form
+        action={formAction}
+        className="space-y-5"
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          const formElement = event.currentTarget;
+          void handleSubmit(() => {
+            formElement.submit();
+          })(event);
+        }}
+      >
         {wasRegistered && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
             Cuenta creada. Revisa tu correo para confirmarlo antes de iniciar
@@ -116,11 +150,16 @@ function LoginForm() {
               name="email"
               type="email"
               required
-              defaultValue={state?.values?.email ?? prefillEmail}
+              {...register("email")}
               className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
               placeholder="correo@ejemplo.com"
             />
           </div>
+          {errors.email ? (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {errors.email.message}
+            </p>
+          ) : null}
         </div>
 
         <div className="space-y-2">
@@ -139,6 +178,7 @@ function LoginForm() {
               name="password"
               type={showPassword ? "text" : "password"}
               required
+              {...register("password")}
               className="h-12 rounded-2xl border-border/70 bg-background pl-10 pr-12 text-sm"
               placeholder="••••••••"
             />
@@ -159,6 +199,11 @@ function LoginForm() {
               )}
             </Button>
           </div>
+          {errors.password ? (
+            <p className="text-xs text-red-600 dark:text-red-400">
+              {errors.password.message}
+            </p>
+          ) : null}
         </div>
 
         <Button

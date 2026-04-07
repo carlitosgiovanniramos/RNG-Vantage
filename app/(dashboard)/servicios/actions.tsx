@@ -2,11 +2,9 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { 
-  createServiceSchema, 
-  updateServiceSchema, 
-  CreateServiceInput, 
-  UpdateServiceInput 
+import {
+  createServiceSchema,
+  updateServiceSchema,
 } from "@/lib/validators/service";
 
 export async function getServices() {
@@ -23,7 +21,9 @@ export async function getServices() {
 export async function createService(formData: unknown) {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "No autorizado" };
 
   // 1. Validación con Zod (Previene entrada de datos maliciosos)
@@ -34,23 +34,23 @@ export async function createService(formData: unknown) {
   }
 
   // 2. Inserción en Supabase
-  const { error } = await supabase
-    .from("services")
-    .insert([parsedData.data]);
+  const { error } = await supabase.from("services").insert([parsedData.data]);
 
   if (error) return { error: error.message };
 
   // 3. Refrescar el dashboard y el catálogo público
   revalidatePath("/servicios");
   revalidatePath("/catalogo");
-  
+
   return { success: true };
 }
 
 export async function updateService(id: string, formData: unknown) {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "No autorizado" };
 
   // Usamos el schema de actualización parcial (Partial Zod Schema)
@@ -69,25 +69,24 @@ export async function updateService(id: string, formData: unknown) {
 
   revalidatePath("/servicios");
   revalidatePath("/catalogo");
-  
+
   return { success: true };
 }
 
 export async function deleteService(id: string) {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: "No autorizado" };
 
-  const { error } = await supabase
-    .from("services")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("services").delete().eq("id", id);
 
   if (error) return { error: error.message };
 
   revalidatePath("/servicios");
   revalidatePath("/catalogo");
-  
+
   return { success: true };
 }
