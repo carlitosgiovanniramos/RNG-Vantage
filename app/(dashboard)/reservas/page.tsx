@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getReservations,
@@ -10,6 +11,7 @@ import type { Database } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, CalendarCheck2, Clock3, XCircle } from "lucide-react";
 
 type ReservationRow = Database["public"]["Tables"]["reservations"]["Row"];
 
@@ -91,16 +93,20 @@ export default function ReservasAdminPage() {
       render: (res) => (
         <div className="flex gap-2">
           <Button
+            type="button"
             size="sm"
             variant="outline"
+            className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
             onClick={() => handleStatusUpdate(res.id, "confirmed")}
             disabled={res.status === "confirmed"}
           >
             Confirmar
           </Button>
           <Button
+            type="button"
             size="sm"
             variant="destructive"
+            className="h-8 bg-destructive/15 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-destructive hover:bg-destructive/25"
             onClick={() => handleStatusUpdate(res.id, "cancelled")}
             disabled={res.status === "cancelled"}
           >
@@ -111,6 +117,14 @@ export default function ReservasAdminPage() {
     },
   ];
 
+  const pendingCount = reservations.filter((res) => res.status === "pending").length;
+  const confirmedCount = reservations.filter(
+    (res) => res.status === "confirmed",
+  ).length;
+  const cancelledCount = reservations.filter(
+    (res) => res.status === "cancelled",
+  ).length;
+
   if (isLoading)
     return <div className="p-8 text-center">Cargando reservas...</div>;
   if (isError)
@@ -119,8 +133,73 @@ export default function ReservasAdminPage() {
     );
 
   return (
-    <div className="container mx-auto space-y-6 p-4">
-      <h1 className="text-2xl font-bold">Gestión de Reservas</h1>
+    <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-8 md:py-10">
+      <header className="relative overflow-hidden border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:p-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-primary/15 blur-3xl"
+        />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-2">
+            <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-primary">
+              Agenda y seguimiento
+            </p>
+            <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
+              Gestión de Reservas
+            </h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Supervisa el estado de las reservas y ejecuta confirmaciones o
+              cancelaciones de forma rápida y segura.
+            </p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+          >
+            <ArrowLeft className="size-4" />
+            Volver al dashboard
+          </Link>
+        </div>
+      </header>
+
+      <section className="grid gap-4 sm:grid-cols-3">
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Pendientes
+            </p>
+            <Clock3 className="size-4 text-amber-600" />
+          </div>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {pendingCount}
+          </p>
+        </article>
+
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Confirmadas
+            </p>
+            <CalendarCheck2 className="size-4 text-emerald-600" />
+          </div>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {confirmedCount}
+          </p>
+        </article>
+
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Canceladas
+            </p>
+            <XCircle className="size-4 text-red-600" />
+          </div>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {cancelledCount}
+          </p>
+        </article>
+      </section>
+
       <DataTable
         data={reservations}
         columns={columns}

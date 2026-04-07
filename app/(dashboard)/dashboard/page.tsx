@@ -1,6 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { CalendarClock, CreditCard, Repeat, TrendingUp } from "lucide-react";
+import {
+  ArrowUpRight,
+  CalendarClock,
+  CreditCard,
+  Home,
+  Repeat,
+  TrendingUp,
+} from "lucide-react";
 import { DataCard } from "@/components/data-card";
 
 type ServiceJoin = {
@@ -84,58 +91,129 @@ export default async function DashboardPage() {
       sum + Number(transaction.amount ?? 0),
     0,
   );
+  const operationsSummary = [
+    {
+      label: "Suscripciones activas",
+      value: activeSubscriptions.length,
+    },
+    {
+      label: "Recurrencia en manejo de redes",
+      value: recurringSubscriptions,
+    },
+    {
+      label: "Reservas por gestionar",
+      value: pendingReservations ?? 0,
+    },
+  ];
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 py-12">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <p className="mt-2 text-muted-foreground">
-        MRR incluye solo servicios de tipo manejo_redes.
-      </p>
+    <section className="mx-auto w-full max-w-7xl space-y-10 px-6 py-10 md:py-14">
+      <header className="relative overflow-hidden border border-border/60 bg-card/85 p-8 backdrop-blur-sm md:p-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-28 left-20 h-60 w-60 rounded-full bg-primary/10 blur-3xl"
+        />
+        <div className="relative space-y-6">
+          <div className="space-y-2">
+            <p className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.22em] text-primary">
+              Control estratégico
+            </p>
+            <h1 className="font-spaceGrotesk text-4xl font-black uppercase tracking-tight text-foreground md:text-5xl">
+              Dashboard Administrativo
+            </h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
+              Visualiza el rendimiento comercial de RGL Estudio con foco en
+              ingresos, suscripciones y operaciones activas. El cálculo de MRR
+              considera únicamente servicios de tipo manejo_redes.
+            </p>
+          </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/"
+              className="inline-flex h-12 items-center gap-2 border border-border/60 bg-background/85 px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-muted"
+            >
+              Panel principal
+              <Home className="size-4" />
+            </Link>
+            <Link
+              href="/reservas"
+              className="inline-flex h-12 items-center gap-2 bg-primary px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Ir a Reservas
+              <ArrowUpRight className="size-4" />
+            </Link>
+            <Link
+              href="/servicios"
+              className="inline-flex h-12 items-center gap-2 border border-border/60 bg-background/85 px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-muted"
+            >
+              Ir a Servicios
+              <ArrowUpRight className="size-4" />
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <DataCard
           title="MRR (solo manejo_redes)"
           value={formatCurrency(mrr)}
-          icon={<Repeat className="size-4" />}
+          icon={<Repeat className="size-5" />}
+          className="xl:col-span-2"
         />
         <DataCard
           title="Ingresos del mes"
           value={formatCurrency(monthlyIncome)}
-          icon={<TrendingUp className="size-4" />}
+          icon={<TrendingUp className="size-5" />}
         />
         <DataCard
           title="Suscripciones recurrentes"
           value={recurringSubscriptions}
-          icon={<CreditCard className="size-4" />}
+          icon={<CreditCard className="size-5" />}
         />
         <DataCard
           title="Servicios únicos activos"
           value={oneTimeSubscriptions}
-          icon={<CalendarClock className="size-4" />}
+          icon={<CalendarClock className="size-5" />}
         />
       </div>
 
-      <div className="mt-4 max-w-sm">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,380px)_1fr]">
         <DataCard
           title="Reservas pendientes"
           value={pendingReservations ?? 0}
-          icon={<CalendarClock className="size-4" />}
+          icon={<CalendarClock className="size-5" />}
         />
-      </div>
-
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Link
-          href="/reservas"
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          Ir a Reservas
-        </Link>
-        <Link
-          href="/servicios"
-          className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-        >
-          Ir a Servicios
-        </Link>
+        <article className="relative overflow-hidden border border-border/60 bg-card/80 p-6 backdrop-blur-sm md:p-8">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-20 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
+          />
+          <div className="relative space-y-5">
+            <h2 className="font-spaceGrotesk text-lg font-black uppercase tracking-[0.12em] text-foreground">
+              Resumen Operativo
+            </h2>
+            <div className="grid gap-3 md:grid-cols-3">
+              {operationsSummary.map((item) => (
+                <div
+                  key={item.label}
+                  className="border border-border/50 bg-background/80 px-4 py-4"
+                >
+                  <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    {item.label}
+                  </p>
+                  <p className="mt-2 font-spaceGrotesk text-2xl font-black text-foreground">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </article>
       </div>
     </section>
   );

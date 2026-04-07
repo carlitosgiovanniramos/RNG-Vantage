@@ -36,19 +36,30 @@ export function DataCard({
         : "text-muted-foreground";
 
   return (
-    <Card className={cn("border border-border/70", className)}>
-      <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/60 pb-3">
-        <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <Card
+      className={cn(
+        "group relative overflow-hidden border border-border/60 bg-card/85 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40",
+        className,
+      )}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary/25 via-primary to-primary/25"
+      />
+      <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
+        <CardTitle className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-muted-foreground/80">
           {title}
         </CardTitle>
         {icon ? (
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          <div className="flex h-10 w-10 items-center justify-center bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/15">
             {icon}
           </div>
         ) : null}
       </CardHeader>
-      <CardContent className="space-y-2 pt-4">
-        <p className="text-3xl font-black tracking-tight">{value}</p>
+      <CardContent className="space-y-2 pt-2">
+        <p className="font-spaceGrotesk text-3xl font-black tracking-tight text-foreground md:text-4xl">
+          {value}
+        </p>
         {trend ? (
           <div
             className={cn(

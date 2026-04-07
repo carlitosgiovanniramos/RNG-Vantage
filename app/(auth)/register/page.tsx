@@ -1,10 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { signup } from "@/app/(auth)/actions";
 import Link from "next/link";
 import {
-  ArrowRight,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -22,10 +21,10 @@ import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
 const initialState = {
   error: "",
   values: {
+    full_name: "",
     first_name: "",
     last_name: "",
     email: "",
-    confirm_password: "",
     data_consent: false,
   },
 };
@@ -33,6 +32,8 @@ const initialState = {
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const allowNativeSubmitRef = useRef(false);
   const [state, formAction, isPending] = useActionState(signup, initialState);
 
   const {
@@ -69,8 +70,65 @@ export default function RegisterPage() {
     state?.values?.last_name,
   ]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const form = formRef.current;
+      if (!form) {
+        return;
+      }
+
+      const firstNameInput = form.elements.namedItem("first_name") as HTMLInputElement | null;
+      const lastNameInput = form.elements.namedItem("last_name") as HTMLInputElement | null;
+      const emailInput = form.elements.namedItem("email") as HTMLInputElement | null;
+      const passwordInput = form.elements.namedItem("password") as HTMLInputElement | null;
+      const confirmPasswordInput = form.elements.namedItem("confirm_password") as HTMLInputElement | null;
+
+      if (
+        !firstNameInput ||
+        !lastNameInput ||
+        !emailInput ||
+        !passwordInput ||
+        !confirmPasswordInput
+      ) {
+        return;
+      }
+
+      const hasExternalProfilePrefill = Boolean(
+        state?.values?.first_name || state?.values?.last_name || state?.values?.email,
+      );
+      const profileLooksAutofilled =
+        !hasExternalProfilePrefill &&
+        (firstNameInput.value.trim().length > 0 ||
+          lastNameInput.value.trim().length > 0 ||
+          emailInput.value.trim().length > 0);
+      const passwordsLookAutofilled =
+        passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0;
+
+      if (profileLooksAutofilled || passwordsLookAutofilled) {
+        reset({
+          first_name: state?.values?.first_name ?? "",
+          last_name: state?.values?.last_name ?? "",
+          email: state?.values?.email ?? "",
+          password: "",
+          confirm_password: "",
+          data_consent: Boolean(state?.values?.data_consent),
+        });
+      }
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [
+    reset,
+    state?.values?.data_consent,
+    state?.values?.email,
+    state?.values?.first_name,
+    state?.values?.last_name,
+  ]);
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="space-y-3 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           <Sparkles className="size-3.5" />
@@ -82,21 +140,27 @@ export default function RegisterPage() {
             Crear una cuenta
           </h1>
           <p className="mx-auto max-w-sm text-sm leading-6 text-muted-foreground">
-            Completa tus datos para registrarte y acceder al sistema con tu
-            perfil de cliente.
+            Crea tu cuenta y empieza.
           </p>
         </div>
       </div>
 
       <form
+        ref={formRef}
         action={formAction}
-        className="space-y-5"
+        className="space-y-6"
         noValidate
         onSubmit={(event) => {
+          if (allowNativeSubmitRef.current) {
+            allowNativeSubmitRef.current = false;
+            return;
+          }
+
           event.preventDefault();
           const formElement = event.currentTarget;
           void handleSubmit(() => {
-            formElement.submit();
+            allowNativeSubmitRef.current = true;
+            formElement.requestSubmit();
           })(event);
         }}
       >
@@ -106,7 +170,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2 sm:col-span-1">
             <Label
               htmlFor="first_name"
@@ -118,7 +182,6 @@ export default function RegisterPage() {
               <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="first_name"
-                name="first_name"
                 type="text"
                 required
                 {...register("first_name")}
@@ -144,7 +207,6 @@ export default function RegisterPage() {
               <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="last_name"
-                name="last_name"
                 type="text"
                 required
                 {...register("last_name")}
@@ -171,7 +233,6 @@ export default function RegisterPage() {
             <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="email"
-              name="email"
               type="email"
               required
               {...register("email")}
@@ -197,7 +258,6 @@ export default function RegisterPage() {
             <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="password"
-              name="password"
               type={showPassword ? "text" : "password"}
               required
               minLength={8}
@@ -230,8 +290,7 @@ export default function RegisterPage() {
             </p>
           ) : null}
           <p className="text-xs leading-5 text-muted-foreground">
-            Usa una contraseña segura de al menos 8 caracteres para mantener tu
-            acceso protegido.
+            Mínimo 8 caracteres.
           </p>
         </div>
 
@@ -246,7 +305,6 @@ export default function RegisterPage() {
             <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="confirm_password"
-              name="confirm_password"
               type={showConfirmPassword ? "text" : "password"}
               required
               {...register("confirm_password")}
@@ -284,7 +342,6 @@ export default function RegisterPage() {
             <input
               type="checkbox"
               id="data_consent"
-              name="data_consent"
               required
               {...register("data_consent")}
               className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
@@ -294,17 +351,16 @@ export default function RegisterPage() {
                 htmlFor="data_consent"
                 className="cursor-pointer text-sm font-medium leading-6 text-foreground"
               >
-                Acepto la política de tratamiento de datos (LOPDP)
+                Acepto la política de datos (LOPDP)
               </Label>
               <p className="text-xs leading-5 text-muted-foreground">
-                Es obligatorio para crear tu cuenta. Puedes leer el detalle en
-                la política de privacidad.
+                Requerido para continuar.
               </p>
               <Link
                 href="/politica-privacidad"
                 className="text-xs font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
               >
-                Ver política de privacidad
+                Leer política
               </Link>
             </div>
           </div>
@@ -318,10 +374,9 @@ export default function RegisterPage() {
         <Button
           type="submit"
           disabled={isPending}
-          className="flex h-12 w-full items-center justify-between rounded-2xl bg-primary px-5 text-sm font-semibold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
+          className="h-12 w-full rounded-2xl bg-primary px-5 text-sm font-semibold uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          <span>{isPending ? "Creando cuenta..." : "Registrarse"}</span>
-          <ArrowRight className="size-4" />
+          {isPending ? "Creando cuenta..." : "Registrarse"}
         </Button>
       </form>
 
