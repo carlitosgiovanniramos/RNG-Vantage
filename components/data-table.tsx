@@ -61,8 +61,8 @@ export function DataTable<T extends Record<string, unknown>>({
   }, [currentPage, filteredData, pageSize]);
 
   return (
-    <div className={cn("space-y-4", className)}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className={cn("space-y-6", className)}>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <Input
           value={filter}
           onChange={(event) => {
@@ -70,21 +70,21 @@ export function DataTable<T extends Record<string, unknown>>({
             setPage(1);
           }}
           placeholder={filterPlaceholder}
-          className="h-10 w-full sm:max-w-xs"
+          className="h-12 w-full sm:max-w-sm bg-surface-container-lowest border-0 focus:ring-2 focus:ring-primary"
         />
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground/70 font-medium">
           {filteredData.length} resultado(s)
         </p>
       </div>
 
-      <div className="rounded-xl border border-border/70">
+      <div className="border-0 overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="border-0 bg-surface-container-low hover:bg-surface-container-low">
               {columns.map((column) => (
                 <TableHead
                   key={String(column.key)}
-                  className={column.className}
+                  className={cn("text-xs font-bold uppercase tracking-[0.18em] text-foreground/70 py-4 px-6", column.className)}
                 >
                   {column.header}
                 </TableHead>
@@ -94,11 +94,14 @@ export function DataTable<T extends Record<string, unknown>>({
           <TableBody>
             {paginated.length > 0 ? (
               paginated.map((row, index) => (
-                <TableRow key={index}>
+                <TableRow 
+                  key={index}
+                  className="border-0 border-b border-b-surface-container-low hover:bg-surface-container-lowest transition-colors"
+                >
                   {columns.map((column) => (
                     <TableCell
                       key={`${index}-${String(column.key)}`}
-                      className={column.className}
+                      className={cn("py-4 px-6 text-sm", column.className)}
                     >
                       {column.render
                         ? column.render(row)
@@ -108,10 +111,10 @@ export function DataTable<T extends Record<string, unknown>>({
                 </TableRow>
               ))
             ) : (
-              <TableRow>
+              <TableRow className="border-0">
                 <TableCell
                   colSpan={columns.length}
-                  className="h-20 text-center text-muted-foreground"
+                  className="h-20 text-center text-muted-foreground py-6"
                 >
                   Sin resultados
                 </TableCell>
@@ -121,8 +124,8 @@ export function DataTable<T extends Record<string, unknown>>({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">
+      <div className="flex items-center justify-between pt-2">
+        <p className="text-xs text-muted-foreground/60 font-medium">
           Página {currentPage} de {totalPages}
         </p>
         <div className="flex gap-2">

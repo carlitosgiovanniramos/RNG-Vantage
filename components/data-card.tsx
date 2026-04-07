@@ -36,18 +36,18 @@ export function DataCard({
         : "text-muted-foreground";
 
   return (
-    <Card className={cn("border border-border/70", className)}>
-      <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/60 pb-3">
-        <CardTitle className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+    <Card className={cn("border-0 bg-gradient-to-br from-surface-container-lowest to-surface/40 shadow-sm", className)}>
+      <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
+        <CardTitle className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground/70 space-grotesk">
           {title}
         </CardTitle>
         {icon ? (
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          <div className="flex h-10 w-10 items-center justify-center rounded bg-primary/10 text-primary">
             {icon}
           </div>
         ) : null}
       </CardHeader>
-      <CardContent className="space-y-2 pt-4">
+      <CardContent className="space-y-2 pt-2">
         <p className="text-3xl font-black tracking-tight">{value}</p>
         {trend ? (
           <div

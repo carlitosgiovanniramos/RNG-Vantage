@@ -86,53 +86,57 @@ export default async function DashboardPage() {
   );
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 py-12">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
-      <p className="mt-2 text-muted-foreground">
-        MRR incluye solo servicios de tipo manejo_redes.
-      </p>
+    <section className="mx-auto w-full max-w-6xl px-6 py-16">
+      <div className="mb-12">
+        <h1 className="text-5xl font-black tracking-tight space-grotesk mb-2">
+          Dashboard
+        </h1>
+        <p className="text-base text-muted-foreground/60">
+          MRR incluye solo servicios de tipo manejo_redes.
+        </p>
+      </div>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <DataCard
           title="MRR (solo manejo_redes)"
           value={formatCurrency(mrr)}
-          icon={<Repeat className="size-4" />}
+          icon={<Repeat className="size-5" />}
         />
         <DataCard
           title="Ingresos del mes"
           value={formatCurrency(monthlyIncome)}
-          icon={<TrendingUp className="size-4" />}
+          icon={<TrendingUp className="size-5" />}
         />
         <DataCard
           title="Suscripciones recurrentes"
           value={recurringSubscriptions}
-          icon={<CreditCard className="size-4" />}
+          icon={<CreditCard className="size-5" />}
         />
         <DataCard
           title="Servicios únicos activos"
           value={oneTimeSubscriptions}
-          icon={<CalendarClock className="size-4" />}
+          icon={<CalendarClock className="size-5" />}
         />
       </div>
 
-      <div className="mt-4 max-w-sm">
+      <div className="mt-8 max-w-sm">
         <DataCard
           title="Reservas pendientes"
           value={pendingReservations ?? 0}
-          icon={<CalendarClock className="size-4" />}
+          icon={<CalendarClock className="size-5" />}
         />
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
+      <div className="mt-10 flex flex-wrap gap-4">
         <Link
           href="/reservas"
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="inline-flex h-12 items-center justify-center bg-primary px-6 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-95"
         >
           Ir a Reservas
         </Link>
         <Link
           href="/servicios"
-          className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-background px-4 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+          className="inline-flex h-12 items-center justify-center bg-muted px-6 text-sm font-bold text-foreground transition-colors hover:bg-muted/70 active:scale-95"
         >
           Ir a Servicios
         </Link>

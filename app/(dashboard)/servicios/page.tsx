@@ -198,22 +198,22 @@ export default function ServiciosAdminPage() {
   ];
 
   return (
-    <div className="container mx-auto space-y-4 p-4">
-      <div>
+    <div className="container mx-auto space-y-6 px-6 py-8">
+      <div className="flex items-center justify-between">
         <Button type="button" variant="outline" onClick={handleGoBack}>
           Volver atrás
         </Button>
       </div>
 
-      <div className="flex flex-col gap-6 md:flex-row">
+      <div className="flex flex-col gap-8 lg:flex-row">
       {/* Formulario de Creación */}
-      <div className="w-full md:w-1/3 bg-white p-6 rounded-lg border border-gray-200 shadow-sm h-fit">
-        <h2 className="text-xl font-bold mb-4">
+      <div className="w-full lg:w-1/3 bg-surface-container-lowest p-8 h-fit border-0 space-y-6">
+        <h2 className="text-lg font-black uppercase tracking-[0.18em]">
           {editingServiceId ? "Editar Servicio" : "Crear Nuevo Servicio"}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Nombre
             </label>
             <input
@@ -221,7 +221,7 @@ export default function ServiciosAdminPage() {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
               required
             />
             {formError?.fieldErrors?.name && (
@@ -232,26 +232,26 @@ export default function ServiciosAdminPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Descripción
             </label>
             <textarea
               name="description"
               value={formData.description || ""}
               onChange={handleInputChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+              className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Tipo
             </label>
             <select
               name="type"
               value={formData.type}
               onChange={handleInputChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white"
+              className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
             >
               <option value="manejo_redes">Manejo de Redes</option>
               <option value="auditoria">Auditoría</option>
@@ -262,7 +262,7 @@ export default function ServiciosAdminPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Precio ($)
               </label>
               <input
@@ -272,12 +272,12 @@ export default function ServiciosAdminPage() {
                 min="0"
                 value={formData.price}
                 onChange={handleInputChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                 Meses Duración
               </label>
               <input
@@ -286,24 +286,24 @@ export default function ServiciosAdminPage() {
                 min="1"
                 value={formData.duration_months}
                 onChange={handleInputChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
                 required
               />
             </div>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-3 pt-2">
             <input
               type="checkbox"
               name="is_active"
               id="is_active"
               checked={formData.is_active}
               onChange={handleInputChange}
-              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+              className="h-4 w-4 accent-primary"
             />
             <label
               htmlFor="is_active"
-              className="ml-2 block text-sm text-gray-900"
+              className="text-sm font-medium text-foreground"
             >
               Activo / Visible
             </label>
@@ -327,7 +327,7 @@ export default function ServiciosAdminPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300"
+            className="w-full flex justify-center py-2 px-4 bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 disabled:bg-primary/50"
           >
             {isSubmitting
               ? "Guardando..."
@@ -339,8 +339,8 @@ export default function ServiciosAdminPage() {
       </div>
 
       {/* Lista de Servicios */}
-      <div className="w-full md:w-2/3">
-        <h1 className="text-2xl font-bold mb-6">Catálogo de Servicios</h1>
+      <div className="w-full lg:w-2/3">
+        <h1 className="text-4xl font-black tracking-tight mb-8 space-grotesk">Catálogo de Servicios</h1>
 
         {isLoading ? (
           <div className="text-center p-8">Cargando servicios...</div>

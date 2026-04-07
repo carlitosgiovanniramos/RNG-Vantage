@@ -130,9 +130,9 @@ export default function ReservasAdminPage() {
     );
 
   return (
-    <div className="container mx-auto space-y-6 p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Gestión de Reservas</h1>
+    <div className="container mx-auto space-y-8 px-6 py-8">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-4xl font-black tracking-tight space-grotesk">Gestión de Reservas</h1>
         <Button type="button" variant="outline" onClick={handleGoBack}>
           Volver atrás
         </Button>
