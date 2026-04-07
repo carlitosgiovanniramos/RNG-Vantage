@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getServices,
@@ -35,7 +35,6 @@ const EMPTY_SERVICE_FORM: CreateServiceInput = {
 };
 
 export default function ServiciosAdminPage() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   // Form state
@@ -141,15 +140,6 @@ export default function ServiciosAdminPage() {
     setFormData(EMPTY_SERVICE_FORM);
   };
 
-  const handleGoBack = () => {
-    if (typeof window !== "undefined" && window.history.length <= 1) {
-      router.push("/dashboard");
-      return;
-    }
-
-    router.back();
-  };
-
   const serviceColumns: DataTableColumn<ServiceRow>[] = [
     {
       key: "name",
@@ -236,15 +226,13 @@ export default function ServiciosAdminPage() {
               controlado para el equipo de RGL Estudio.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 gap-2 border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
-            onClick={handleGoBack}
+          <Link
+            href="/dashboard"
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
           >
             <ArrowLeft className="size-4" />
-            Volver atrás
-          </Button>
+            Volver al dashboard
+          </Link>
         </div>
       </header>
 

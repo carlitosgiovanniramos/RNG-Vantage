@@ -5,7 +5,6 @@ import { login, resendSignupConfirmation } from "@/app/(auth)/actions";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
-  ArrowRight,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -106,7 +105,7 @@ function LoginForm() {
   }, [prefillEmail, reset, state?.values?.email]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div className="space-y-3 text-center">
         <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
           <Sparkles className="size-3.5" />
@@ -118,8 +117,7 @@ function LoginForm() {
             Iniciar sesión
           </h1>
           <p className="mx-auto max-w-sm text-sm leading-6 text-muted-foreground">
-            Ingresa con tu correo y contraseña para continuar al área
-            correspondiente.
+            Ingresa para continuar.
           </p>
         </div>
       </div>
@@ -127,7 +125,7 @@ function LoginForm() {
       <form
         ref={formRef}
         action={formAction}
-        className="space-y-5"
+        className="space-y-6"
         noValidate
         onSubmit={(event) => {
           if (allowNativeSubmitRef.current) {
@@ -152,8 +150,7 @@ function LoginForm() {
 
         {hint === "confirm-or-login" && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-            Si ya te registraste, revisa tu correo y luego inicia sesión. Evita
-            reenviar varias veces seguidas.
+            Si ya te registraste, confirma tu correo y luego inicia sesión.
           </div>
         )}
 
@@ -248,10 +245,9 @@ function LoginForm() {
         <Button
           type="submit"
           disabled={isPending}
-          className="flex h-12 w-full items-center justify-between rounded-2xl bg-primary px-5 text-sm font-semibold uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90"
+          className="h-12 w-full rounded-2xl bg-primary px-5 text-sm font-semibold uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90"
         >
-          <span>{isPending ? "Iniciando sesión..." : "Ingresar"}</span>
-          <ArrowRight className="size-4" />
+          {isPending ? "Iniciando sesión..." : "Ingresar"}
         </Button>
       </form>
 
@@ -262,11 +258,10 @@ function LoginForm() {
         >
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">
-              ¿No te llegó el correo de confirmación?
+              ¿No llegó el correo?
             </p>
             <p className="text-xs leading-5 text-muted-foreground">
-              Puedes pedir un nuevo enlace usando el mismo correo con el que te
-              registraste.
+              Reenvía el enlace con tu mismo correo.
             </p>
           </div>
           <Input
