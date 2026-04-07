@@ -12,22 +12,22 @@ const statusMap: Record<StatusValue, { label: string; className: string }> = {
   pending: {
     label: "Pendiente",
     className:
-      "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-700",
+      "border-0 bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-200",
   },
   active: {
     label: "Activo",
     className:
-      "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-700",
+      "border-0 bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-200",
   },
   expired: {
     label: "Expirado",
     className:
-      "bg-red-100 text-red-900 border-red-300 dark:bg-red-900/30 dark:text-red-200 dark:border-red-700",
+      "border-0 bg-red-100 text-red-900 dark:bg-red-900/30 dark:text-red-200",
   },
   completed: {
     label: "Completado",
     className:
-      "bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-900/30 dark:text-sky-200 dark:border-sky-700",
+      "border-0 bg-sky-100 text-sky-900 dark:bg-sky-900/30 dark:text-sky-200",
   },
 };
 
@@ -37,7 +37,11 @@ export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <Badge
       variant="outline"
-      className={cn("font-semibold", config.className, className)}
+      className={cn(
+        "font-spaceGrotesk h-6 rounded-none px-2.5 text-[0.65rem] font-bold uppercase tracking-[0.16em]",
+        config.className,
+        className,
+      )}
     >
       {config.label}
     </Badge>

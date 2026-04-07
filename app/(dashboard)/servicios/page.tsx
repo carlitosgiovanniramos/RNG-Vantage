@@ -14,6 +14,7 @@ import type { Database } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
+import { ArrowLeft, PencilLine, Sparkles, Trash2 } from "lucide-react";
 
 type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
 type CreateServiceFieldErrors = Partial<
@@ -151,8 +152,10 @@ export default function ServiciosAdminPage() {
       header: "Nombre",
       render: (service) => (
         <div>
-          <div className="font-medium">{service.name}</div>
-          <div className="max-w-xs truncate text-xs text-muted-foreground">
+          <div className="font-spaceGrotesk text-sm font-bold uppercase tracking-[0.08em] text-foreground">
+            {service.name}
+          </div>
+          <div className="max-w-xs truncate text-xs text-muted-foreground/80">
             {service.description || "Sin descripción"}
           </div>
         </div>
@@ -163,8 +166,10 @@ export default function ServiciosAdminPage() {
       header: "Tipo / Precio",
       render: (service) => (
         <div>
-          <div className="capitalize">{service.type.replace("_", " ")}</div>
-          <div className="font-semibold">
+          <div className="capitalize text-foreground/80">
+            {service.type.replace("_", " ")}
+          </div>
+          <div className="font-spaceGrotesk text-base font-black text-foreground">
             ${service.price} / {service.duration_months}m
           </div>
         </div>
@@ -182,14 +187,24 @@ export default function ServiciosAdminPage() {
       header: "Acciones",
       render: (service) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => handleStartEdit(service)}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
+            onClick={() => handleStartEdit(service)}
+          >
+            <PencilLine className="size-3" />
             Editar
           </Button>
           <Button
+            type="button"
             size="sm"
             variant="destructive"
+            className="h-8 gap-1.5 bg-destructive/15 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-destructive hover:bg-destructive/25"
             onClick={() => handleDelete(service.id)}
           >
+            <Trash2 className="size-3" />
             Eliminar
           </Button>
         </div>
@@ -198,166 +213,204 @@ export default function ServiciosAdminPage() {
   ];
 
   return (
-    <div className="container mx-auto space-y-6 px-6 py-8">
-      <div className="flex items-center justify-between">
-        <Button type="button" variant="outline" onClick={handleGoBack}>
-          Volver atrás
-        </Button>
-      </div>
-
-      <div className="flex flex-col gap-8 lg:flex-row">
-      {/* Formulario de Creación */}
-      <div className="w-full lg:w-1/3 bg-surface-container-lowest p-8 h-fit border-0 space-y-6">
-        <h2 className="text-lg font-black uppercase tracking-[0.18em]">
-          {editingServiceId ? "Editar Servicio" : "Crear Nuevo Servicio"}
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Nombre
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
-              required
-            />
-            {formError?.fieldErrors?.name && (
-              <p className="text-red-500 text-xs mt-1">
-                {formError.fieldErrors.name[0]}
-              </p>
-            )}
+    <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-8 md:py-10">
+      <header className="relative overflow-hidden border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:p-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/15 blur-3xl"
+        />
+        <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="space-y-2">
+            <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-primary">
+              Administración de catálogo
+            </p>
+            <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
+              Gestión de Servicios
+            </h1>
+            <p className="max-w-2xl text-sm text-muted-foreground">
+              Diseña y actualiza servicios con un flujo rápido, limpio y
+              controlado para el equipo de RGL Estudio.
+            </p>
           </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Descripción
-            </label>
-            <textarea
-              name="description"
-              value={formData.description || ""}
-              onChange={handleInputChange}
-              className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Tipo
-            </label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleInputChange}
-              className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
-            >
-              <option value="manejo_redes">Manejo de Redes</option>
-              <option value="auditoria">Auditoría</option>
-              <option value="capacitacion">Capacitación</option>
-              <option value="otro">Otro</option>
-            </select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Precio ($)
-              </label>
-              <input
-                type="number"
-                name="price"
-                step="0.01"
-                min="0"
-                value={formData.price}
-                onChange={handleInputChange}
-                className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Meses Duración
-              </label>
-              <input
-                type="number"
-                name="duration_months"
-                min="1"
-                value={formData.duration_months}
-                onChange={handleInputChange}
-                className="mt-2 block w-full bg-background px-3 py-2 text-sm border-0 focus:ring-2 focus:ring-primary outline-none"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 pt-2">
-            <input
-              type="checkbox"
-              name="is_active"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={handleInputChange}
-              className="h-4 w-4 accent-primary"
-            />
-            <label
-              htmlFor="is_active"
-              className="text-sm font-medium text-foreground"
-            >
-              Activo / Visible
-            </label>
-          </div>
-
-          {typeof formError === "string" && (
-            <p className="text-red-500 text-sm mt-2">{formError}</p>
-          )}
-
-          {editingServiceId && (
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleCancelEdit}
-            >
-              Cancelar edición
-            </Button>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center py-2 px-4 bg-primary text-primary-foreground text-sm font-bold hover:bg-primary/90 disabled:bg-primary/50"
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 gap-2 border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
+            onClick={handleGoBack}
           >
-            {isSubmitting
-              ? "Guardando..."
-              : editingServiceId
-                ? "Guardar cambios"
-                : "Guardar Servicio"}
-          </button>
-        </form>
-      </div>
+            <ArrowLeft className="size-4" />
+            Volver atrás
+          </Button>
+        </div>
+      </header>
 
-      {/* Lista de Servicios */}
-      <div className="w-full lg:w-2/3">
-        <h1 className="text-4xl font-black tracking-tight mb-8 space-grotesk">Catálogo de Servicios</h1>
-
-        {isLoading ? (
-          <div className="text-center p-8">Cargando servicios...</div>
-        ) : isError ? (
-          <div className="text-center p-8 text-red-500">
-            Error: {error.message}
+      <div className="grid gap-6 xl:grid-cols-[370px_minmax(0,1fr)]">
+        <aside className="h-fit border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:p-7 xl:sticky xl:top-6">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-spaceGrotesk text-base font-black uppercase tracking-[0.14em] text-foreground">
+              {editingServiceId ? "Editar Servicio" : "Nuevo Servicio"}
+            </h2>
+            <span className="inline-flex h-8 items-center gap-1 bg-primary/10 px-2.5 font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.14em] text-primary">
+              <Sparkles className="size-3" />
+              Admin
+            </span>
           </div>
-        ) : (
-          <DataTable
-            data={services}
-            columns={serviceColumns}
-            pageSize={8}
-            filterPlaceholder="Buscar por nombre, tipo o descripción"
-          />
-        )}
-      </div>
 
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Nombre
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
+                required
+              />
+              {formError?.fieldErrors?.name && (
+                <p className="mt-1 text-xs text-red-500">
+                  {formError.fieldErrors.name[0]}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Descripción
+              </label>
+              <textarea
+                name="description"
+                value={formData.description || ""}
+                onChange={handleInputChange}
+                rows={4}
+                className="mt-2 w-full resize-none border border-border/60 bg-background/90 px-3 py-2 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Tipo
+              </label>
+              <select
+                name="type"
+                value={formData.type}
+                onChange={handleInputChange}
+                className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
+              >
+                <option value="manejo_redes">Manejo de Redes</option>
+                <option value="auditoria">Auditoría</option>
+                <option value="capacitacion">Capacitación</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                  Precio ($)
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  step="0.01"
+                  min="0"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
+                  required
+                />
+              </div>
+              <div>
+                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                  Duración
+                </label>
+                <input
+                  type="number"
+                  name="duration_months"
+                  min="1"
+                  value={formData.duration_months}
+                  onChange={handleInputChange}
+                  className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
+                name="is_active"
+                id="is_active"
+                checked={formData.is_active}
+                onChange={handleInputChange}
+                className="h-4 w-4 accent-primary"
+              />
+              <label
+                htmlFor="is_active"
+                className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.14em] text-foreground"
+              >
+                Activo / Visible
+              </label>
+            </div>
+
+            {typeof formError === "string" && (
+              <p className="mt-2 text-sm text-red-500">{formError}</p>
+            )}
+
+            {editingServiceId && (
+              <Button
+                type="button"
+                variant="outline"
+                className="h-11 w-full border-border/70 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
+                onClick={handleCancelEdit}
+              >
+                Cancelar edición
+              </Button>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-11 w-full font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.18em]"
+            >
+              {isSubmitting
+                ? "Guardando..."
+                : editingServiceId
+                  ? "Guardar cambios"
+                  : "Guardar servicio"}
+            </Button>
+          </form>
+        </aside>
+
+        <section className="space-y-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <h2 className="font-spaceGrotesk text-2xl font-black uppercase tracking-[0.08em] text-foreground md:text-3xl">
+              Catálogo de Servicios
+            </h2>
+            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              {services.length} servicio(s) en catálogo
+            </p>
+          </div>
+
+          {isLoading ? (
+            <div className="border border-border/60 bg-card/80 p-8 text-center">
+              Cargando servicios...
+            </div>
+          ) : isError ? (
+            <div className="border border-border/60 bg-card/80 p-8 text-center text-red-500">
+              Error: {error.message}
+            </div>
+          ) : (
+            <DataTable
+              data={services}
+              columns={serviceColumns}
+              pageSize={8}
+              filterPlaceholder="Buscar por nombre, tipo o descripción"
+            />
+          )}
+        </section>
       </div>
     </div>
   );
