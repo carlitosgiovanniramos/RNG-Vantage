@@ -22,10 +22,10 @@ import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
 const initialState = {
   error: "",
   values: {
+    full_name: "",
     first_name: "",
     last_name: "",
     email: "",
-    confirm_password: "",
     data_consent: false,
   },
 };
@@ -184,7 +184,6 @@ export default function RegisterPage() {
               <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="first_name"
-                name="first_name"
                 type="text"
                 required
                 {...register("first_name")}
@@ -210,7 +209,6 @@ export default function RegisterPage() {
               <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="last_name"
-                name="last_name"
                 type="text"
                 required
                 {...register("last_name")}
@@ -237,7 +235,6 @@ export default function RegisterPage() {
             <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="email"
-              name="email"
               type="email"
               required
               {...register("email")}
@@ -263,7 +260,6 @@ export default function RegisterPage() {
             <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="password"
-              name="password"
               type={showPassword ? "text" : "password"}
               required
               minLength={8}
@@ -312,7 +308,6 @@ export default function RegisterPage() {
             <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="confirm_password"
-              name="confirm_password"
               type={showConfirmPassword ? "text" : "password"}
               required
               {...register("confirm_password")}
@@ -350,7 +345,6 @@ export default function RegisterPage() {
             <input
               type="checkbox"
               id="data_consent"
-              name="data_consent"
               required
               {...register("data_consent")}
               className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"

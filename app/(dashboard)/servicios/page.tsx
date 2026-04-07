@@ -43,6 +43,10 @@ export default function ServiciosAdminPage() {
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [formError, setFormError] = useState<CreateServiceFormError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formFieldErrors =
+    typeof formError === "object" && formError !== null
+      ? formError.fieldErrors
+      : undefined;
 
   const {
     data: services = [],
@@ -269,9 +273,9 @@ export default function ServiciosAdminPage() {
                 className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
                 required
               />
-              {formError?.fieldErrors?.name && (
+              {formFieldErrors?.name && (
                 <p className="mt-1 text-xs text-red-500">
-                  {formError.fieldErrors.name[0]}
+                  {formFieldErrors.name[0]}
                 </p>
               )}
             </div>
