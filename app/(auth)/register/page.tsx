@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { signup } from "@/app/(auth)/actions";
 import Link from "next/link";
 import {
@@ -33,6 +33,8 @@ const initialState = {
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const allowNativeSubmitRef = useRef(false);
   const [state, formAction, isPending] = useActionState(signup, initialState);
 
   const {
@@ -69,6 +71,63 @@ export default function RegisterPage() {
     state?.values?.last_name,
   ]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const form = formRef.current;
+      if (!form) {
+        return;
+      }
+
+      const firstNameInput = form.elements.namedItem("first_name") as HTMLInputElement | null;
+      const lastNameInput = form.elements.namedItem("last_name") as HTMLInputElement | null;
+      const emailInput = form.elements.namedItem("email") as HTMLInputElement | null;
+      const passwordInput = form.elements.namedItem("password") as HTMLInputElement | null;
+      const confirmPasswordInput = form.elements.namedItem("confirm_password") as HTMLInputElement | null;
+
+      if (
+        !firstNameInput ||
+        !lastNameInput ||
+        !emailInput ||
+        !passwordInput ||
+        !confirmPasswordInput
+      ) {
+        return;
+      }
+
+      const hasExternalProfilePrefill = Boolean(
+        state?.values?.first_name || state?.values?.last_name || state?.values?.email,
+      );
+      const profileLooksAutofilled =
+        !hasExternalProfilePrefill &&
+        (firstNameInput.value.trim().length > 0 ||
+          lastNameInput.value.trim().length > 0 ||
+          emailInput.value.trim().length > 0);
+      const passwordsLookAutofilled =
+        passwordInput.value.length > 0 || confirmPasswordInput.value.length > 0;
+
+      if (profileLooksAutofilled || passwordsLookAutofilled) {
+        reset({
+          first_name: state?.values?.first_name ?? "",
+          last_name: state?.values?.last_name ?? "",
+          email: state?.values?.email ?? "",
+          password: "",
+          confirm_password: "",
+          data_consent: Boolean(state?.values?.data_consent),
+        });
+      }
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [
+    reset,
+    state?.values?.data_consent,
+    state?.values?.email,
+    state?.values?.first_name,
+    state?.values?.last_name,
+  ]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-3 text-center">
@@ -89,14 +148,21 @@ export default function RegisterPage() {
       </div>
 
       <form
+        ref={formRef}
         action={formAction}
         className="space-y-5"
         noValidate
         onSubmit={(event) => {
+          if (allowNativeSubmitRef.current) {
+            allowNativeSubmitRef.current = false;
+            return;
+          }
+
           event.preventDefault();
           const formElement = event.currentTarget;
           void handleSubmit(() => {
-            formElement.submit();
+            allowNativeSubmitRef.current = true;
+            formElement.requestSubmit();
           })(event);
         }}
       >

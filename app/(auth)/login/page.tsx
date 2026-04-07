@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, Suspense, useEffect, useState } from "react";
+import { useActionState, Suspense, useEffect, useRef, useState } from "react";
 import { login, resendSignupConfirmation } from "@/app/(auth)/actions";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -36,6 +36,8 @@ const initialResendState = {
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const allowNativeSubmitRef = useRef(false);
   const searchParams = useSearchParams();
   const redirectParams = searchParams.get("redirect") ?? "";
   const wasRegistered = searchParams.get("registered") === "1";
@@ -71,6 +73,38 @@ function LoginForm() {
     });
   }, [prefillEmail, reset, state?.values?.email]);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const form = formRef.current;
+      if (!form) {
+        return;
+      }
+
+      const emailInput = form.elements.namedItem("email") as HTMLInputElement | null;
+      const passwordInput = form.elements.namedItem("password") as HTMLInputElement | null;
+
+      if (!emailInput || !passwordInput) {
+        return;
+      }
+
+      const hasExternalEmailPrefill = Boolean(state?.values?.email ?? prefillEmail);
+      const emailLooksAutofilled =
+        !hasExternalEmailPrefill && emailInput.value.trim().length > 0;
+      const passwordLooksAutofilled = passwordInput.value.length > 0;
+
+      if (emailLooksAutofilled || passwordLooksAutofilled) {
+        reset({
+          email: state?.values?.email ?? prefillEmail,
+          password: "",
+        });
+      }
+    }, 120);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [prefillEmail, reset, state?.values?.email]);
+
   return (
     <div className="space-y-6">
       <div className="space-y-3 text-center">
@@ -91,14 +125,21 @@ function LoginForm() {
       </div>
 
       <form
+        ref={formRef}
         action={formAction}
         className="space-y-5"
         noValidate
         onSubmit={(event) => {
+          if (allowNativeSubmitRef.current) {
+            allowNativeSubmitRef.current = false;
+            return;
+          }
+
           event.preventDefault();
           const formElement = event.currentTarget;
           void handleSubmit(() => {
-            formElement.submit();
+            allowNativeSubmitRef.current = true;
+            formElement.requestSubmit();
           })(event);
         }}
       >
@@ -147,7 +188,6 @@ function LoginForm() {
             <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="email"
-              name="email"
               type="email"
               required
               {...register("email")}
@@ -175,7 +215,6 @@ function LoginForm() {
             <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="password"
-              name="password"
               type={showPassword ? "text" : "password"}
               required
               {...register("password")}
