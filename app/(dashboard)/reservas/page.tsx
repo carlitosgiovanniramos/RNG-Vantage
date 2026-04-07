@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getReservations,
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 type ReservationRow = Database["public"]["Tables"]["reservations"]["Row"];
 
 export default function ReservasAdminPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   const {
@@ -41,6 +43,15 @@ export default function ReservasAdminPage() {
     } else {
       alert("Error al actualizar: " + error);
     }
+  };
+
+  const handleGoBack = () => {
+    if (typeof window !== "undefined" && window.history.length <= 1) {
+      router.push("/dashboard");
+      return;
+    }
+
+    router.back();
   };
 
   const columns: DataTableColumn<ReservationRow>[] = [
@@ -120,7 +131,12 @@ export default function ReservasAdminPage() {
 
   return (
     <div className="container mx-auto space-y-6 p-4">
-      <h1 className="text-2xl font-bold">Gestión de Reservas</h1>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-2xl font-bold">Gestión de Reservas</h1>
+        <Button type="button" variant="outline" onClick={handleGoBack}>
+          Volver atrás
+        </Button>
+      </div>
       <DataTable
         data={reservations}
         columns={columns}

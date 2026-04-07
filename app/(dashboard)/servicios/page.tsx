@@ -1,8 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getServices, createService, deleteService } from "./actions";
+import {
+  getServices,
+  createService,
+  updateService,
+  deleteService,
+} from "./actions";
 import { CreateServiceInput } from "@/lib/validators/service";
 import type { Database } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
@@ -18,18 +24,22 @@ type CreateServiceFormError =
   | string
   | null;
 
+const EMPTY_SERVICE_FORM: CreateServiceInput = {
+  name: "",
+  description: "",
+  type: "manejo_redes",
+  price: 0,
+  duration_months: 1,
+  is_active: true,
+};
+
 export default function ServiciosAdminPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   // Form state
-  const [formData, setFormData] = useState<CreateServiceInput>({
-    name: "",
-    description: "",
-    type: "manejo_redes",
-    price: 0,
-    duration_months: 1,
-    is_active: true,
-  });
+  const [formData, setFormData] = useState<CreateServiceInput>(EMPTY_SERVICE_FORM);
+  const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [formError, setFormError] = useState<CreateServiceFormError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -72,18 +82,20 @@ export default function ServiciosAdminPage() {
     setIsSubmitting(true);
     setFormError(null);
 
-    const { success, error, details } = await createService(formData);
+    const result = editingServiceId
+      ? await updateService(editingServiceId, formData)
+      : await createService(formData);
+
+    const { success, error, details } = result;
 
     if (success) {
-      alert("Servicio creado exitosamente!");
-      setFormData({
-        name: "",
-        description: "",
-        type: "manejo_redes",
-        price: 0,
-        duration_months: 1,
-        is_active: true,
-      });
+      alert(
+        editingServiceId
+          ? "Servicio actualizado exitosamente!"
+          : "Servicio creado exitosamente!",
+      );
+      setFormData(EMPTY_SERVICE_FORM);
+      setEditingServiceId(null);
       await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
       await refetch();
     } else {
@@ -103,6 +115,34 @@ export default function ServiciosAdminPage() {
     } else {
       alert("Error al eliminar: " + error);
     }
+  };
+
+  const handleStartEdit = (service: ServiceRow) => {
+    setEditingServiceId(service.id);
+    setFormError(null);
+    setFormData({
+      name: service.name,
+      description: service.description ?? "",
+      type: service.type,
+      price: service.price,
+      duration_months: service.duration_months,
+      is_active: service.is_active,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingServiceId(null);
+    setFormError(null);
+    setFormData(EMPTY_SERVICE_FORM);
+  };
+
+  const handleGoBack = () => {
+    if (typeof window !== "undefined" && window.history.length <= 1) {
+      router.push("/dashboard");
+      return;
+    }
+
+    router.back();
   };
 
   const serviceColumns: DataTableColumn<ServiceRow>[] = [
@@ -141,22 +181,36 @@ export default function ServiciosAdminPage() {
       key: "actions",
       header: "Acciones",
       render: (service) => (
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={() => handleDelete(service.id)}
-        >
-          Eliminar
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={() => handleStartEdit(service)}>
+            Editar
+          </Button>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => handleDelete(service.id)}
+          >
+            Eliminar
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="container mx-auto p-4 flex flex-col md:flex-row gap-6">
+    <div className="container mx-auto space-y-4 p-4">
+      <div>
+        <Button type="button" variant="outline" onClick={handleGoBack}>
+          Volver atrás
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-6 md:flex-row">
       {/* Formulario de Creación */}
       <div className="w-full md:w-1/3 bg-white p-6 rounded-lg border border-gray-200 shadow-sm h-fit">
-        <h2 className="text-xl font-bold mb-4">Crear Nuevo Servicio</h2>
+        <h2 className="text-xl font-bold mb-4">
+          {editingServiceId ? "Editar Servicio" : "Crear Nuevo Servicio"}
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -259,12 +313,27 @@ export default function ServiciosAdminPage() {
             <p className="text-red-500 text-sm mt-2">{formError}</p>
           )}
 
+          {editingServiceId && (
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={handleCancelEdit}
+            >
+              Cancelar edición
+            </Button>
+          )}
+
           <button
             type="submit"
             disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300"
           >
-            {isSubmitting ? "Guardando..." : "Guardar Servicio"}
+            {isSubmitting
+              ? "Guardando..."
+              : editingServiceId
+                ? "Guardar cambios"
+                : "Guardar Servicio"}
           </button>
         </form>
       </div>
@@ -287,6 +356,8 @@ export default function ServiciosAdminPage() {
             filterPlaceholder="Buscar por nombre, tipo o descripción"
           />
         )}
+      </div>
+
       </div>
     </div>
   );
