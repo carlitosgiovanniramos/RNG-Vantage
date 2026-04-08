@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export type StatusValue = "pending" | "active" | "expired" | "completed";
+export type StatusValue = "pending" | "active" | "expired" | "completed" | "cancelled";
 
 type StatusBadgeProps = {
   status: StatusValue;
@@ -28,6 +28,11 @@ const statusMap: Record<StatusValue, { label: string; className: string }> = {
     label: "Completado",
     className:
       "border-0 bg-sky-100 text-sky-900 dark:bg-sky-900/30 dark:text-sky-200",
+  },
+  cancelled: {
+    label: "Cancelada",
+    className:
+      "border-0 bg-zinc-100 text-zinc-700 dark:bg-zinc-800/50 dark:text-zinc-300",
   },
 };
 

@@ -81,7 +81,7 @@ export default function ReservasAdminPage() {
         }
 
         if (res.status === "cancelled") {
-          return <StatusBadge status="expired" />;
+          return <StatusBadge status="cancelled" />;
         }
 
         return <StatusBadge status={res.status as "pending" | "completed"} />;

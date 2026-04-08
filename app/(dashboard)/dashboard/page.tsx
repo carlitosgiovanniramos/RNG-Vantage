@@ -44,9 +44,8 @@ function formatCurrency(value: number): string {
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 
   const { data: subscriptionsData } = await supabase
     .from("subscriptions")
