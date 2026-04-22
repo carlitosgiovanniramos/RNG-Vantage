@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getServices,
@@ -35,7 +35,6 @@ const EMPTY_SERVICE_FORM: CreateServiceInput = {
 };
 
 export default function ServiciosAdminPage() {
-  const router = useRouter();
   const queryClient = useQueryClient();
 
   // Form state
@@ -43,6 +42,10 @@ export default function ServiciosAdminPage() {
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [formError, setFormError] = useState<CreateServiceFormError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const formFieldErrors =
+    typeof formError === "object" && formError !== null
+      ? formError.fieldErrors
+      : undefined;
 
   const {
     data: services = [],
@@ -137,15 +140,6 @@ export default function ServiciosAdminPage() {
     setFormData(EMPTY_SERVICE_FORM);
   };
 
-  const handleGoBack = () => {
-    if (typeof window !== "undefined" && window.history.length <= 1) {
-      router.push("/dashboard");
-      return;
-    }
-
-    router.back();
-  };
-
   const serviceColumns: DataTableColumn<ServiceRow>[] = [
     {
       key: "name",
@@ -232,15 +226,13 @@ export default function ServiciosAdminPage() {
               controlado para el equipo de RGL Estudio.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 gap-2 border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
-            onClick={handleGoBack}
+          <Link
+            href="/dashboard"
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
           >
             <ArrowLeft className="size-4" />
-            Volver atrás
-          </Button>
+            Volver al dashboard
+          </Link>
         </div>
       </header>
 
@@ -269,9 +261,9 @@ export default function ServiciosAdminPage() {
                 className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
                 required
               />
-              {formError?.fieldErrors?.name && (
+              {formFieldErrors?.name && (
                 <p className="mt-1 text-xs text-red-500">
-                  {formError.fieldErrors.name[0]}
+                  {formFieldErrors.name[0]}
                 </p>
               )}
             </div>

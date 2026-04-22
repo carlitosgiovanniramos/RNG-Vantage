@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   CalendarClock,
   CreditCard,
+  Home,
   Repeat,
   TrendingUp,
 } from "lucide-react";
@@ -132,6 +133,13 @@ export default async function DashboardPage() {
           </div>
 
           <div className="flex flex-wrap gap-3">
+            <Link
+              href="/"
+              className="inline-flex h-12 items-center gap-2 border border-border/60 bg-background/85 px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-muted"
+            >
+              Panel principal
+              <Home className="size-4" />
+            </Link>
             <Link
               href="/reservas"
               className="inline-flex h-12 items-center gap-2 bg-primary px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-primary/90"
