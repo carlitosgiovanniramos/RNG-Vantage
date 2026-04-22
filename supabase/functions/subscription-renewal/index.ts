@@ -10,10 +10,12 @@ declare const Deno: {
 type ServiceInfo = {
   type: string;
   duration_months: number;
+  price: number;
 };
 
 type RenewableSubscription = {
   id: string;
+  user_id: string;
   ends_at: string;
   auto_renew: boolean;
   services: ServiceInfo | ServiceInfo[] | null;
@@ -54,7 +56,7 @@ Deno.serve(async () => {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("subscriptions")
-    .select("id, ends_at, auto_renew, services!inner(type, duration_months)")
+    .select("id, user_id, ends_at, auto_renew, services!inner(type, duration_months, price)")
     .eq("status", "active")
     .lte("ends_at", now);
 
@@ -93,6 +95,23 @@ Deno.serve(async () => {
 
       if (renewError) {
         failures.push(`renew:${subscription.id}:${renewError.message}`);
+        continue;
+      }
+
+      // PASO 2: Generar la nueva transacción (Recibo pendiente)
+      const { error: transactionError } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: subscription.user_id,
+          subscription_id: subscription.id,
+          amount: service.price,
+          status: "pending",
+          payment_method: "pending",
+        });
+
+      if (transactionError) {
+        failures.push(`transaction:${subscription.id}:${transactionError.message}`);
+        // Nota: la suscripción sí se renovó su fecha, pero falló la creación del recibo.
         continue;
       }
 
