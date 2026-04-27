@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getReservations,
   updateReservationStatus,
@@ -11,11 +13,41 @@ import type { Database } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CalendarCheck2, Clock3, XCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowLeft,
+  CalendarCheck2,
+  Clock3,
+  XCircle,
+  ChevronDown,
+  Eye,
+} from "lucide-react";
 
 type ReservationRow = Database["public"]["Tables"]["reservations"]["Row"];
 
 export default function ReservasAdminPage() {
+  const [statusFilter, setStatusFilter] = useState<"all" | ReservationStatus>(
+    "all",
+  );
+  const [selectedReservation, setSelectedReservation] =
+    useState<ReservationRow | null>(null);
   const queryClient = useQueryClient();
 
   const {
@@ -35,13 +67,36 @@ export default function ReservasAdminPage() {
     },
   });
 
+  // Filtrar reservas por estado
+  const filteredReservations = reservations.filter((res) => {
+    if (statusFilter === "all") return true;
+    return res.status === statusFilter;
+  });
+
   const handleStatusUpdate = async (id: string, status: ReservationStatus) => {
     const { success, error } = await updateReservationStatus(id, status);
     if (success) {
       await queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
       await refetch();
+
+      // Mostrar toast de éxito
+      const statusLabel = {
+        pending: "Pendiente",
+        confirmed: "Confirmada",
+        cancelled: "Cancelada",
+        completed: "Completada",
+      }[status];
+
+      toast.success(`Reserva actualizada a ${statusLabel}`, {
+        description: `ID: ${id.substring(0, 8)}...`,
+      });
+
+      // Cerrar el dialog si está abierto
+      setSelectedReservation(null);
     } else {
-      alert("Error al actualizar: " + error);
+      toast.error("Error al actualizar", {
+        description: error || "Intenta de nuevo más tarde",
+      });
     }
   };
 
@@ -62,6 +117,14 @@ export default function ReservasAdminPage() {
           <div className="text-xs text-muted-foreground">{res.email}</div>
         </div>
       ),
+    },
+    {
+      key: "phone",
+      header: "Teléfono",
+      render: (res) =>
+        res.phone || (
+          <span className="text-muted-foreground">No especificado</span>
+        ),
     },
     {
       key: "preferred_date",
@@ -92,32 +155,210 @@ export default function ReservasAdminPage() {
       header: "Acciones",
       render: (res) => (
         <div className="flex gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
-            onClick={() => handleStatusUpdate(res.id, "confirmed")}
-            disabled={res.status === "confirmed"}
-          >
-            Confirmar
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            className="h-8 bg-destructive/15 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-destructive hover:bg-destructive/25"
-            onClick={() => handleStatusUpdate(res.id, "cancelled")}
-            disabled={res.status === "cancelled"}
-          >
-            Cancelar
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
+                onClick={() => setSelectedReservation(res)}
+              >
+                <Eye className="mr-1.5 size-3" />
+                Ver
+              </Button>
+            </DialogTrigger>
+            {selectedReservation?.id === res.id && (
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Detalle de Reserva</DialogTitle>
+                  <DialogDescription>
+                    Información completa de la reserva y opciones de gestión.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4 py-4">
+                  {/* Información Personal */}
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Información Personal</h4>
+                    <div className="space-y-1 rounded-lg bg-muted p-3">
+                      <p className="text-sm">
+                        <span className="font-medium">Nombre:</span>{" "}
+                        {selectedReservation.first_name}{" "}
+                        {selectedReservation.last_name}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Email:</span>{" "}
+                        {selectedReservation.email}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Teléfono:</span>{" "}
+                        {selectedReservation.phone || "No especificado"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Información de la Reserva */}
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Información de la Reserva</h4>
+                    <div className="space-y-1 rounded-lg bg-muted p-3">
+                      <p className="text-sm">
+                        <span className="font-medium">ID:</span>{" "}
+                        {selectedReservation.id}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Fecha Preferida:</span>{" "}
+                        {new Date(
+                          selectedReservation.preferred_date,
+                        ).toLocaleString("es-EC", {
+                          dateStyle: "medium",
+                          timeStyle: "short",
+                        })}
+                      </p>
+                      <p className="text-sm">
+                        <span className="font-medium">Estado:</span>{" "}
+                        {selectedReservation.status === "confirmed" ? (
+                          <StatusBadge status="active" />
+                        ) : selectedReservation.status === "cancelled" ? (
+                          <StatusBadge status="expired" />
+                        ) : (
+                          <StatusBadge
+                            status={
+                              selectedReservation.status as
+                                | "pending"
+                                | "completed"
+                            }
+                          />
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Notas */}
+                  {selectedReservation.notes && (
+                    <div className="space-y-2">
+                      <h4 className="font-medium">Notas</h4>
+                      <p className="rounded-lg bg-muted p-3 text-sm">
+                        {selectedReservation.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Fechas del Sistema */}
+                  <div className="space-y-2 border-t pt-4">
+                    <h4 className="text-xs font-medium text-muted-foreground">
+                      Información del Sistema
+                    </h4>
+                    <div className="space-y-1 text-xs text-muted-foreground">
+                      <p>
+                        Creada:{" "}
+                        {new Date(
+                          selectedReservation.created_at,
+                        ).toLocaleString("es-EC")}
+                      </p>
+                      <p>
+                        Actualizada:{" "}
+                        {new Date(
+                          selectedReservation.updated_at,
+                        ).toLocaleString("es-EC")}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Cambiar Estado */}
+                  <div className="space-y-2 border-t pt-4">
+                    <h4 className="font-medium">Cambiar Estado</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 border-amber-600/30 bg-amber-50/50 text-amber-900 hover:bg-amber-100 dark:border-amber-600/30 dark:bg-amber-950/30 dark:text-amber-200 dark:hover:bg-amber-950/50"
+                        onClick={() => handleStatusUpdate(res.id, "pending")}
+                        disabled={res.status === "pending"}
+                      >
+                        Pendiente
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 border-emerald-600/30 bg-emerald-50/50 text-emerald-900 hover:bg-emerald-100 dark:border-emerald-600/30 dark:bg-emerald-950/30 dark:text-emerald-200 dark:hover:bg-emerald-950/50"
+                        onClick={() => handleStatusUpdate(res.id, "confirmed")}
+                        disabled={res.status === "confirmed"}
+                      >
+                        Confirmada
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-8 bg-destructive/15 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-destructive hover:bg-destructive/25"
+                        onClick={() => handleStatusUpdate(res.id, "cancelled")}
+                        disabled={res.status === "cancelled"}
+                      >
+                        Cancelada
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <DialogClose asChild>
+                  <Button type="button" variant="outline" className="w-full">
+                    Cerrar
+                  </Button>
+                </DialogClose>
+              </DialogContent>
+            )}
+          </Dialog>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
+              >
+                <ChevronDown className="size-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>Cambiar Estado</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={res.status === "pending"}
+                onClick={() => handleStatusUpdate(res.id, "pending")}
+              >
+                Pendiente
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={res.status === "confirmed"}
+                onClick={() => handleStatusUpdate(res.id, "confirmed")}
+              >
+                Confirmada
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={res.status === "completed"}
+                onClick={() => handleStatusUpdate(res.id, "completed")}
+              >
+                Completada
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={res.status === "cancelled"}
+                onClick={() => handleStatusUpdate(res.id, "cancelled")}
+                className="text-destructive focus:text-destructive"
+              >
+                Cancelada
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       ),
     },
   ];
 
-  const pendingCount = reservations.filter((res) => res.status === "pending").length;
+  const pendingCount = reservations.filter(
+    (res) => res.status === "pending",
+  ).length;
   const confirmedCount = reservations.filter(
     (res) => res.status === "confirmed",
   ).length;
@@ -200,12 +441,41 @@ export default function ReservasAdminPage() {
         </article>
       </section>
 
-      <DataTable
-        data={reservations}
-        columns={columns}
-        pageSize={8}
-        filterPlaceholder="Buscar por cliente, email o estado"
-      />
+      {/* Tabs para filtrar por estado */}
+      <div className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+        <Tabs
+          value={statusFilter}
+          onValueChange={(value) =>
+            setStatusFilter(value as typeof statusFilter)
+          }
+        >
+          <TabsList className="grid w-full grid-cols-4 h-10 bg-muted/50">
+            <TabsTrigger value="all" className="text-xs sm:text-sm">
+              Todas
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="text-xs sm:text-sm">
+              Pendientes ({pendingCount})
+            </TabsTrigger>
+            <TabsTrigger value="confirmed" className="text-xs sm:text-sm">
+              Confirmadas ({confirmedCount})
+            </TabsTrigger>
+            <TabsTrigger value="cancelled" className="text-xs sm:text-sm">
+              Canceladas ({cancelledCount})
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="mt-4">
+            <TabsContent value={statusFilter} className="mt-0">
+              <DataTable
+                data={filteredReservations}
+                columns={columns}
+                pageSize={8}
+                filterPlaceholder="Buscar por cliente, email o teléfono"
+              />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 }
