@@ -1,12 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Home } from "lucide-react";
+import { useState } from "react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
-import { getTransactions, type TransactionRow } from "./actions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { getTransactions, type TransactionRow, markTransactionAsCompleted } from "./actions";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-EC", {
@@ -16,6 +21,13 @@ function formatCurrency(value: number) {
 }
 
 export default function TransaccionesAdminPage() {
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<TransactionRow | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [notes, setNotes] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+
   const {
     data: transactions = [],
     isLoading,
@@ -31,6 +43,39 @@ export default function TransaccionesAdminPage() {
       return data ?? [];
     },
   });
+
+  const handleOpenDialog = (tx: TransactionRow) => {
+    setSelectedTx(tx);
+    setPaymentMethod("cash");
+    setNotes("");
+    setOpenDialog(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedTx) return;
+
+    setIsSubmitting(true);
+    try {
+      const result = await markTransactionAsCompleted({
+        transaction_id: selectedTx.id,
+        payment_method: paymentMethod,
+        notes: notes || undefined,
+      });
+
+      if (result.success) {
+        setOpenDialog(false);
+        queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
+        alert("✅ Pago registrado exitosamente");
+      } else {
+        alert(`❌ Error: ${result.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al registrar el pago");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const columns: DataTableColumn<TransactionRow>[] = [
     {
@@ -71,6 +116,20 @@ export default function TransaccionesAdminPage() {
           dateStyle: "medium",
           timeStyle: "short",
         }),
+    },
+    {
+      key: "actions",
+      header: "Acciones",
+      render: (tx) => (
+        <Button
+          size="sm"
+          variant={tx.status === "pending" ? "default" : "ghost"}
+          disabled={tx.status !== "pending"}
+          onClick={() => handleOpenDialog(tx)}
+        >
+          {tx.status === "pending" ? "Registrar Pago" : "Completado"}
+        </Button>
+      ),
     },
   ];
 
@@ -120,6 +179,65 @@ export default function TransaccionesAdminPage() {
         pageSize={10}
         filterPlaceholder="Buscar por ID, estado o método"
       />
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Registrar Pago</DialogTitle>
+          </DialogHeader>
+
+          {selectedTx && (
+            <div className="space-y-4">
+              <div className="rounded-lg bg-muted p-3">
+                <p className="text-sm text-muted-foreground">
+                  Transacción: {selectedTx.id.substring(0, 12)}...
+                </p>
+                <p className="text-lg font-semibold">
+                  {formatCurrency(Number(selectedTx.amount ?? 0))}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Método de Pago</label>
+                <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Efectivo</SelectItem>
+                    <SelectItem value="transfer">Transferencia</SelectItem>
+                    <SelectItem value="card">Tarjeta</SelectItem>
+                    <SelectItem value="pending">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Notas (opcional)</label>
+                <Textarea
+                  placeholder="Referencia del banco, comprobante, etc..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="min-h-20"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpenDialog(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {isSubmitting ? "Guardando..." : "Registrar Pago"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
