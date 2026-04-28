@@ -11,7 +11,23 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { getTransactions, type TransactionRow, markTransactionAsCompleted } from "./actions";
+import {
+  getTransactions,
+  markTransactionAsCompleted,
+  markTransactionAsFailed,
+  cleanExpiredTransactions,
+} from "./actions";
+
+export type TransactionRow = {
+  id: string;
+  user_id: string;
+  subscription_id: string | null;
+  amount: number;
+  status: "pending" | "completed" | "failed" | "refunded";
+  payment_method: "cash" | "transfer" | "card" | "pending";
+  created_at: string;
+  notes: string | null;
+};
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-EC", {
@@ -77,6 +93,40 @@ export default function TransaccionesAdminPage() {
     }
   };
 
+  const handleMarkFailed = async (tx: TransactionRow) => {
+    if (!confirm("¿Estás seguro de que quieres marcar esta transacción como fallida/cancelada?")) return;
+    
+    try {
+      const result = await markTransactionAsFailed(tx.id);
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
+        alert("✅ Transacción marcada como fallida");
+      } else {
+        alert(`❌ Error: ${result.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al cancelar la transacción");
+    }
+  };
+
+  const handleCleanExpired = async () => {
+    if (!confirm("¿Revisar y cancelar transacciones pendientes con más de 24 horas?")) return;
+    
+    try {
+      const result = await cleanExpiredTransactions();
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
+        alert(`✅ Operación completada: ${result.message}`);
+      } else {
+        alert(`❌ Error: ${result.error}`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al limpiar transacciones expiradas");
+    }
+  };
+
   const columns: DataTableColumn<TransactionRow>[] = [
     {
       key: "id",
@@ -100,11 +150,16 @@ export default function TransaccionesAdminPage() {
         if (tx.status === "completed") {
           return <StatusBadge status="completed" />;
         }
-
         if (tx.status === "pending") {
           return <StatusBadge status="pending" />;
         }
-
+        if (tx.status === "failed" || tx.status === "refunded") {
+          return (
+            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">
+              {tx.status === "failed" ? "Fallido" : "Cancelado"}
+            </span>
+          );
+        }
         return <StatusBadge status="expired" />;
       },
     },
@@ -121,14 +176,22 @@ export default function TransaccionesAdminPage() {
       key: "actions",
       header: "Acciones",
       render: (tx) => (
-        <Button
-          size="sm"
-          variant={tx.status === "pending" ? "default" : "ghost"}
-          disabled={tx.status !== "pending"}
-          onClick={() => handleOpenDialog(tx)}
-        >
-          {tx.status === "pending" ? "Registrar Pago" : "Completado"}
-        </Button>
+        <div className="flex gap-2 items-center">
+          {tx.status === "pending" ? (
+            <>
+              <Button size="sm" onClick={() => handleOpenDialog(tx)}>
+                Registrar Pago
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => handleMarkFailed(tx)}>
+                Marcar Fallido
+              </Button>
+            </>
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {tx.status === "completed" ? "Completado" : "Cancelado"}
+            </span>
+          )}
+        </div>
       ),
     },
   ];
@@ -155,7 +218,15 @@ export default function TransaccionesAdminPage() {
           </h1>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCleanExpired}
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+          >
+            Limpiar Expiradas (24h)
+          </Button>
+
           <Link
             href="/dashboard"
             className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"

@@ -8,6 +8,20 @@ type ActionResult =
   | { success: false; error: string };
 
 /**
+ * Tipo para una fila de transacción en la tabla
+ */
+type TransactionRow = {
+  id: string;
+  user_id: string;
+  subscription_id: string | null;
+  amount: number;
+  status: "pending" | "completed" | "failed" | "refunded";
+  payment_method: "cash" | "transfer" | "card" | "pending";
+  created_at: string;
+  notes: string | null;
+};
+
+/**
  * Server Action: Marcar una transacción como pagada
  * 
  * Cuando Ruth registra que un cliente ya pagó:
@@ -15,11 +29,8 @@ type ActionResult =
  * 2. Activa automáticamente la suscripción asociada
  * 
  * @param data - { transaction_id, payment_method, notes? }
- * @returns { success: true } o { success: false, error: "..." }
  */
-export async function markTransactionAsCompleted(
-  data: unknown
-): Promise<ActionResult> {
+export async function markTransactionAsCompleted(data: unknown) {
   const parsed = markTransactionAsPaidSchema.safeParse(data);
 
   if (!parsed.success) {
@@ -43,7 +54,7 @@ export async function markTransactionAsCompleted(
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("role")
-    .eq("user_id", user.user.id)
+    .eq("id", user.user.id)
     .single();
 
   if (profileError || profile?.role !== "admin") {
@@ -101,7 +112,6 @@ export async function markTransactionAsCompleted(
         "[markTransactionAsCompleted] Update subscription error:",
         updateSubscriptionError.message
       );
-      // Nota: La transacción sí se marcó como pagada, pero falló la activación de la suscripción
       return {
         success: false,
         error: "Pago registrado, pero hubo un error al activar la suscripción.",
@@ -113,27 +123,10 @@ export async function markTransactionAsCompleted(
 }
 
 /**
- * Tipo para una fila de transacción en la tabla
- */
-export type TransactionRow = {
-  id: string;
-  user_id: string;
-  subscription_id: string | null;
-  amount: number;
-  status: "pending" | "completed" | "failed" | "refunded";
-  payment_method: "cash" | "transfer" | "card" | "pending";
-  created_at: string;
-  notes: string | null;
-};
-
-/**
  * Server Action: Obtener todas las transacciones
  * Ruth (admin) ve todas las transacciones del sistema
  */
-export async function getTransactions(): Promise<
-  | { data: TransactionRow[]; error: null }
-  | { data: null; error: string }
-> {
+export async function getTransactions() {
   const supabase = await createClient();
 
   // Verificar que el usuario es admin
@@ -145,7 +138,7 @@ export async function getTransactions(): Promise<
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")
-    .eq("user_id", user.user.id)
+    .eq("id", user.user.id)
     .single();
 
   if (profile?.role !== "admin") {
@@ -164,4 +157,99 @@ export async function getTransactions(): Promise<
   }
 
   return { data: (data || []) as TransactionRow[], error: null };
+}
+
+/**
+ * Server Action: Marcar transacción como fallida/cancelada
+ * 
+ * Cambia el estado a "failed" si estaba "pending"
+ * y cancela la suscripción asociada.
+ */
+export async function markTransactionAsFailed(transaction_id: string) {
+  if (!transaction_id || typeof transaction_id !== "string") {
+    return { success: false, error: "ID inválido." };
+  }
+
+  const supabase = await createClient();
+
+  const { data: user, error: userError } = await supabase.auth.getUser();
+  if (userError || !user?.user) return { success: false, error: "No estás autenticado." };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.user.id).single();
+  if (profile?.role !== "admin") return { success: false, error: "No autorizado." };
+
+  const { data: transaction, error: getError } = await supabase
+    .from("transactions")
+    .select("id, subscription_id, status")
+    .eq("id", transaction_id)
+    .single();
+
+  if (getError || !transaction) return { success: false, error: "Transacción no encontrada." };
+  if (transaction.status !== "pending") return { success: false, error: "La transacción ya no está pendiente." };
+
+  const { error: updateTxError } = await supabase
+    .from("transactions")
+    .update({ status: "failed", notes: "Cancelada por admin" })
+    .eq("id", transaction_id);
+
+  if (updateTxError) return { success: false, error: "Error al cancelar la transacción." };
+
+  if (transaction.subscription_id) {
+    await supabase
+      .from("subscriptions")
+      .update({ status: "cancelled" })
+      .eq("id", transaction.subscription_id);
+  }
+
+  return { success: true };
+}
+
+/**
+ * Server Action: Limpiar transacciones expiradas (> 24 horas pendientes)
+ * 
+ * Pasa las transacciones "pending" con más de 24 horas a "failed"
+ * y sus suscripciones a "cancelled".
+ */
+export async function cleanExpiredTransactions() {
+  const supabase = await createClient();
+
+  const { data: user } = await supabase.auth.getUser();
+  if (!user?.user) return { success: false, error: "No estás autenticado." };
+
+  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.user.id).single();
+  if (profile?.role !== "admin") return { success: false, error: "No autorizado." };
+
+  // Calcular la fecha hace 24 horas
+  const date24hAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  // Buscar transacciones pendientes antiguas
+  const { data: expiredTxs } = await supabase
+    .from("transactions")
+    .select("id, subscription_id")
+    .eq("status", "pending")
+    .lt("created_at", date24hAgo);
+
+  if (!expiredTxs || expiredTxs.length === 0) {
+    return { success: true, count: 0, message: "No hay transacciones expiradas." };
+  }
+
+  let count = 0;
+  for (const tx of expiredTxs) {
+    const { error: txError } = await supabase
+      .from("transactions")
+      .update({ status: "failed", notes: "Expirada (no se registró pago en 24h)" })
+      .eq("id", tx.id);
+      
+    if (!txError) {
+      if (tx.subscription_id) {
+        await supabase
+          .from("subscriptions")
+          .update({ status: "cancelled" })
+          .eq("id", tx.subscription_id);
+      }
+      count++;
+    }
+  }
+
+  return { success: true, count, message: `Se limpiaron ${count} transacciones expiradas.` };
 }

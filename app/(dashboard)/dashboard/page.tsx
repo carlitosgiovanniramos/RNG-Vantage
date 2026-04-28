@@ -154,6 +154,20 @@ export default async function DashboardPage() {
               Ir a Servicios
               <ArrowUpRight className="size-4" />
             </Link>
+            <Link
+              href="/subscriptions"
+              className="inline-flex h-12 items-center gap-2 border border-border/60 bg-background/85 px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-muted"
+            >
+              Ir a Suscripciones
+              <ArrowUpRight className="size-4" />
+            </Link>
+            <Link
+              href="/transacciones"
+              className="inline-flex h-12 items-center gap-2 bg-primary px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Consultar Transacciones
+              <ArrowUpRight className="size-4" />
+            </Link>
           </div>
         </div>
       </header>

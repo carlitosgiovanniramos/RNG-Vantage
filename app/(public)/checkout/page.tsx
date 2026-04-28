@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { createSubscriptionAction } from "./actions";
+import { CheckoutForm } from "./checkout-form";
 
 type CheckoutPageProps = {
   searchParams: Promise<{
@@ -91,8 +91,52 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
       </p>
 
       {success && (
-        <div className="mt-6 rounded-md border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Suscripcion creada con exito.
+        <div className="mt-6 rounded-md border border-emerald-300 bg-emerald-50 px-6 py-6 text-emerald-900 shadow-sm dark:bg-emerald-950/20 dark:text-emerald-50">
+          <h3 className="mb-2 text-xl font-bold text-emerald-800 dark:text-emerald-400">
+            Solicitud de contratación registrada
+          </h3>
+          <p className="mb-4 text-emerald-800 dark:text-emerald-200">
+            Tu suscripción está pendiente de pago.
+          </p>
+
+          <div className="my-4 grid gap-2 border-y border-emerald-200 py-4 dark:border-emerald-800/60">
+            <div className="flex justify-between">
+              <span className="font-semibold">Servicio contratado:</span>
+              <span className="text-right">{service.name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="font-semibold">Monto a pagar:</span>
+              <span className="text-right">{formatCurrency(service.price)}</span>
+            </div>
+            <div className="flex justify-between items-center gap-4">
+              <span className="font-semibold">Estado:</span>
+              <span className="rounded-full bg-amber-100 px-3 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                Pendiente de pago
+              </span>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-emerald-100/50 p-4 dark:bg-emerald-950/40">
+            <h4 className="mb-2 font-semibold">Datos de transferencia:</h4>
+            <ul className="space-y-1 text-sm text-emerald-900/90 dark:text-emerald-100/90">
+              <li>
+                <span className="font-medium">Banco:</span> Banco Pichincha
+              </li>
+              <li>
+                <span className="font-medium">Cuenta:</span> Ahorros 2200000000
+              </li>
+              <li>
+                <span className="font-medium">Titular:</span> Ruth Noemi Gómez Lescano
+              </li>
+              <li>
+                <span className="font-medium">Concepto:</span> Pago de suscripción RGL Estudio
+              </li>
+            </ul>
+          </div>
+
+          <p className="mt-4 text-sm font-medium text-emerald-900 dark:text-emerald-100">
+            Cuando realices el pago, envía el comprobante al administrador. Tu suscripción será activada cuando el pago sea verificado.
+          </p>
         </div>
       )}
 
@@ -113,34 +157,22 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
         </div>
         <p className="mt-5 text-2xl font-bold">{priceLabel}</p>
 
-        <form action={createSubscriptionAction} className="mt-6 space-y-4">
-          <input type="hidden" name="service_id" value={service.id} />
+        <CheckoutForm
+          serviceId={service.id}
+          isRecurringService={isRecurringService}
+          success={success}
+        />
 
-          <label className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
-            <input
-              type="checkbox"
-              name="auto_renew"
-              defaultChecked={isRecurringService}
-              disabled={!isRecurringService}
-              className="mt-0.5 h-4 w-4 rounded border-border"
-            />
-            <span>
-              Renovar automaticamente
-              <span className="block text-muted-foreground">
-                {isRecurringService
-                  ? "Solo aplica para servicios de manejo de redes."
-                  : "No aplica a servicios unicos: se forzara auto_renew = false."}
-              </span>
-            </span>
-          </label>
-
-          <button
-            type="submit"
-            className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Confirmar contratacion
-          </button>
-        </form>
+        {success && (
+          <div className="mt-4 flex items-center gap-3">
+            <Link
+              href="/catalogo"
+              className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              Volver al catalogo
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
