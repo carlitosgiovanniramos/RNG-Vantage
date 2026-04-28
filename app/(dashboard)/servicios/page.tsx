@@ -10,7 +10,7 @@ import {
   deleteService,
 } from "./actions";
 import { CreateServiceInput } from "@/lib/validators/service";
-import type { Database } from "@/types/database";
+import type { Database, ServiceType } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
+type ServiceRow = Omit<Database["public"]["Tables"]["services"]["Row"], "type"> & {
+  type: ServiceType;
+};
 type CreateServiceFieldErrors = Partial<
   Record<keyof CreateServiceInput, string[]>
 >;
@@ -39,6 +41,19 @@ const EMPTY_SERVICE_FORM: CreateServiceInput = {
   duration_months: 1,
   is_active: true,
 };
+
+const SERVICE_TYPES: ServiceType[] = [
+  "manejo_redes",
+  "auditoria",
+  "capacitacion",
+  "otro",
+];
+
+function normalizeServiceType(value: string): ServiceType | null {
+  return SERVICE_TYPES.includes(value as ServiceType)
+    ? (value as ServiceType)
+    : null;
+}
 
 export default function ServiciosAdminPage() {
   const queryClient = useQueryClient();
@@ -67,7 +82,14 @@ export default function ServiciosAdminPage() {
       if (error) {
         throw new Error(error);
       }
-      return (data as ServiceRow[] | null) ?? [];
+      const raw = (data as Database["public"]["Tables"]["services"]["Row"][] | null) ?? [];
+      return raw
+        .map((service) => {
+          const type = normalizeServiceType(service.type);
+          if (!type) return null;
+          return { ...service, type } as ServiceRow;
+        })
+        .filter((service): service is ServiceRow => Boolean(service));
     },
   });
 

@@ -6,9 +6,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getReservations,
   updateReservationStatus,
-  type ReservationStatus,
 } from "./actions";
-import type { Database } from "@/types/database";
+import type { Database, ReservationStatus } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";

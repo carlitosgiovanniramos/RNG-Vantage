@@ -3,10 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { markTransactionAsPaidSchema } from "@/lib/validators/transaction";
 
-type ActionResult =
-  | { success: true }
-  | { success: false; error: string };
-
 /**
  * Tipo para una fila de transacción en la tabla
  */
