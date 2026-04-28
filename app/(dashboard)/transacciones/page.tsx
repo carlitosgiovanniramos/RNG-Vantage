@@ -27,6 +27,7 @@ export type TransactionRow = {
   payment_method: "cash" | "transfer" | "card" | "pending";
   created_at: string;
   notes: string | null;
+  client_name?: string;
 };
 
 function formatCurrency(value: number) {
@@ -135,6 +136,11 @@ export default function TransaccionesAdminPage() {
       key: "id",
       header: "ID",
       render: (tx) => `${tx.id.substring(0, 8)}...`,
+    },
+    {
+      key: "client_name",
+      header: "Cliente",
+      render: (tx) => tx.client_name || "Sin cliente",
     },
     {
       key: "amount",

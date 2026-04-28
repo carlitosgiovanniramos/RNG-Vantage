@@ -19,6 +19,7 @@ type TransactionRow = {
   payment_method: "cash" | "transfer" | "card" | "pending";
   created_at: string;
   notes: string | null;
+  client_name?: string;
 };
 
 /**
@@ -156,7 +157,35 @@ export async function getTransactions() {
     return { data: null, error: "No se pudo cargar las transacciones." };
   }
 
-  return { data: (data || []) as TransactionRow[], error: null };
+  const transactions = (data || []) as TransactionRow[];
+
+  const userIds = Array.from(
+    new Set(transactions.map((tx) => tx.user_id).filter(Boolean)),
+  );
+
+  const { data: profiles } = userIds.length
+    ? await supabase
+        .from("profiles")
+        .select("id, first_name, last_name")
+        .in("id", userIds)
+    : { data: [] };
+
+  const profilesById = new Map(
+    (profiles ?? []).map((profile) => [profile.id, profile]),
+  );
+
+  const withClientNames = transactions.map((tx) => {
+    const profile = profilesById.get(tx.user_id);
+    const clientName = profile
+      ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+      : "";
+    return {
+      ...tx,
+      client_name: clientName || "Sin cliente",
+    };
+  });
+
+  return { data: withClientNames, error: null };
 }
 
 /**
