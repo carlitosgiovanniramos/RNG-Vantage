@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&amp;family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-primary-container": "#490b00",
+              "on-primary-fixed": "#000000",
+              "on-tertiary-fixed-variant": "#696c6a",
+              "surface-container-high": "#e0e3e1",
+              "primary-container": "#ff7855",
+              "surface-container-highest": "#dadedb",
+              "secondary-container": "#e5e2e1",
+              "on-secondary-fixed": "#403f3f",
+              "surface-tint": "#ae2900",
+              "outline": "#747776",
+              "error": "#b41340",
+              "error-container": "#f74b6d",
+              "surface-container": "#e6e9e7",
+              "primary-fixed-dim": "#ff5d32",
+              "inverse-primary": "#fd582d",
+              "surface-bright": "#f5f7f5",
+              "primary": "#ae2900",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-dim": "#4d504f",
+              "secondary-fixed": "#e5e2e1",
+              "surface-variant": "#dadedb",
+              "surface-dim": "#d1d5d3",
+              "on-primary": "#ffefec",
+              "inverse-surface": "#0c0f0e",
+              "on-surface-variant": "#595c5b",
+              "secondary": "#5c5b5b",
+              "tertiary": "#595c5b",
+              "on-tertiary-container": "#5e6160",
+              "surface-container-low": "#eff1ef",
+              "secondary-fixed-dim": "#d6d4d3",
+              "on-tertiary": "#f1f3f1",
+              "secondary-dim": "#504f4f",
+              "on-surface": "#2c2f2e",
+              "on-error-container": "#510017",
+              "on-secondary-container": "#525151",
+              "on-error": "#ffefef",
+              "primary-dim": "#992300",
+              "tertiary-fixed": "#fbfdfa",
+              "error-dim": "#a70138",
+              "background": "#f5f7f5",
+              "on-background": "#2c2f2e",
+              "primary-fixed": "#ff7855",
+              "tertiary-fixed-dim": "#edeeec",
+              "on-secondary-fixed-variant": "#5c5b5b",
+              "on-secondary": "#f5f2f1",
+              "tertiary-container": "#fbfdfa",
+              "on-tertiary-fixed": "#4c4f4e",
+              "inverse-on-surface": "#9b9d9c",
+              "outline-variant": "#abaeac",
+              "surface": "#f5f7f5",
+              "on-primary-fixed-variant": "#591000"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Work Sans"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .kinetic-marquee {
+            white-space: nowrap;
+            overflow: hidden;
+            display: flex;
+        }
+        .kinetic-marquee div {
+            display: flex;
+            animation: marquee 20s linear infinite;
+        }
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        /* Editorial layout helpers */
+        .bleed-container {
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="bg-[#f5f7f5] dark:bg-[#2c2f2e] sticky top-0 z-50">
+<nav class="flex justify-between items-center w-full px-8 py-6 max-w-[1440px] mx-auto">
+<div class="text-2xl font-black text-[#2c2f2e] dark:text-[#f5f7f5] uppercase font-headline tracking-tighter">
+                RNG-Vantage
+            </div>
+<div class="hidden md:flex items-center space-x-8 font-['Space_Grotesk'] tracking-tight font-bold text-sm"><a class="text-[#ae2900] dark:text-[#ff7855] border-b-2 border-[#ae2900] dark:border-[#ff7855] pb-1 transition-colors duration-200" href="/catalogo">Servicios</a><a class="text-[#2c2f2e] dark:text-[#dadedb] opacity-80 hover:text-[#ae2900] dark:hover:text-[#ff7855] transition-colors duration-200" href="#">Reservar</a><a class="text-[#2c2f2e] dark:text-[#dadedb] opacity-80 hover:text-[#ae2900] dark:hover:text-[#ff7855] transition-colors duration-200" href="#">Iniciar Sesión</a></div>
+<div class="flex items-center space-x-6">
+<button class="bg-primary text-on-primary px-6 py-3 font-headline font-bold text-sm hover:bg-primary-dim transition-all active:scale-95">Comenzar</button>
+</div>
+</nav>
+<div class="bg-[#dadedb] dark:bg-[#3d4140] h-[1px] w-full"></div>
+</header>
+<main class="max-w-[1440px] mx-auto px-8 pt-20 pb-40">
+<!-- Hero Editorial Section -->
+<section class="mb-24 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+<div class="md:col-span-8">
+<span class="font-headline font-bold text-primary tracking-widest text-sm uppercase mb-4 block">Catálogo Oficial 2024</span>
+<h1 class="font-headline text-[clamp(3.5rem,8vw,6rem)] leading-[0.9] font-black tracking-tighter text-on-surface mb-8">
+                    Catálogo de <br/>
+<span class="text-primary-container">Servicios.</span>
+</h1>
+<p class="max-w-xl text-lg text-on-surface-variant font-medium leading-relaxed">
+                    Potenciamos su presencia digital con estrategias brutales y ejecución de alta precisión. Desde auditoría hasta gestión completa de ecosistemas.
+                </p>
+</div>
+<div class="md:col-span-4 self-end flex justify-end">
+<div class="w-full h-64 bg-surface-container-high relative overflow-hidden group">
+<img class="w-full h-full object-cover grayscale contrast-125 opacity-80 group-hover:grayscale-0 transition-all duration-700" data-alt="Abstract modern architectural structure with sharp shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4PaZLPTXSk7HXo7AqTAZ4PGCbgFMcLoiKn20hhYseqm1C4UwOOHU_3eMz25DqrTl-BhynBFcuRokm3rJXVlmX_nkVoOYZKgJSAgzDEPNZyl38_pT90Xm4Yi5fP_NLF_uJXn8mzgRMlhmQS9iS2pajXq5huIEg4gxZHZjRifxWhuSFUnso1zBEtQhxkwd1mAVYfc4bht2RCVy_Xy2IGnGTdy96OrgvCeOOSLDR2Xz38pfFn0wRI2-qqYvK9pxe5cdacrXuESIGjXkR"/>
+<div class="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
+</div>
+</div>
+</section>
+<!-- Kinetic Marquee -->
+<div class="bleed-container bg-primary py-4 mb-24 overflow-hidden">
+<div class="flex whitespace-nowrap font-headline font-black text-4xl uppercase tracking-tighter text-on-primary opacity-90 italic">
+<div class="flex space-x-12 animate-[marquee_30s_linear_infinite]">
+<span>Innovación Radical</span>
+<span>•</span>
+<span>Resultados Tangibles</span>
+<span>•</span>
+<span>RNG-Vantage Elite</span>
+<span>•</span>
+<span>Auditoría Estratégica</span>
+<span>•</span>
+<span>Manejo de Redes</span>
+<span>•</span>
+<span>Capacitación</span>
+<span>•</span>
+</div>
+<div aria-hidden="true" class="flex space-x-12 animate-[marquee_30s_linear_infinite]">
+<span>Innovación Radical</span>
+<span>•</span>
+<span>Resultados Tangibles</span>
+<span>•</span>
+<span>RNG-Vantage Elite</span>
+<span>•</span>
+<span>Auditoría Estratégica</span>
+<span>•</span>
+<span>Manejo de Redes</span>
+<span>•</span>
+<span>Capacitación</span>
+<span>•</span>
+</div>
+</div>
+</div>
+<!-- Filter Controls -->
+<div class="flex flex-wrap items-center gap-4 mb-16">
+<button class="bg-primary text-white font-headline font-bold px-8 py-3 text-sm tracking-tight active:scale-95 transition-all">Todos</button>
+<button class="bg-surface-container-high text-on-surface font-headline font-bold px-8 py-3 text-sm tracking-tight hover:bg-surface-container-highest active:scale-95 transition-all">Manejo de Redes</button>
+<button class="bg-surface-container-high text-on-surface font-headline font-bold px-8 py-3 text-sm tracking-tight hover:bg-surface-container-highest active:scale-95 transition-all">Auditoría</button>
+<button class="bg-surface-container-high text-on-surface font-headline font-bold px-8 py-3 text-sm tracking-tight hover:bg-surface-container-highest active:scale-95 transition-all">Capacitación</button>
+</div>
+<!-- Service Grid: Bento Style -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 1: Featured Large -->
+<div class="md:col-span-2 md:row-span-2 bg-surface-container-lowest p-10 flex flex-col justify-between group relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8">
+<span class="bg-primary text-on-primary font-headline text-[10px] uppercase font-black tracking-[0.2em] px-3 py-1">DESTACADO</span>
+</div>
+<div>
+<span class="font-headline font-bold text-primary text-sm uppercase tracking-widest mb-4 block">Manejo de Redes</span>
+<h3 class="font-headline text-5xl font-black tracking-tighter mb-6 leading-none">Manejo de Redes - Mensual Premium</h3>
+<p class="text-on-surface-variant text-lg font-medium max-w-lg mb-8">Gestión total de ecosistemas digitales, incluyendo creación de contenido diario, pauta publicitaria y community management avanzado.</p>
+</div>
+<div class="flex items-end justify-between border-t border-outline-variant/20 pt-8">
+<div class="space-y-1">
+<div class="text-sm font-headline font-bold uppercase text-outline">Inversión</div>
+<div class="text-4xl font-headline font-black text-on-surface">$150.00 <span class="text-sm font-normal text-outline-variant">/ mes</span></div>
+<div class="flex items-center gap-2 text-primary font-headline font-bold text-xs uppercase pt-2">
+<span class="material-symbols-outlined text-sm">schedule</span> 30 Días
+                        </div>
+</div>
+<button class="bg-on-surface text-surface px-10 py-5 font-headline font-black text-sm uppercase hover:bg-primary transition-colors">Contratar</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-low p-8 flex flex-col justify-between group hover:bg-surface-container transition-colors">
+<div>
+<span class="font-headline font-bold text-primary text-[10px] uppercase tracking-[0.2em] mb-4 block">Estrategia</span>
+<h3 class="font-headline text-2xl font-black tracking-tight mb-4 leading-tight">Auditoría + Estrategia Digital</h3>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6">Análisis profundo de métricas y rediseño de hoja de ruta estratégica para conversión masiva.</p>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-baseline">
+<div class="text-2xl font-headline font-black text-on-surface">$200.00</div>
+<div class="text-[10px] font-headline font-bold text-outline-variant uppercase">Un pago</div>
+</div>
+<button class="w-full bg-surface-container-highest text-on-surface py-4 font-headline font-bold text-sm uppercase border border-outline-variant/10 hover:bg-primary hover:text-white transition-all">Contratar</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-8 flex flex-col justify-between group border-2 border-transparent hover:border-primary transition-all">
+<div>
+<span class="font-headline font-bold text-primary text-[10px] uppercase tracking-[0.2em] mb-4 block">Crecimiento</span>
+<h3 class="font-headline text-2xl font-black tracking-tight mb-4 leading-tight">Capacitación In-House Team</h3>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6">Entrenamiento intensivo para equipos internos sobre las últimas tendencias de IA y Social Media.</p>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-baseline">
+<div class="text-2xl font-headline font-black text-on-surface">$400.00</div>
+<div class="text-[10px] font-headline font-bold text-outline-variant uppercase">Por sesión</div>
+</div>
+<button class="w-full bg-surface-container-highest text-on-surface py-4 font-headline font-bold text-sm uppercase hover:bg-primary hover:text-white transition-all">Contratar</button>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-primary text-on-primary p-8 flex flex-col justify-between group">
+<div>
+<span class="font-headline font-bold text-on-primary/60 text-[10px] uppercase tracking-[0.2em] mb-4 block">Branding</span>
+<h3 class="font-headline text-2xl font-black tracking-tight mb-4 leading-tight">Identidad Visual Kinetic</h3>
+<p class="text-on-primary/80 text-sm line-clamp-2 mb-6">Rediseño de marca bajo el concepto de brutalismo moderno y alta recordación visual.</p>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-baseline">
+<div class="text-2xl font-headline font-black text-on-primary">$650.00</div>
+<div class="text-[10px] font-headline font-bold text-on-primary/60 uppercase">Proyecto</div>
+</div>
+<button class="w-full bg-white text-primary py-4 font-headline font-black text-sm uppercase hover:bg-primary-container hover:text-on-primary-container transition-all">Contratar</button>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="bg-surface-container-low p-8 flex flex-col justify-between group">
+<div>
+<span class="font-headline font-bold text-primary text-[10px] uppercase tracking-[0.2em] mb-4 block">Análisis</span>
+<h3 class="font-headline text-2xl font-black tracking-tight mb-4 leading-tight">Reporte Anual de Competencia</h3>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6">Investigación exhaustiva del mercado y posicionamiento de competidores directos.</p>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-baseline">
+<div class="text-2xl font-headline font-black text-on-surface">$120.00</div>
+<div class="text-[10px] font-headline font-bold text-outline-variant uppercase">Reporte</div>
+</div>
+<button class="w-full bg-surface-container-highest text-on-surface py-4 font-headline font-bold text-sm uppercase hover:bg-primary hover:text-white transition-all">Contratar</button>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="bg-surface-container-lowest p-8 flex flex-col justify-between group border-l-8 border-primary">
+<div>
+<span class="font-headline font-bold text-primary text-[10px] uppercase tracking-[0.2em] mb-4 block">Ads</span>
+<h3 class="font-headline text-2xl font-black tracking-tight mb-4 leading-tight">Optimización de Pauta Meta/Google</h3>
+<p class="text-on-surface-variant text-sm line-clamp-2 mb-6">Configuración técnica de píxeles y escalado de campañas de conversión masiva.</p>
+</div>
+<div class="space-y-6">
+<div class="flex justify-between items-baseline">
+<div class="text-2xl font-headline font-black text-on-surface">$300.00</div>
+<div class="text-[10px] font-headline font-bold text-outline-variant uppercase">Setup</div>
+</div>
+<button class="w-full bg-on-surface text-surface py-4 font-headline font-bold text-sm uppercase hover:bg-primary transition-all">Contratar</button>
+</div>
+</div>
+</div>
+<!-- Secondary CTA Section -->
+<section class="mt-40 grid grid-cols-1 md:grid-cols-2 gap-12 bg-surface-container-highest p-12 relative">
+<div class="space-y-8">
+<h2 class="font-headline text-5xl font-black tracking-tighter leading-[1.1]">¿No encuentras lo que buscas?</h2>
+<p class="text-on-surface-variant font-medium text-lg leading-relaxed">
+                    Diseñamos paquetes a la medida de su infraestructura y objetivos. Conversemos sobre su próximo gran salto digital.
+                </p>
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<button class="bg-primary text-on-primary px-8 py-4 font-headline font-bold text-sm uppercase tracking-wider">Agendar Consultoría</button>
+<button class="bg-surface-container-lowest text-on-surface px-8 py-4 font-headline font-bold text-sm uppercase tracking-wider border border-outline-variant">Escribir a Soporte</button>
+</div>
+</div>
+<div class="hidden md:block absolute bottom-0 right-12 w-1/3 aspect-square bg-primary-container/20 -mb-20 overflow-hidden transform rotate-3">
+<img class="w-full h-full object-cover mix-blend-overlay opacity-80" data-alt="Modern workstation with multiple monitors showing code and analytics" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrIWVdutXxkZNA4W6SoQpiQT5FtDNuGItV3xxePD9xP0ed94I_8LbeyTBDwPogjqrSuQVdIi9wjxlf_Gw65FlFthP7oCXdmwqb1PX3UI5BWRtnr2bB8xJwIM_c7zeNey7NbssK12sx27U981QxzFkZNeXI7YMzmqqCReNHInDCsx3mwQfpKAi7KekSkvVTJhTY-_SQ8NlD2xzfYYaM53TMR6v-ts7oAPVbncdZx42xCs3goykRDMYfNChvHcT1WRBFEib-f2KDMIRc"/>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#2c2f2e] dark:bg-[#f5f7f5] w-full py-12 px-8">
+<div class="flex flex-col md:flex-row justify-between items-center w-full max-w-[1440px] mx-auto space-y-4 md:space-y-0">
+<div class="text-lg font-black text-[#f5f7f5] dark:text-[#2c2f2e] uppercase font-headline">
+                RNG-Vantage
+            </div>
+<div class="flex space-x-8 font-['Space_Grotesk'] text-xs tracking-widest uppercase">
+<a class="text-[#dadedb] dark:text-[#3d4140] opacity-60 hover:text-[#ff7855] dark:hover:text-[#ae2900] transition-opacity" href="#">POLÍTICA DE PRIVACIDAD</a>
+<a class="text-[#dadedb] dark:text-[#3d4140] opacity-60 hover:text-[#ff7855] dark:hover:text-[#ae2900] transition-opacity" href="#">TÉRMINOS DE SERVICIO</a><a class="text-[#dadedb] dark:text-[#3d4140] opacity-60 hover:text-[#ff7855] dark:hover:text-[#ae2900] transition-opacity" href="#">AVISO LEGAL</a>
+</div>
+<div class="text-[#dadedb] dark:text-[#3d4140] opacity-60 font-['Space_Grotesk'] text-xs tracking-widest uppercase">
+                © 2024 RNG-Vantage. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

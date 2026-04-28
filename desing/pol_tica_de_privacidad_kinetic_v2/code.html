@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-tertiary-fixed-variant": "#696c6a",
+              "error": "#b41340",
+              "on-surface-variant": "#595c5b",
+              "background": "#f5f7f5",
+              "secondary-container": "#e5e2e1",
+              "surface-container-highest": "#dadedb",
+              "on-primary-container": "#490b00",
+              "tertiary": "#595c5b",
+              "surface-variant": "#dadedb",
+              "on-surface": "#2c2f2e",
+              "secondary-fixed": "#e5e2e1",
+              "surface-tint": "#ae2900",
+              "error-container": "#f74b6d",
+              "surface-dim": "#d1d5d3",
+              "on-error": "#ffefef",
+              "primary-dim": "#992300",
+              "inverse-primary": "#fd582d",
+              "on-secondary-container": "#525151",
+              "on-primary-fixed-variant": "#591000",
+              "surface-container-low": "#eff1ef",
+              "primary-fixed-dim": "#ff5d32",
+              "surface-container-high": "#e0e3e1",
+              "on-error-container": "#510017",
+              "primary-fixed": "#ff7855",
+              "surface-container": "#e6e9e7",
+              "on-tertiary": "#f1f3f1",
+              "on-primary-fixed": "#000000",
+              "tertiary-container": "#fbfdfa",
+              "on-tertiary-container": "#5e6160",
+              "error-dim": "#a70138",
+              "tertiary-fixed": "#fbfdfa",
+              "inverse-on-surface": "#9b9d9c",
+              "on-secondary": "#f5f2f1",
+              "tertiary-fixed-dim": "#edeeec",
+              "secondary": "#5c5b5b",
+              "inverse-surface": "#0c0f0e",
+              "on-background": "#2c2f2e",
+              "surface": "#f5f7f5",
+              "on-secondary-fixed": "#403f3f",
+              "on-secondary-fixed-variant": "#5c5b5b",
+              "surface-bright": "#f5f7f5",
+              "tertiary-dim": "#4d504f",
+              "outline": "#747776",
+              "secondary-dim": "#504f4f",
+              "on-tertiary-fixed": "#4c4f4e",
+              "on-primary": "#ffefec",
+              "primary": "#ae2900",
+              "secondary-fixed-dim": "#d6d4d3",
+              "outline-variant": "#abaeac",
+              "primary-container": "#ff7855",
+              "surface-container-lowest": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Work Sans"],
+              "label": ["Space Grotesk"]
+            },
+            borderRadius: {"DEFAULT": "0px", "lg": "0px", "xl": "0px", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Work Sans', sans-serif; }
+        h1, h2, h3, .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .brutal-shadow { box-shadow: 8px 8px 0px 0px rgba(44, 47, 46, 1); }
+        .kinetic-marquee {
+            display: flex;
+            overflow: hidden;
+            user-select: none;
+            gap: 2rem;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar Suppressed per UX Goal: Focused journey (Legal Content) -->
+<main class="min-h-screen">
+<!-- Hero Section -->
+<header class="pt-20 pb-32 px-6 md:px-12 max-w-[1440px] mx-auto border-b-0">
+<div class="flex flex-col gap-8">
+<div class="inline-flex items-center gap-2 text-primary font-headline font-bold tracking-widest uppercase text-sm">
+<span class="w-12 h-[2px] bg-primary"></span>
+                    Legal Compliance
+                </div>
+<h1 class="text-5xl md:text-8xl font-black font-headline tracking-tighter text-on-surface leading-[0.9] uppercase">
+                    Política de <span class="text-primary">Privacidad</span> y Tratamiento de Datos Personales
+                </h1>
+<div class="max-w-2xl mt-4">
+<p class="text-xl md:text-2xl font-body text-on-surface opacity-80 leading-relaxed">
+                        En RNG-Vantage, la integridad y seguridad de tu información es nuestra prioridad estructural. Este documento detalla cómo gestionamos tu huella digital bajo estándares internacionales y locales.
+                    </p>
+</div>
+</div>
+</header>
+<!-- Kinetic Marquee -->
+<section class="bg-on-surface py-6 overflow-hidden">
+<div class="kinetic-marquee whitespace-nowrap flex text-surface font-headline font-black text-4xl uppercase tracking-tighter opacity-20">
+<span>Transparencia Estructural • Protección de Datos • Seguridad • LOPDP Ecuador • RNG-Vantage • Transparencia Estructural • Protección de Datos • Seguridad • LOPDP Ecuador • RNG-Vantage •</span>
+</div>
+</section>
+<!-- Content Grid -->
+<section class="py-24 px-6 md:px-12 max-w-[1440px] mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-16">
+<!-- Sidebar / Quick Links -->
+<aside class="lg:col-span-3">
+<div class="sticky top-12 flex flex-col gap-6">
+<div class="bg-surface-container-low p-8 border-l-8 border-primary">
+<h3 class="font-headline font-bold text-lg uppercase mb-4 tracking-tight">Índice</h3>
+<nav class="flex flex-col gap-4">
+<a class="font-headline text-sm font-bold uppercase hover:text-primary transition-colors" href="#responsable">01. Responsable</a>
+<a class="font-headline text-sm font-bold uppercase hover:text-primary transition-colors" href="#datos">02. Datos Recopilados</a>
+<a class="font-headline text-sm font-bold uppercase hover:text-primary transition-colors" href="#finalidad">03. Finalidad</a>
+<a class="font-headline text-sm font-bold uppercase hover:text-primary transition-colors" href="#lopdp">04. LOPDP Ecuador</a>
+</nav>
+</div>
+<div class="p-8 bg-primary text-on-primary">
+<p class="font-headline font-bold text-xs uppercase tracking-widest opacity-80 mb-2">Última actualización</p>
+<p class="font-headline font-black text-2xl tracking-tighter uppercase">24 MAY 2024</p>
+</div>
+</div>
+</aside>
+<!-- Policy Content -->
+<article class="lg:col-span-9 space-y-24">
+<!-- Section: Responsable -->
+<div class="scroll-mt-12" id="responsable">
+<div class="flex items-baseline gap-4 mb-8">
+<span class="font-headline font-black text-6xl text-primary opacity-20">01</span>
+<h2 class="font-headline font-black text-4xl uppercase tracking-tighter">Responsable del Tratamiento</h2>
+</div>
+<div class="bg-surface-container-lowest p-10 border-0 relative">
+<div class="grid md:grid-cols-2 gap-12 font-body text-lg text-on-surface leading-relaxed">
+<div>
+<p class="mb-6">
+                                        RNG-Vantage (en adelante "La Empresa"), con domicilio principal en Quito, Ecuador, actúa como el Responsable del Tratamiento de sus datos personales recolectados a través de nuestra plataforma.
+                                    </p>
+<p>
+                                        Garantizamos que el tratamiento se realiza bajo los principios de legalidad, consentimiento, transparencia y seguridad.
+                                    </p>
+</div>
+<div class="bg-surface-container-high p-8 flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">corporate_fare</span>
+<span class="font-headline font-bold text-xs uppercase tracking-widest">RNG-Vantage Corp.</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">mail</span>
+<span class="font-headline font-bold text-xs uppercase tracking-widest">legal@rngvantage.com</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<span class="font-headline font-bold text-xs uppercase tracking-widest">Quito, Ecuador</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Section: Datos Recopilados -->
+<div class="scroll-mt-12" id="datos">
+<div class="flex items-baseline gap-4 mb-8">
+<span class="font-headline font-black text-6xl text-primary opacity-20">02</span>
+<h2 class="font-headline font-black text-4xl uppercase tracking-tighter">Datos Recopilados</h2>
+</div>
+<div class="grid md:grid-cols-3 gap-8">
+<div class="bg-surface-container-low p-8 flex flex-col gap-4">
+<span class="material-symbols-outlined text-primary text-4xl">person</span>
+<h4 class="font-headline font-bold uppercase tracking-tight">Identificación</h4>
+<p class="font-body opacity-80">Nombres completos, número de cédula o pasaporte, y datos de contacto directo.</p>
+</div>
+<div class="bg-surface-container-low p-8 flex flex-col gap-4">
+<span class="material-symbols-outlined text-primary text-4xl">devices</span>
+<h4 class="font-headline font-bold uppercase tracking-tight">Técnicos</h4>
+<p class="font-body opacity-80">Dirección IP, tipo de navegador, sistema operativo e historial de navegación en el sitio.</p>
+</div>
+<div class="bg-surface-container-low p-8 flex flex-col gap-4">
+<span class="material-symbols-outlined text-primary text-4xl">payments</span>
+<h4 class="font-headline font-bold uppercase tracking-tight">Transaccionales</h4>
+<p class="font-body opacity-80">Información sobre servicios adquiridos, métodos de pago y registros de facturación.</p>
+</div>
+</div>
+</div>
+<!-- Section: Finalidad -->
+<div class="scroll-mt-12" id="finalidad">
+<div class="flex items-baseline gap-4 mb-8">
+<span class="font-headline font-black text-6xl text-primary opacity-20">03</span>
+<h2 class="font-headline font-black text-4xl uppercase tracking-tighter">Finalidad del Tratamiento</h2>
+</div>
+<div class="space-y-6 font-body text-xl text-on-surface leading-relaxed border-l-4 border-primary-fixed pl-8">
+<p>Procesamos su información exclusivamente para los siguientes fines declarados:</p>
+<ul class="space-y-4">
+<li class="flex gap-4">
+<span class="font-headline font-bold text-primary">A.</span>
+<span>Prestación de los servicios contratados y gestión administrativa de su cuenta de usuario.</span>
+</li>
+<li class="flex gap-4">
+<span class="font-headline font-bold text-primary">B.</span>
+<span>Comunicación de actualizaciones críticas, cambios en términos y condiciones o alertas de seguridad.</span>
+</li>
+<li class="flex gap-4">
+<span class="font-headline font-bold text-primary">C.</span>
+<span>Mejora continua de nuestra interfaz y experiencia de usuario mediante análisis de datos anonimizados.</span>
+</li>
+<li class="flex gap-4">
+<span class="font-headline font-bold text-primary">D.</span>
+<span>Cumplimiento de obligaciones legales y requerimientos de autoridades competentes en Ecuador.</span>
+</li>
+</ul>
+</div>
+</div>
+<!-- Section: LOPDP Ecuador -->
+<div class="scroll-mt-12" id="lopdp">
+<div class="flex items-baseline gap-4 mb-8">
+<span class="font-headline font-black text-6xl text-primary opacity-20">04</span>
+<h2 class="font-headline font-black text-4xl uppercase tracking-tighter">Cumplimiento LOPDP Ecuador</h2>
+</div>
+<div class="bg-on-surface text-surface p-12">
+<h3 class="font-headline font-bold text-2xl uppercase text-primary mb-6">Ley Orgánica de Protección de Datos Personales</h3>
+<p class="font-body text-lg opacity-80 mb-10 max-w-3xl">
+                                Conforme a la legislación ecuatoriana vigente, usted dispone de los derechos de Acceso, Rectificación, Eliminación, Oposición, Portabilidad y Suspensión del tratamiento.
+                            </p>
+<div class="grid md:grid-cols-2 gap-12">
+<div class="bg-surface/10 p-8 backdrop-blur-md">
+<h4 class="font-headline font-bold uppercase mb-4 tracking-widest text-primary">Ejercicio de Derechos</h4>
+<p class="text-sm leading-relaxed mb-6 opacity-70">
+                                        Para ejercer cualquiera de estos derechos, debe enviar una solicitud formal con la copia de su identificación al correo electrónico de nuestro Delegado de Protección de Datos.
+                                    </p>
+<a class="inline-block bg-primary text-on-primary px-6 py-3 font-headline font-bold uppercase tracking-widest hover:bg-primary-dim transition-all active:scale-95" href="mailto:privacy@rngvantage.com">
+                                        Contactar Delegado
+                                    </a>
+</div>
+<div class="flex flex-col justify-center">
+<div class="flex items-center gap-4 mb-4">
+<div class="w-4 h-4 bg-primary"></div>
+<p class="font-headline text-xs uppercase tracking-widest">Plazo de respuesta: 15 días hábiles</p>
+</div>
+<div class="flex items-center gap-4 mb-4">
+<div class="w-4 h-4 bg-primary"></div>
+<p class="font-headline text-xs uppercase tracking-widest">Gratuidad en el ejercicio de derechos</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-4 h-4 bg-primary"></div>
+<p class="font-headline text-xs uppercase tracking-widest">Autoridad de control: Superintendencia de Protección de Datos</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</article>
+</div>
+</section>
+<!-- Back to Top / CTA -->
+<section class="py-20 flex justify-center border-t-8 border-primary bg-surface-container-lowest">
+<a class="group flex flex-col items-center gap-4" href="/">
+<span class="material-symbols-outlined text-6xl text-on-surface group-hover:text-primary transition-colors">arrow_back</span>
+<span class="font-headline font-black text-2xl uppercase tracking-tighter">Volver al Inicio</span>
+</a>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-20">
+<div class="bg-[#ae2900] h-[8px] w-full"></div>
+<div class="bg-[#2c2f2e] text-[#ff7855] p-12 w-full flex flex-col md:flex-row justify-between items-center max-w-full">
+<div class="mb-8 md:mb-0">
+<span class="text-lg font-black text-white font-headline tracking-tighter uppercase">RNG-VANTAGE</span>
+</div>
+<div class="flex flex-col md:flex-row gap-8 items-center">
+<div class="flex gap-6">
+<a class="text-xs font-light tracking-widest uppercase font-headline text-[#ff7855] underline hover:opacity-100 transition-opacity duration-300" href="/politica-privacidad">POLÍTICA DE PRIVACIDAD</a>
+<a class="text-xs font-light tracking-widest uppercase font-headline text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">TÉRMINOS DE SERVICIO</a>
+<a class="text-xs font-light tracking-widest uppercase font-headline text-[#f5f7f5] opacity-60 hover:opacity-100 hover:text-[#ff7855] transition-opacity duration-300" href="#">AVISO LEGAL</a>
+</div>
+<p class="text-xs font-light tracking-widest uppercase font-headline text-[#f5f7f5] opacity-60">© 2026 RNG-VANTAGE. ALL RIGHTS RESERVED.</p>
+</div>
+</div>
+</footer>
+</body></html>

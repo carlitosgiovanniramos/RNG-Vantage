@@ -1,5 +1,5 @@
 -- =============================================================
--- RNG-Vantage: Migracion inicial
+-- RGL Estudio: Migracion inicial
 -- Sistema integral de ventas, reservas y control financiero
 -- =============================================================
 

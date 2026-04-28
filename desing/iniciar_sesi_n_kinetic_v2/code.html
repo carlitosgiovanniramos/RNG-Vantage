@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="light" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Iniciar Sesión | RNG-Vantage</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts: Space Grotesk & Work Sans -->
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;900&amp;family=Work+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary-fixed-variant": "#696c6a",
+                        "error": "#b41340",
+                        "on-surface-variant": "#595c5b",
+                        "background": "#f5f7f5",
+                        "secondary-container": "#e5e2e1",
+                        "surface-container-highest": "#dadedb",
+                        "on-primary-container": "#490b00",
+                        "tertiary": "#595c5b",
+                        "surface-variant": "#dadedb",
+                        "on-surface": "#2c2f2e",
+                        "secondary-fixed": "#e5e2e1",
+                        "surface-tint": "#ae2900",
+                        "error-container": "#f74b6d",
+                        "surface-dim": "#d1d5d3",
+                        "on-error": "#ffefef",
+                        "primary-dim": "#992300",
+                        "inverse-primary": "#fd582d",
+                        "on-secondary-container": "#525151",
+                        "on-primary-fixed-variant": "#591000",
+                        "surface-container-low": "#eff1ef",
+                        "primary-fixed-dim": "#ff5d32",
+                        "surface-container-high": "#e0e3e1",
+                        "on-error-container": "#510017",
+                        "primary-fixed": "#ff7855",
+                        "surface-container": "#e6e9e7",
+                        "on-tertiary": "#f1f3f1",
+                        "on-primary-fixed": "#000000",
+                        "tertiary-container": "#fbfdfa",
+                        "on-tertiary-container": "#5e6160",
+                        "error-dim": "#a70138",
+                        "tertiary-fixed": "#fbfdfa",
+                        "inverse-on-surface": "#9b9d9c",
+                        "on-secondary": "#f5f2f1",
+                        "tertiary-fixed-dim": "#edeeec",
+                        "secondary": "#5c5b5b",
+                        "inverse-surface": "#0c0f0e",
+                        "on-background": "#2c2f2e",
+                        "surface": "#f5f7f5",
+                        "on-secondary-fixed": "#403f3f",
+                        "on-secondary-fixed-variant": "#5c5b5b",
+                        "surface-bright": "#f5f7f5",
+                        "tertiary-dim": "#4d504f",
+                        "outline": "#747776",
+                        "secondary-dim": "#504f4f",
+                        "on-tertiary-fixed": "#4c4f4e",
+                        "on-primary": "#ffefec",
+                        "primary": "#ae2900",
+                        "secondary-fixed-dim": "#d6d4d3",
+                        "outline-variant": "#abaeac",
+                        "primary-container": "#ff7855",
+                        "surface-container-lowest": "#ffffff"
+                    },
+                    fontFamily: {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Work Sans"],
+                        "label": ["Space Grotesk"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Work Sans', sans-serif;
+        }
+        h1, h2, h3, .brand-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        /* Editorial Brutalist Overlays */
+        .brutalist-bg {
+            background-image: radial-gradient(circle at 2px 2px, #dadedb 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface brutalist-bg min-h-screen flex items-center justify-center p-6">
+<!-- Kinetic Marquee Background Element -->
+<div class="fixed top-0 left-0 w-full overflow-hidden whitespace-nowrap py-4 bg-primary select-none pointer-events-none rotate-[-1deg] translate-y-[-10px] z-0">
+<div class="inline-block animate-marquee font-headline font-black text-6xl text-on-primary opacity-10 uppercase tracking-tighter">
+            RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE • RNG-VANTAGE •
+        </div>
+</div>
+<!-- Login Container Card -->
+<main class="relative z-10 w-full max-w-[480px]">
+<!-- Editorial Layering: Decorative Offset Background -->
+<div class="absolute inset-0 bg-primary-container translate-x-3 translate-y-3 z-0"></div>
+<div class="relative z-10 bg-surface-container-lowest p-8 md:p-12 shadow-none border-none">
+<!-- Brand Identity -->
+<div class="flex flex-col items-center mb-10">
+<div class="brand-font text-4xl font-black text-on-surface tracking-tighter uppercase mb-2">
+                    RNG-Vantage
+                </div>
+<div class="h-1.5 w-16 bg-primary"></div>
+</div>
+<!-- Page Title -->
+<header class="mb-10 text-center">
+<h1 class="font-headline font-bold text-4xl text-on-surface uppercase tracking-tighter leading-none mb-2">
+                    Iniciar Sesión
+                </h1>
+<p class="font-body text-on-surface-variant text-sm tracking-tight">
+                    Introduce tus credenciales para acceder al panel.
+                </p>
+</header>
+<!-- Login Form -->
+<form class="space-y-8">
+<!-- Email Field -->
+<div class="group">
+<label class="font-label font-bold text-[10px] uppercase tracking-[0.2em] text-on-surface-variant mb-2 block" for="email">
+                        CORREO ELECTRÓNICO
+                    </label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 px-0 py-3 font-body text-on-surface transition-all placeholder:text-outline-variant/50" id="email" placeholder="nombre@ejemplo.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="group">
+<div class="flex justify-between items-end mb-2">
+<label class="font-label font-bold text-[10px] uppercase tracking-[0.2em] text-on-surface-variant block" for="password">
+                            CONTRASEÑA
+                        </label>
+<a class="font-label text-[10px] uppercase tracking-widest text-primary hover:underline" href="#">
+                            ¿Olvidaste tu contraseña?
+                        </a>
+</div>
+<div class="relative">
+<input class="w-full bg-surface-container-low border-b-2 border-outline-variant focus:border-primary focus:ring-0 px-0 py-3 font-body text-on-surface transition-all placeholder:text-outline-variant/50" id="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-0 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+<!-- Primary Action -->
+<div class="pt-4">
+<button class="w-full bg-primary text-on-primary font-headline font-bold text-lg uppercase tracking-widest py-5 px-8 transition-all hover:bg-primary-dim active:scale-[0.98] flex justify-between items-center group" type="submit">
+<span>Entrar al Sistema</span>
+<span class="material-symbols-outlined transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</form>
+<!-- Secondary Action / Redirect -->
+<footer class="mt-12 pt-8 border-t border-surface-container-highest text-center">
+<p class="font-body text-sm text-on-surface-variant">
+                    ¿No tienes cuenta? 
+                    <a class="font-headline font-bold text-primary uppercase tracking-tight hover:text-primary-dim transition-colors ml-1" href="/register">
+                        Regístrate
+                    </a>
+</p>
+</footer>
+</div>
+<!-- Asymmetric Decorative Element -->
+<div class="absolute -bottom-16 -left-16 hidden lg:block select-none pointer-events-none opacity-20">
+<span class="font-headline font-black text-9xl text-primary-container leading-none">01</span>
+</div>
+</main>
+<!-- Footer Branding (Shared Component Logic) -->
+<footer class="fixed bottom-0 left-0 w-full p-8 flex justify-between items-end pointer-events-none opacity-40">
+<div class="font-label text-[10px] uppercase tracking-[0.4em] text-on-surface-variant">
+            © 2026 RNG-VANTAGE. ALL RIGHTS RESERVED.
+        </div>
+</footer>
+<!-- Image placeholders for visual context (though not strictly images, these are stylized content nodes) -->
+<div class="hidden">
+<img data-alt="Abstract brutalist architecture with high contrast shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCMnSF69l5eRv3LH8TnTnTL7TtMEsZie4WI3ynxAeAHdsZvW_pO2ttub0EfYyJ92EJRYtVAK9MMsRzxBBU-EN-lYtwKIHtuNtYiGnw31CB5wtfHhzDrhYn5tpVfkHht8qzl94cogoMy5B_wHp1kq2OdX4-KpJC93NFHCJOr6zHoV3amSPKdJYVA_RgNzuB2gPcrJXj80CWqus13huCWy8nFVpZ1soaxmFT2VHmQXLevqqwXtrp0YYaOEBa7whF3wHwzoC6r10bjaC4-"/>
+</div>
+</body></html>
