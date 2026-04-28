@@ -40,6 +40,9 @@ export default function TransaccionesAdminPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedTx, setSelectedTx] = useState<TransactionRow | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [statusFilter, setStatusFilter] = useState<
+    TransactionRow["status"] | "all"
+  >("all");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
@@ -196,6 +199,15 @@ export default function TransaccionesAdminPage() {
     },
   ];
 
+  const filteredTransactions =
+    statusFilter === "all"
+      ? transactions
+      : transactions.filter((tx) => tx.status === statusFilter);
+  const totalFiltered = filteredTransactions.reduce(
+    (sum, tx) => sum + Number(tx.amount ?? 0),
+    0,
+  );
+
   if (isLoading) {
     return <div className="p-8 text-center">Cargando transacciones...</div>;
   }
@@ -244,10 +256,44 @@ export default function TransaccionesAdminPage() {
         </div>
       </header>
 
+      <section className="flex flex-wrap items-center gap-4 border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+        <div className="min-w-[180px] space-y-2">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Estado
+          </p>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(value as TransactionRow["status"] | "all")
+            }
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filtrar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="pending">Pendiente</SelectItem>
+              <SelectItem value="completed">Completado</SelectItem>
+              <SelectItem value="failed">Fallido</SelectItem>
+              <SelectItem value="refunded">Reembolsado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="ml-auto border border-border/60 bg-background/80 px-4 py-3">
+          <p className="font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Total filtrado
+          </p>
+          <p className="mt-1 font-spaceGrotesk text-2xl font-black text-foreground">
+            {formatCurrency(totalFiltered)}
+          </p>
+        </div>
+      </section>
+
       <DataTable
-        data={transactions}
+        data={filteredTransactions}
         columns={columns}
-        pageSize={10}
+        pageSize={5}
         filterPlaceholder="Buscar por ID, estado o método"
       />
 

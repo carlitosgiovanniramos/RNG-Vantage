@@ -4,12 +4,48 @@ const serviceTypes = ["manejo_redes", "auditoria", "capacitacion", "otro"] as co
 
 export const createServiceSchema = z.object({
   name: z.string().min(3, "El nombre del servicio debe tener al menos 3 caracteres"),
-  description: z.string().max(1000, "Descripción demasiado larga").optional(),
+
+  description: z
+    .string()
+    .max(1000, "Descripción demasiado larga")
+    .optional(),
+
+  full_description: z
+    .string()
+    .max(1000, "La descripción completa es demasiado larga")
+    .optional(),
+
+  image_url: z
+    .string()
+    .url("La URL de la imagen no es válida")
+    .optional()
+    .or(z.literal("")),
+
+  includes: z
+    .array(z.string())
+    .optional(),
+
+  benefits: z
+    .array(z.string())
+    .optional(),
+
+  deliverables: z
+    .array(z.string())
+    .optional(),
+
+  target_audience: z
+    .string()
+    .max(300, "El público objetivo es demasiado largo")
+    .optional(),
+
   type: z.enum(serviceTypes, { 
     message: "Tipo de servicio no válido" 
   }),
+
   price: z.number().min(0, "El precio no puede ser negativo"),
+
   duration_months: z.number().int().min(1, "Mínimo 1 mes").default(1),
+
   is_active: z.boolean().default(true),
 });
 

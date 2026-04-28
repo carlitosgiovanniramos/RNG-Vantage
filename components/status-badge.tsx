@@ -1,10 +1,17 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-export type StatusValue = "pending" | "active" | "expired" | "completed";
+export type StatusValue =
+  | "pending"
+  | "active"
+  | "expired"
+  | "completed"
+  | "cancelled"
+  | "failed"
+  | "refunded";
 
 type StatusBadgeProps = {
-  status: StatusValue;
+  status?: StatusValue | string | null;
   className?: string;
 };
 
@@ -29,10 +36,26 @@ const statusMap: Record<StatusValue, { label: string; className: string }> = {
     className:
       "border-0 bg-sky-100 text-sky-900 dark:bg-sky-900/30 dark:text-sky-200",
   },
+  cancelled: {
+    label: "Cancelado",
+    className:
+      "border-0 bg-slate-100 text-slate-900 dark:bg-slate-900/30 dark:text-slate-200",
+  },
+  failed: {
+    label: "Fallido",
+    className:
+      "border-0 bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-200",
+  },
+  refunded: {
+    label: "Reembolsado",
+    className:
+      "border-0 bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-200",
+  },
 };
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
-  const config = statusMap[status];
+  const key = status && status in statusMap ? (status as StatusValue) : "pending";
+  const config = statusMap[key];
 
   return (
     <Badge
