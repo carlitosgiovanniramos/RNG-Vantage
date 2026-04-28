@@ -15,10 +15,9 @@ async function run() {
     .select("id, user_id, status, starts_at, ends_at, auto_renew, services(id, name, type, price)");
   
   console.log("Perfil query count:", subs?.length, "Error:", error);
-  if (subs?.length > 0) {
-    console.log("First sub user_id:", subs[0].user_id);
-    console.log("Auth users:", subs.map(s => s.user_id));
-  }
+  if (!subs || subs.length === 0) return;
+  console.log("First sub user_id:", subs[0].user_id);
+  console.log("Auth users:", subs.map((s) => s.user_id));
 }
 
 run();

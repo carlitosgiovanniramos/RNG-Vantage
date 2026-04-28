@@ -83,9 +83,6 @@ export default async function SubscriptionsPage() {
   const pendingCount = subscriptionRows.filter(
     (sub) => sub.status === "pending",
   ).length;
-  const expiredCount = subscriptionRows.filter(
-    (sub) => sub.status === "expired",
-  ).length;
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8 md:py-10">
