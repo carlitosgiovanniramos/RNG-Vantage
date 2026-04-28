@@ -14,7 +14,13 @@ import type { Database } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, PencilLine, Sparkles, Trash2 } from "lucide-react";
+import { ArrowLeft, PencilLine, Plus, Sparkles, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
 type CreateServiceFieldErrors = Partial<
@@ -42,6 +48,7 @@ export default function ServiciosAdminPage() {
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [formError, setFormError] = useState<CreateServiceFormError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const formFieldErrors =
     typeof formError === "object" && formError !== null
       ? formError.fieldErrors
@@ -100,6 +107,7 @@ export default function ServiciosAdminPage() {
       );
       setFormData(EMPTY_SERVICE_FORM);
       setEditingServiceId(null);
+      setIsDialogOpen(false);
       await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
       await refetch();
     } else {
@@ -132,12 +140,21 @@ export default function ServiciosAdminPage() {
       duration_months: service.duration_months,
       is_active: service.is_active,
     });
+    setIsDialogOpen(true);
   };
 
   const handleCancelEdit = () => {
     setEditingServiceId(null);
     setFormError(null);
     setFormData(EMPTY_SERVICE_FORM);
+    setIsDialogOpen(false);
+  };
+
+  const handleCreate = () => {
+    setEditingServiceId(null);
+    setFormError(null);
+    setFormData(EMPTY_SERVICE_FORM);
+    setIsDialogOpen(true);
   };
 
   const serviceColumns: DataTableColumn<ServiceRow>[] = [
@@ -226,29 +243,105 @@ export default function ServiciosAdminPage() {
               controlado para el equipo de RGL Estudio.
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            <ArrowLeft className="size-4" />
-            Volver al dashboard
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={handleCreate}
+              className="inline-flex h-11 items-center gap-2 bg-primary px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Plus className="size-4" />
+              Crear nuevo servicio
+            </Button>
+            <Link
+              href="/dashboard"
+              className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+            >
+              <ArrowLeft className="size-4" />
+              Volver al dashboard
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className="grid gap-6 xl:grid-cols-[370px_minmax(0,1fr)]">
-        <aside className="h-fit border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:p-7 xl:sticky xl:top-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-spaceGrotesk text-base font-black uppercase tracking-[0.14em] text-foreground">
+      <section className="grid gap-4 sm:grid-cols-3">
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Total
+          </p>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {services.length}
+          </p>
+        </article>
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Activos
+          </p>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {services.filter((service) => service.is_active).length}
+          </p>
+        </article>
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Inactivos
+          </p>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {services.filter((service) => !service.is_active).length}
+          </p>
+        </article>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="font-spaceGrotesk text-2xl font-black uppercase tracking-[0.08em] text-foreground md:text-3xl">
+            Catálogo de Servicios
+          </h2>
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            {services.length} servicio(s) en catálogo
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="border border-border/60 bg-card/80 p-8 text-center">
+            Cargando servicios...
+          </div>
+        ) : isError ? (
+          <div className="border border-border/60 bg-card/80 p-8 text-center text-red-500">
+            Error: {error.message}
+          </div>
+        ) : (
+          <DataTable
+            data={services}
+            columns={serviceColumns}
+            pageSize={5}
+            filterPlaceholder="Buscar por nombre, tipo o descripción"
+          />
+        )}
+      </section>
+
+      <Dialog
+        open={isDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) {
+            setEditingServiceId(null);
+            setFormError(null);
+            setFormData(EMPTY_SERVICE_FORM);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle className="font-spaceGrotesk text-base font-black uppercase tracking-[0.12em]">
               {editingServiceId ? "Editar Servicio" : "Nuevo Servicio"}
-            </h2>
-            <span className="inline-flex h-8 items-center gap-1 bg-primary/10 px-2.5 font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.14em] text-primary">
-              <Sparkles className="size-3" />
-              Admin
-            </span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="inline-flex h-8 items-center gap-1 bg-primary/10 px-2.5 font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.14em] text-primary">
+            <Sparkles className="size-3" />
+            Admin
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                 Nombre
@@ -351,59 +444,42 @@ export default function ServiciosAdminPage() {
               <p className="mt-2 text-sm text-red-500">{formError}</p>
             )}
 
-            {editingServiceId && (
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+              {editingServiceId ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 border-border/70 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
+                  onClick={handleCancelEdit}
+                >
+                  Cancelar edición
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 border-border/70 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cerrar
+                </Button>
+              )}
+
               <Button
-                type="button"
-                variant="outline"
-                className="h-11 w-full border-border/70 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
-                onClick={handleCancelEdit}
+                type="submit"
+                disabled={isSubmitting}
+                className="h-11 font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.18em]"
               >
-                Cancelar edición
+                {isSubmitting
+                  ? "Guardando..."
+                  : editingServiceId
+                    ? "Guardar cambios"
+                    : "Guardar servicio"}
               </Button>
-            )}
-
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-11 w-full font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.18em]"
-            >
-              {isSubmitting
-                ? "Guardando..."
-                : editingServiceId
-                  ? "Guardar cambios"
-                  : "Guardar servicio"}
-            </Button>
+            </div>
           </form>
-        </aside>
-
-        <section className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="font-spaceGrotesk text-2xl font-black uppercase tracking-[0.08em] text-foreground md:text-3xl">
-              Catálogo de Servicios
-            </h2>
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-              {services.length} servicio(s) en catálogo
-            </p>
-          </div>
-
-          {isLoading ? (
-            <div className="border border-border/60 bg-card/80 p-8 text-center">
-              Cargando servicios...
-            </div>
-          ) : isError ? (
-            <div className="border border-border/60 bg-card/80 p-8 text-center text-red-500">
-              Error: {error.message}
-            </div>
-          ) : (
-            <DataTable
-              data={services}
-              columns={serviceColumns}
-              pageSize={8}
-              filterPlaceholder="Buscar por nombre, tipo o descripción"
-            />
-          )}
-        </section>
-      </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

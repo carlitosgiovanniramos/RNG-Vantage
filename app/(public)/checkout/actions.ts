@@ -1,96 +1,126 @@
 "use server";
 
-import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import type { ServiceType } from "@/types";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createSubscriptionSchema } from "@/lib/validators/subscription";
 
-function isRecurringService(type: ServiceType): boolean {
-  return type === "manejo_redes";
-}
-
-function addMonths(date: Date, months: number): Date {
-  const result = new Date(date);
-  result.setMonth(result.getMonth() + months);
-  return result;
-}
-
-function buildCheckoutUrl(serviceId: string, params: Record<string, string>): string {
-  const search = new URLSearchParams({ service_id: serviceId, ...params });
-  return `/checkout?${search.toString()}`;
-}
-
-export async function createSubscriptionAction(formData: FormData) {
-  const serviceId = (formData.get("service_id") as string | null)?.trim() ?? "";
-
-  if (!serviceId) {
-    redirect("/catalogo?error=service-missing");
-  }
-
-  const requestedAutoRenew = formData.get("auto_renew") === "on";
+/**
+ * Crea una suscripción pendiente y una transacción inicial pendiente.
+ * 
+ * @param params { service_id: string, auto_renew: boolean }
+ * @returns Result object con success, ids y datos básicos o un mensaje de error.
+ */
+export async function createSubscription(params: {
+  service_id: string;
+  auto_renew: boolean;
+}) {
   const supabase = await createClient();
 
+  // 3. Obtener el usuario actual
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    const redirectPath = encodeURIComponent(`/checkout?service_id=${serviceId}`);
-    redirect(`/login?redirect=${redirectPath}`);
+    return { success: false, error: "Debes iniciar sesión para continuar." };
   }
 
+  // 4. Consultar el servicio
   const { data: service, error: serviceError } = await supabase
     .from("services")
-    .select("id, type, price, duration_months, is_active")
-    .eq("id", serviceId)
-    .maybeSingle();
+    .select("*")
+    .eq("id", params.service_id)
+    .single();
 
-  if (serviceError || !service || !service.is_active) {
-    redirect(buildCheckoutUrl(serviceId, { error: "service-not-found" }));
+  if (serviceError || !service) {
+    return { success: false, error: "El servicio no existe o no pudo ser encontrado." };
   }
 
-  // Regla de negocio: solo manejo_redes es renovable.
-  const autoRenew = isRecurringService(service.type) ? requestedAutoRenew : false;
+  if (!service.is_active) {
+    return { success: false, error: "El servicio seleccionado no está activo." };
+  }
+
+  // 5. Aplicar lógica de negocio de auto_renew
+  // Solo los servicios type = "manejo_redes" admiten renovación automática.
+  let autoRenew = params.auto_renew;
+  if (service.type !== "manejo_redes") {
+    autoRenew = false;
+  }
+
+  // 6. Calcular fechas
   const startsAt = new Date();
-  const endsAt = addMonths(startsAt, Math.max(service.duration_months, 1));
+  const endsAt = new Date(startsAt);
+  endsAt.setMonth(startsAt.getMonth() + (service.duration_months || 1));
 
-  let supabaseAdmin: ReturnType<typeof createAdminClient>;
-  try {
-    supabaseAdmin = createAdminClient();
-  } catch {
-    redirect(buildCheckoutUrl(serviceId, { error: "create-failed" }));
+  // 2. Validar los datos preparados según createSubscriptionSchema
+  const subDataToValidate = {
+    user_id: user.id,
+    service_id: service.id,
+    starts_at: startsAt.toISOString(),
+    ends_at: endsAt.toISOString(),
+    auto_renew: autoRenew,
+  };
+
+  const validation = createSubscriptionSchema.safeParse(subDataToValidate);
+
+  if (!validation.success) {
+    return {
+      success: false,
+      error: "Datos de suscripción inválidos.",
+      details: validation.error.format(),
+    };
   }
 
+  // 7. Insertar en tabla subscriptions
   const { data: createdSubscription, error: subscriptionError } = await supabase
     .from("subscriptions")
     .insert({
-      user_id: user.id,
-      service_id: service.id,
-      starts_at: startsAt.toISOString(),
-      ends_at: endsAt.toISOString(),
-      status: "pending", // Flujo correcto: pending -> admin confirma pago -> active
-      auto_renew: autoRenew,
+      ...validation.data,
+      status: "pending",
     })
     .select("id")
     .single();
 
   if (subscriptionError || !createdSubscription) {
-    redirect(buildCheckoutUrl(serviceId, { error: "create-failed" }));
+    return { success: false, error: "Error al crear la suscripción." };
   }
 
-  const { error: transactionError } = await supabaseAdmin.from("transactions").insert({
-    user_id: user.id,
+  // 8 y 9. Insertar transacción pendiente usando SERVICE_ROLE_KEY
+  // IMPORTANTE:
+  // Se utiliza el cliente admin (SERVICE_ROLE_KEY) porque las políticas de RLS 
+  // en la tabla "transactions" impiden que los usuarios con rol "authenticated"
+  // inserten registros directamente. Solo el backend/sistema autorizado puede 
+  // crear transacciones financieras para mantener la seguridad.
+  const supabaseAdmin = createAdminClient();
+
+  const { data: createdTransaction, error: transactionError } = await supabaseAdmin
+    .from("transactions")
+    .insert({
+      user_id: user.id,
+      subscription_id: createdSubscription.id,
+      amount: service.price,
+      payment_method: "pending",
+      status: "pending",
+    })
+    .select("id")
+    .single();
+
+  if (transactionError || !createdTransaction) {
+    return {
+      success: false,
+      error: "Error al crear la transacción vinculada.",
+      subscription_id: createdSubscription.id,
+    };
+  }
+
+  // 10. Retornar éxito
+  return {
+    success: true,
     subscription_id: createdSubscription.id,
-    amount: service.price,
-    payment_method: "pending",
-    status: "pending",
-    notes: "Transaccion creada automaticamente desde checkout",
-  });
-
-  if (transactionError) {
-    await supabaseAdmin.from("subscriptions").delete().eq("id", createdSubscription.id);
-    redirect(buildCheckoutUrl(serviceId, { error: "transaction-failed" }));
-  }
-
-  redirect(buildCheckoutUrl(serviceId, { success: "1" }));
+    transaction_id: createdTransaction.id,
+    service: {
+      name: service.name,
+      price: service.price,
+    },
+  };
 }

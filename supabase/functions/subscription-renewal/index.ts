@@ -35,20 +35,56 @@ function addMonths(isoDate: string, months: number): string {
   return date.toISOString();
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  // CORS Headers y OPTIONS request para endpoints
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" }})
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     return new Response(
       JSON.stringify({ error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 
+  // Verificar la cabecera Authorization para garantizar que es un admin
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Missing Authorization header" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  // Cliente de Supabase usando el token del usuario actual para verificar sus permisos
+  const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+    global: { headers: { Authorization: `Bearer ${token}` } }
+  });
+
+  const { data: { user }, error: userError } = await userClient.auth.getUser();
+  if (userError || !user) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Invalid JWT token" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Verificamos rol a través de app_metadata (o consultando profiles)
+  const role = user.app_metadata?.role;
+  if (role !== "admin") {
+    return new Response(
+      JSON.stringify({ error: "Forbidden: Only admins can trigger subscription renewals" }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Cliente con SERVICE_ROLE para poder bypassear RLS al actualizar registros globalmente
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
   });

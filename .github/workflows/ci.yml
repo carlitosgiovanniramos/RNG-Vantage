@@ -1,0 +1,42 @@
+name: CI / Build Validation
+
+on:
+  push:
+    branches: ["main", "develop"]
+  pull_request:
+    branches: ["main", "develop"]
+
+jobs:
+  build-and-lint:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Linter
+        run: npm run lint
+        continue-on-error: true # Opcional: Para evitar fallar PRs temporalmente si el lint estricto falla
+
+      - name: TypeScript Type Checking
+        run: npx tsc --noEmit
+
+      - name: Verify Build
+        run: |
+          # Simular variables de entorno para que Next.js pueda buildear
+          export NEXT_PUBLIC_SUPABASE_URL="https://placeholder.supabase.co"
+          export NEXT_PUBLIC_SUPABASE_ANON_KEY="placeholder"
+          npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder"
