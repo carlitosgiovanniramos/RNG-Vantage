@@ -2,10 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { Database } from "@/types/database";
-
-// Extraemos el tipo exacto de tu base de datos
-export type ReservationStatus = Database["public"]["Enums"]["reservation_status"];
+import type { ReservationStatus } from "@/types/database";
 
 export async function getReservations() {
   const supabase = await createClient();
