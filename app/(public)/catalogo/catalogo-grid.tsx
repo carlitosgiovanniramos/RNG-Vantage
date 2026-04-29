@@ -4,11 +4,25 @@ import { useState } from "react";
 import Link from "next/link";
 import { Network, BarChart, GraduationCap, Settings2, LucideIcon } from "lucide-react";
 
-import type { Database } from "@/types/database";
-import type { ServiceType } from "@/types/database";
+import type { Database, ServiceType } from "@/types/database";
 import { Button } from "@/components/ui/button";
 
-type Service = Database["public"]["Tables"]["services"]["Row"];
+type Service = Omit<Database["public"]["Tables"]["services"]["Row"], "type"> & {
+  type: ServiceType;
+};
+
+const SERVICE_TYPES: ServiceType[] = [
+  "manejo_redes",
+  "auditoria",
+  "capacitacion",
+  "otro",
+];
+
+function normalizeServiceType(value: string): ServiceType | null {
+  return SERVICE_TYPES.includes(value as ServiceType)
+    ? (value as ServiceType)
+    : null;
+}
 
 const TYPE_LABELS: Record<ServiceType | "Todos", string> = {
   Todos: "Todos",
@@ -37,19 +51,28 @@ function getPriceDisplay(service: Service): { main: string; unit: string } {
 }
 
 interface CatalogoGridProps {
-  services: Service[];
+  services: Database["public"]["Tables"]["services"]["Row"][];
 }
 
 export function CatalogoGrid({ services }: CatalogoGridProps) {
   const [activeFilter, setActiveFilter] = useState<ServiceType | "Todos">("Todos");
+  const normalizedServices: Service[] = services
+    .map((service) => {
+      const type = normalizeServiceType(service.type);
+      if (!type) return null;
+      return { ...service, type } as Service;
+    })
+    .filter((service): service is Service => Boolean(service));
 
-  const availableTypes = Array.from(new Set(services.map((s) => s.type)));
+  const availableTypes = Array.from(
+    new Set(normalizedServices.map((s) => s.type)),
+  );
   const filterOptions: (ServiceType | "Todos")[] = ["Todos", ...availableTypes];
 
   const filtered =
     activeFilter === "Todos"
-      ? services
-      : services.filter((s) => s.type === activeFilter);
+      ? normalizedServices
+      : normalizedServices.filter((s) => s.type === activeFilter);
 
   return (
     <div>

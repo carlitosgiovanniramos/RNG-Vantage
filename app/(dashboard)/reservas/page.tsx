@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getReservations,
   updateReservationStatus,
-  type ReservationStatus,
 } from "./actions";
-import type { Database } from "@/types/database";
+import type { Database, ReservationStatus } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,9 @@ type ReservationRow = Database["public"]["Tables"]["reservations"]["Row"];
 
 export default function ReservasAdminPage() {
   const queryClient = useQueryClient();
+  const [statusFilter, setStatusFilter] = useState<
+    ReservationStatus | "all"
+  >("all");
 
   const {
     data: reservations = [],
@@ -124,6 +127,16 @@ export default function ReservasAdminPage() {
   const cancelledCount = reservations.filter(
     (res) => res.status === "cancelled",
   ).length;
+  const filteredReservations =
+    statusFilter === "all"
+      ? reservations
+      : reservations.filter((res) => res.status === statusFilter);
+  const statusTabs = [
+    { label: "Todas", value: "all", count: reservations.length },
+    { label: "Pendientes", value: "pending", count: pendingCount },
+    { label: "Confirmadas", value: "confirmed", count: confirmedCount },
+    { label: "Canceladas", value: "cancelled", count: cancelledCount },
+  ] as const;
 
   if (isLoading)
     return <div className="p-8 text-center">Cargando reservas...</div>;
@@ -200,10 +213,31 @@ export default function ReservasAdminPage() {
         </article>
       </section>
 
+      <section className="flex flex-wrap gap-2 border border-border/60 bg-card/80 p-3 backdrop-blur-sm">
+        {statusTabs.map((tab) => {
+          const isActive = statusFilter === tab.value;
+          return (
+            <Button
+              key={tab.value}
+              type="button"
+              variant={isActive ? "default" : "outline"}
+              onClick={() => setStatusFilter(tab.value)}
+              className={
+                isActive
+                  ? "h-9 rounded-none font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em]"
+                  : "h-9 rounded-none border-border/70 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em]"
+              }
+            >
+              {tab.label} ({tab.count})
+            </Button>
+          );
+        })}
+      </section>
+
       <DataTable
-        data={reservations}
+        data={filteredReservations}
         columns={columns}
-        pageSize={8}
+        pageSize={5}
         filterPlaceholder="Buscar por cliente, email o estado"
       />
     </div>

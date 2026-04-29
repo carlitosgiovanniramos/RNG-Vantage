@@ -10,10 +10,12 @@ declare const Deno: {
 type ServiceInfo = {
   type: string;
   duration_months: number;
+  price: number;
 };
 
 type RenewableSubscription = {
   id: string;
+  user_id: string;
   ends_at: string;
   auto_renew: boolean;
   services: ServiceInfo | ServiceInfo[] | null;
@@ -33,20 +35,56 @@ function addMonths(isoDate: string, months: number): string {
   return date.toISOString();
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  // CORS Headers y OPTIONS request para endpoints
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type" }})
+  }
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!supabaseUrl || !serviceRoleKey) {
     return new Response(
       JSON.stringify({ error: "Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 
+  // Verificar la cabecera Authorization para garantizar que es un admin
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Missing Authorization header" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  
+  // Cliente de Supabase usando el token del usuario actual para verificar sus permisos
+  const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+    global: { headers: { Authorization: `Bearer ${token}` } }
+  });
+
+  const { data: { user }, error: userError } = await userClient.auth.getUser();
+  if (userError || !user) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Invalid JWT token" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Verificamos rol a través de app_metadata (o consultando profiles)
+  const role = user.app_metadata?.role;
+  if (role !== "admin") {
+    return new Response(
+      JSON.stringify({ error: "Forbidden: Only admins can trigger subscription renewals" }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  // Cliente con SERVICE_ROLE para poder bypassear RLS al actualizar registros globalmente
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
   });
@@ -54,7 +92,7 @@ Deno.serve(async () => {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("subscriptions")
-    .select("id, ends_at, auto_renew, services!inner(type, duration_months)")
+    .select("id, user_id, ends_at, auto_renew, services!inner(type, duration_months, price)")
     .eq("status", "active")
     .lte("ends_at", now);
 
@@ -93,6 +131,23 @@ Deno.serve(async () => {
 
       if (renewError) {
         failures.push(`renew:${subscription.id}:${renewError.message}`);
+        continue;
+      }
+
+      // PASO 2: Generar la nueva transacción (Recibo pendiente)
+      const { error: transactionError } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: subscription.user_id,
+          subscription_id: subscription.id,
+          amount: service.price,
+          status: "pending",
+          payment_method: "pending",
+        });
+
+      if (transactionError) {
+        failures.push(`transaction:${subscription.id}:${transactionError.message}`);
+        // Nota: la suscripción sí se renovó su fecha, pero falló la creación del recibo.
         continue;
       }
 

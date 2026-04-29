@@ -9,6 +9,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { DataCard } from "@/components/data-card";
+import { DashboardCharts } from "@/components/dashboard-charts";
 
 type ServiceJoin = {
   type: string;
@@ -23,6 +24,7 @@ type ActiveSubscriptionRow = {
 
 type CompletedTransactionRow = {
   amount: number | null;
+  created_at: string;
 };
 
 function normalizeService(
@@ -42,10 +44,22 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
+function formatMonthLabel(date: Date): string {
+  const label = date.toLocaleString("es-EC", { month: "short" });
+  return label.replace(".", "");
+}
+
+function getMonthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const now = new Date();
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const chartStart = new Date(monthStart);
+  chartStart.setMonth(chartStart.getMonth() - 5);
 
   const { data: subscriptionsData } = await supabase
     .from("subscriptions")
@@ -54,9 +68,9 @@ export default async function DashboardPage() {
 
   const { data: completedTransactions } = await supabase
     .from("transactions")
-    .select("amount")
+    .select("amount, created_at")
     .eq("status", "completed")
-    .gte("created_at", monthStart.toISOString());
+    .gte("created_at", chartStart.toISOString());
 
   const { count: pendingReservations } = await supabase
     .from("reservations")
@@ -83,12 +97,56 @@ export default async function DashboardPage() {
 
   const oneTimeSubscriptions =
     activeSubscriptions.length - recurringSubscriptions;
-  const monthlyIncome = (
-    (completedTransactions ?? []) as CompletedTransactionRow[]
-  ).reduce(
-    (sum: number, transaction: CompletedTransactionRow) =>
-      sum + Number(transaction.amount ?? 0),
-    0,
+  const monthlyIncome = ((completedTransactions ?? []) as CompletedTransactionRow[])
+    .filter((transaction) =>
+      new Date(transaction.created_at) >= monthStart,
+    )
+    .reduce(
+      (sum: number, transaction: CompletedTransactionRow) =>
+        sum + Number(transaction.amount ?? 0),
+      0,
+    );
+
+  const lastSixMonths = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date();
+    date.setDate(1);
+    date.setMonth(date.getMonth() - (5 - index));
+    return date;
+  });
+
+  const incomeByMonth = ((completedTransactions ?? []) as CompletedTransactionRow[]).reduce(
+    (acc, transaction) => {
+      const date = new Date(transaction.created_at);
+      const key = getMonthKey(date);
+      acc.set(key, (acc.get(key) ?? 0) + Number(transaction.amount ?? 0));
+      return acc;
+    },
+    new Map<string, number>(),
+  );
+
+  const monthlyIncomeSeries = lastSixMonths.map((date) => {
+    const key = getMonthKey(date);
+    return {
+      label: formatMonthLabel(date),
+      value: Number(incomeByMonth.get(key) ?? 0),
+    };
+  });
+
+  const serviceMixCounts = activeSubscriptions.reduce(
+    (acc, subscription) => {
+      const service = normalizeService(subscription.services);
+      if (!service) return acc;
+      acc.set(service.type, (acc.get(service.type) ?? 0) + 1);
+      return acc;
+    },
+    new Map<string, number>(),
+  );
+
+  const serviceMixSeries = Array.from(serviceMixCounts.entries()).map(
+    ([type, value]) => ({
+      name: type.replace(/_/g, " "),
+      value,
+    }),
   );
   const operationsSummary = [
     {
@@ -153,6 +211,20 @@ export default async function DashboardPage() {
               Ir a Servicios
               <ArrowUpRight className="size-4" />
             </Link>
+            <Link
+              href="/subscriptions"
+              className="inline-flex h-12 items-center gap-2 border border-border/60 bg-background/85 px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-muted"
+            >
+              Ir a Suscripciones
+              <ArrowUpRight className="size-4" />
+            </Link>
+            <Link
+              href="/transacciones"
+              className="inline-flex h-12 items-center gap-2 bg-primary px-5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Consultar Transacciones
+              <ArrowUpRight className="size-4" />
+            </Link>
           </div>
         </div>
       </header>
@@ -214,6 +286,11 @@ export default async function DashboardPage() {
           </div>
         </article>
       </div>
+
+      <DashboardCharts
+        monthlyIncome={monthlyIncomeSeries}
+        serviceMix={serviceMixSeries}
+      />
     </section>
   );
 }

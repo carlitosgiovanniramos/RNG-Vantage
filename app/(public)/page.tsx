@@ -5,7 +5,22 @@ import { Network, BarChart, GraduationCap, Settings2, TrendingUp, Calendar, Pack
 import { createClient } from "@/lib/supabase/server";
 import type { Database, ServiceType } from "@/types/database";
 
-type Service = Database["public"]["Tables"]["services"]["Row"];
+type Service = Omit<Database["public"]["Tables"]["services"]["Row"], "type"> & {
+  type: ServiceType;
+};
+
+const SERVICE_TYPES: ServiceType[] = [
+  "manejo_redes",
+  "auditoria",
+  "capacitacion",
+  "otro",
+];
+
+function normalizeServiceType(value: string): ServiceType | null {
+  return SERVICE_TYPES.includes(value as ServiceType)
+    ? (value as ServiceType)
+    : null;
+}
 
 const TYPE_ICONS: Record<ServiceType, LucideIcon> = {
   manejo_redes: Network,
@@ -30,7 +45,13 @@ export default async function LandingPage() {
     .order("price", { ascending: true })
     .limit(3);
 
-  const landingServices: Service[] = data ?? [];
+  const landingServices: Service[] = (data ?? [])
+    .map((service) => {
+      const type = normalizeServiceType(service.type);
+      if (!type) return null;
+      return { ...service, type } as Service;
+    })
+    .filter((service): service is Service => Boolean(service));
   return (
     <div className="flex flex-col">
       {/* --- Hero Section --- */}
