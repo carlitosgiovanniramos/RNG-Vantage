@@ -129,17 +129,16 @@ export default function RegisterPage() {
 
   return (
     <div className="space-y-7">
-      <div className="space-y-3 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          <Sparkles className="size-3.5" />
+      <div className="space-y-3">
+        <div className="inline-block bg-primary px-3 py-1 font-spaceGrotesk text-xs font-bold uppercase tracking-widest text-white">
           Nuevo registro
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-spaceGrotesk text-4xl font-black uppercase tracking-tighter text-foreground sm:text-5xl">
             Crear una cuenta
           </h1>
-          <p className="mx-auto max-w-sm text-sm leading-6 text-muted-foreground">
+          <p className="max-w-sm font-workSans text-sm leading-6 text-muted-foreground">
             Crea tu cuenta y empieza.
           </p>
         </div>
@@ -165,7 +164,7 @@ export default function RegisterPage() {
         }}
       >
         {state?.error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+          <div className="rounded-none border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
             {state.error}
           </div>
         )}
@@ -174,7 +173,7 @@ export default function RegisterPage() {
           <div className="space-y-2 sm:col-span-1">
             <Label
               htmlFor="first_name"
-              className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+              className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
             >
               Nombre
             </Label>
@@ -185,7 +184,7 @@ export default function RegisterPage() {
                 type="text"
                 required
                 {...register("first_name")}
-                className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
+                className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
                 placeholder="Juan Pablo"
               />
             </div>
@@ -199,7 +198,7 @@ export default function RegisterPage() {
           <div className="space-y-2 sm:col-span-1">
             <Label
               htmlFor="last_name"
-              className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+              className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
             >
               Apellido
             </Label>
@@ -210,7 +209,7 @@ export default function RegisterPage() {
                 type="text"
                 required
                 {...register("last_name")}
-                className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
+                className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
                 placeholder="López Ramos"
               />
             </div>
@@ -225,7 +224,7 @@ export default function RegisterPage() {
         <div className="space-y-2">
           <Label
             htmlFor="email"
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
           >
             Correo electrónico
           </Label>
@@ -236,7 +235,7 @@ export default function RegisterPage() {
               type="email"
               required
               {...register("email")}
-              className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
+              className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
               placeholder="correo@ejemplo.com"
             />
           </div>
@@ -250,7 +249,7 @@ export default function RegisterPage() {
         <div className="space-y-2">
           <Label
             htmlFor="password"
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
           >
             Contraseña
           </Label>
@@ -264,7 +263,7 @@ export default function RegisterPage() {
               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$"
               title="Debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
               {...register("password")}
-              className="h-12 rounded-2xl border-border/70 bg-background pl-10 pr-12 text-sm"
+              className="h-12 rounded-none border-border/70 bg-background pl-10 pr-12 text-sm"
               placeholder="••••••••"
             />
             <Button
@@ -272,7 +271,7 @@ export default function RegisterPage() {
               variant="ghost"
               size="icon-sm"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-none text-muted-foreground hover:text-foreground"
               aria-label={
                 showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
               }
@@ -297,7 +296,7 @@ export default function RegisterPage() {
         <div className="space-y-2">
           <Label
             htmlFor="confirm_password"
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
           >
             Confirmar contraseña
           </Label>
@@ -308,7 +307,7 @@ export default function RegisterPage() {
               type={showConfirmPassword ? "text" : "password"}
               required
               {...register("confirm_password")}
-              className="h-12 rounded-2xl border-border/70 bg-background pl-10 pr-12 text-sm"
+              className="h-12 rounded-none border-border/70 bg-background pl-10 pr-12 text-sm"
               placeholder="••••••••"
             />
             <Button
@@ -316,7 +315,7 @@ export default function RegisterPage() {
               variant="ghost"
               size="icon-sm"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-none text-muted-foreground hover:text-foreground"
               aria-label={
                 showConfirmPassword
                   ? "Ocultar confirmación"
@@ -337,7 +336,7 @@ export default function RegisterPage() {
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-border/70 bg-muted/30 p-4">
+        <div className="rounded-none border border-border/70 bg-muted/30 p-4">
           <div className="flex items-start gap-3">
             <input
               type="checkbox"
@@ -349,7 +348,7 @@ export default function RegisterPage() {
             <div className="space-y-1">
               <Label
                 htmlFor="data_consent"
-                className="cursor-pointer text-sm font-medium leading-6 text-foreground"
+                className="cursor-pointer font-workSans text-sm font-bold leading-6 text-foreground"
               >
                 Acepto la política de datos (LOPDP)
               </Label>
@@ -374,7 +373,7 @@ export default function RegisterPage() {
         <Button
           type="submit"
           disabled={isPending}
-          className="h-12 w-full rounded-2xl bg-primary px-5 text-sm font-semibold uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90"
+          className="h-12 w-full rounded-none bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 active:scale-95"
         >
           {isPending ? "Creando cuenta..." : "Registrarse"}
         </Button>

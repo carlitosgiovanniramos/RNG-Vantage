@@ -106,17 +106,16 @@ function LoginForm() {
 
   return (
     <div className="space-y-7">
-      <div className="space-y-3 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-          <Sparkles className="size-3.5" />
+      <div className="space-y-3">
+        <div className="inline-block bg-primary px-3 py-1 font-spaceGrotesk text-xs font-bold uppercase tracking-widest text-white">
           Acceso seguro
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+          <h1 className="font-spaceGrotesk text-4xl font-black uppercase tracking-tighter text-foreground sm:text-5xl">
             Iniciar sesión
           </h1>
-          <p className="mx-auto max-w-sm text-sm leading-6 text-muted-foreground">
+          <p className="max-w-sm font-workSans text-sm leading-6 text-muted-foreground">
             Ingresa para continuar.
           </p>
         </div>
@@ -142,32 +141,32 @@ function LoginForm() {
         }}
       >
         {wasRegistered && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <div className="rounded-none border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
             Cuenta creada. Revisa tu correo para confirmarlo antes de iniciar
             sesión.
           </div>
         )}
 
         {hint === "confirm-or-login" && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
             Si ya te registraste, confirma tu correo y luego inicia sesión.
           </div>
         )}
 
         {resendState?.success && (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
+          <div className="rounded-none border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
             {resendState.success}
           </div>
         )}
 
         {resendState?.error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+          <div className="rounded-none border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
             {resendState.error}
           </div>
         )}
 
         {state?.error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+          <div className="rounded-none border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
             {state.error}
           </div>
         )}
@@ -177,7 +176,7 @@ function LoginForm() {
         <div className="space-y-2">
           <Label
             htmlFor="email"
-            className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
           >
             Correo electrónico
           </Label>
@@ -188,7 +187,7 @@ function LoginForm() {
               type="email"
               required
               {...register("email")}
-              className="h-12 rounded-2xl border-border/70 bg-background pl-10 text-sm"
+              className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
               placeholder="correo@ejemplo.com"
             />
           </div>
@@ -203,7 +202,7 @@ function LoginForm() {
           <div className="flex items-end justify-between gap-3">
             <Label
               htmlFor="password"
-              className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+              className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
             >
               Contraseña
             </Label>
@@ -215,7 +214,7 @@ function LoginForm() {
               type={showPassword ? "text" : "password"}
               required
               {...register("password")}
-              className="h-12 rounded-2xl border-border/70 bg-background pl-10 pr-12 text-sm"
+              className="h-12 rounded-none border-border/70 bg-background pl-10 pr-12 text-sm"
               placeholder="••••••••"
             />
             <Button
@@ -223,7 +222,7 @@ function LoginForm() {
               variant="ghost"
               size="icon-sm"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-xl text-muted-foreground hover:text-foreground"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-none text-muted-foreground hover:text-foreground"
               aria-label={
                 showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
               }
@@ -245,7 +244,7 @@ function LoginForm() {
         <Button
           type="submit"
           disabled={isPending}
-          className="h-12 w-full rounded-2xl bg-primary px-5 text-sm font-semibold uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90"
+          className="h-12 w-full rounded-none bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 active:scale-95"
         >
           {isPending ? "Iniciando sesión..." : "Ingresar"}
         </Button>
@@ -254,7 +253,7 @@ function LoginForm() {
       {shouldShowResend && (
         <form
           action={resendAction}
-          className="space-y-3 rounded-2xl border border-dashed border-border/70 bg-muted/30 p-4"
+          className="space-y-3 rounded-none border border-dashed border-border/70 bg-muted/30 p-4"
         >
           <div className="space-y-1">
             <p className="text-sm font-semibold text-foreground">
@@ -274,14 +273,14 @@ function LoginForm() {
               resendState?.values?.email ??
               ""
             }
-            className="h-12 rounded-2xl border-border/70 bg-background text-sm"
+            className="h-12 rounded-none border-border/70 bg-background text-sm"
             placeholder="correo@ejemplo.com"
           />
           <Button
             type="submit"
             disabled={isResending}
             variant="outline"
-            className="h-12 w-full rounded-2xl border-border/70 bg-background text-sm font-semibold uppercase tracking-[0.16em]"
+            className="h-12 w-full rounded-none border-border/70 bg-background font-spaceGrotesk text-sm font-bold uppercase tracking-[0.16em]"
           >
             {isResending ? "Reenviando..." : "Reenviar confirmación"}
           </Button>

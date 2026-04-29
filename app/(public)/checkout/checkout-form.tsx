@@ -52,7 +52,7 @@ export function CheckoutForm({
   return (
     <>
       {errorMsg && (
-        <div className="mt-6 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <div className="mt-6 border border-red-200 bg-red-50 px-4 py-3 font-workSans text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
           {errorMsg}
         </div>
       )}
@@ -60,40 +60,40 @@ export function CheckoutForm({
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <input type="hidden" name="service_id" value={serviceId} />
 
-        <label className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
+        <label className="flex items-start gap-3 border border-border/60 bg-muted/30 p-4">
           <input
             type="checkbox"
             name="auto_renew"
             defaultChecked={isRecurringService}
             disabled={!isRecurringService}
-            className="mt-0.5 h-4 w-4 rounded border-border"
+            className="mt-0.5 h-4 w-4 border-border text-primary"
           />
-          <span>
-            Renovar automaticamente
-            <span className="block text-muted-foreground">
+          <span className="font-workSans text-sm leading-relaxed">
+            Renovar automáticamente
+            <span className="mt-0.5 block text-xs text-muted-foreground">
               {isRecurringService
                 ? "Solo aplica para servicios de manejo de redes."
-                : "No aplica a servicios unicos: se forzara auto_renew = false."}
+                : "No aplica a servicios únicos."}
             </span>
           </span>
         </label>
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center">
           {success ? (
             <button
               type="button"
               disabled
-              className="inline-flex h-10 items-center justify-center rounded-md bg-muted px-4 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed"
+              className="inline-flex h-12 cursor-not-allowed items-center bg-muted px-5 font-spaceGrotesk text-sm font-bold uppercase tracking-[0.14em] text-muted-foreground opacity-50"
             >
-              Confirmar contratacion
+              Confirmar contratación
             </button>
           ) : (
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex h-12 items-center bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
             >
-              {loading ? "Procesando..." : "Confirmar contratacion"}
+              {loading ? "Procesando..." : "Confirmar contratación"}
             </button>
           )}
         </div>

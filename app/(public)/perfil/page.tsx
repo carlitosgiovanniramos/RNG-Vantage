@@ -140,7 +140,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
           <h2 className="font-spaceGrotesk text-lg font-black uppercase tracking-tight text-foreground">
             Mis suscripciones
           </h2>
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
+          <span className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
             {totalItems} registro(s)
           </span>
         </div>
@@ -161,16 +161,16 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
                   <p className="font-spaceGrotesk text-sm font-bold uppercase tracking-[0.08em] text-foreground">
                     {item._serviceName}
                   </p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="font-workSans text-xs text-muted-foreground">
                     Tipo: {item._serviceType} · {formatCurrency(item._price)}
                   </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
+                  <p className="mt-2 font-workSans text-xs text-muted-foreground">
                     Inicio: {formatDate(item.starts_at)} · Vence: {formatDate(item.ends_at)}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold ${
+                    className={`px-2.5 py-0.5 font-spaceGrotesk text-[0.65rem] font-bold uppercase tracking-[0.12em] ${
                       STATUS_STYLES[item.status ?? "pending"] ??
                       STATUS_STYLES.pending
                     }`}
@@ -178,7 +178,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
                     {STATUS_LABELS[item.status ?? "pending"] ?? "Pendiente"}
                   </span>
                   <span
-                    className={`rounded-full px-2.5 py-0.5 text-[0.65rem] font-semibold ${
+                    className={`px-2.5 py-0.5 font-spaceGrotesk text-[0.65rem] font-bold uppercase tracking-[0.12em] ${
                       item.auto_renew
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-amber-100 text-amber-700"
@@ -200,7 +200,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
             <div className="flex gap-2">
               <Link
                 href={`/perfil?page=${Math.max(1, currentPage - 1)}`}
-                className={`inline-flex h-9 items-center justify-center rounded-md border border-border px-3 text-xs font-semibold ${
+                className={`inline-flex h-9 items-center border border-border/70 px-3 font-spaceGrotesk text-xs font-bold uppercase tracking-wide ${
                   currentPage === 1
                     ? "pointer-events-none text-muted-foreground/50"
                     : "text-foreground hover:bg-muted"
@@ -210,7 +210,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
               </Link>
               <Link
                 href={`/perfil?page=${Math.min(totalPages, currentPage + 1)}`}
-                className={`inline-flex h-9 items-center justify-center rounded-md border border-border px-3 text-xs font-semibold ${
+                className={`inline-flex h-9 items-center border border-border/70 px-3 font-spaceGrotesk text-xs font-bold uppercase tracking-wide ${
                   currentPage === totalPages
                     ? "pointer-events-none text-muted-foreground/50"
                     : "text-foreground hover:bg-muted"
