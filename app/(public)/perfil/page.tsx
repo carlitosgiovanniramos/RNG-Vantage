@@ -21,7 +21,7 @@ type SubscriptionItem = {
 };
 
 type PerfilPageProps = {
-  searchParams?: { page?: string };
+  searchParams?: Promise<{ page?: string }>;
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -83,8 +83,9 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
     ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
     : user.email?.split("@")[0] ?? "Cliente";
 
+  const resolvedSearchParams = await searchParams;
   const pageSize = 5;
-  const rawPage = Number(searchParams?.page ?? "1");
+  const rawPage = Number(resolvedSearchParams?.page ?? "1");
   const currentPage = Number.isNaN(rawPage) ? 1 : Math.max(1, rawPage);
   const rangeStart = (currentPage - 1) * pageSize;
   const rangeEnd = rangeStart + pageSize - 1;
