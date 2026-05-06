@@ -12,11 +12,14 @@ import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CalendarCheck2, Clock3, XCircle } from "lucide-react";
+import { toast } from "sonner";
+import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 
 type ReservationRow = Database["public"]["Tables"]["reservations"]["Row"];
 
 export default function ReservasAdminPage() {
   const queryClient = useQueryClient();
+  useAdminRealtime("reservations", "admin-reservations");
   const [statusFilter, setStatusFilter] = useState<
     ReservationStatus | "all"
   >("all");
@@ -44,7 +47,7 @@ export default function ReservasAdminPage() {
       await queryClient.invalidateQueries({ queryKey: ["admin-reservations"] });
       await refetch();
     } else {
-      alert("Error al actualizar: " + error);
+      toast.error("Error al actualizar: " + error);
     }
   };
 

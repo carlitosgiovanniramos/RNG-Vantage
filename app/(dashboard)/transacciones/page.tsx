@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Home } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
@@ -48,6 +49,7 @@ export default function TransaccionesAdminPage() {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  useAdminRealtime("transactions", "admin-transactions");
 
   const {
     data: transactions = [],

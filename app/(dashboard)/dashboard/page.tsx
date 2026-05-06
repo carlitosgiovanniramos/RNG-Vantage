@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { DataCard } from "@/components/data-card";
 import { DashboardCharts } from "@/components/dashboard-charts";
+import { RealtimeRefresher } from "@/components/realtime-refresher";
 
 type ServiceJoin = {
   type: string;
@@ -165,6 +166,7 @@ export default async function DashboardPage() {
 
   return (
     <section className="mx-auto w-full max-w-7xl space-y-10 px-6 py-10 md:py-14">
+      <RealtimeRefresher tables={["subscriptions", "transactions", "reservations"]} />
       <header className="relative overflow-hidden border border-border/60 bg-card/85 p-8 backdrop-blur-sm md:p-10">
         <div
           aria-hidden

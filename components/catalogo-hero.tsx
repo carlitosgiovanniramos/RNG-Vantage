@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export function CatalogoHero() {
   return (
-    <div className="relative -mt-[90px] w-full h-[76vh] overflow-hidden">
+    <div className="relative -mt-[90px] w-full h-screen overflow-hidden">
       <Image
         src="/images/catalogo-hero.webp"
         alt="RGL Estudio — Servicios"

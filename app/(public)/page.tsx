@@ -60,7 +60,7 @@ export default async function LandingPage() {
         {/* Foto de fondo — object-[center_20%] para mostrar la cara */}
         <Image
           alt="RGL Estudio — Ruth Gómez"
-          src="/images/ruth-hero.jpg"
+          src="/images/ruth-hero.webp"
           fill
           className="object-cover object-[center_20%]"
           sizes="100vw"
