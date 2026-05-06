@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Grotesk, Inter, Work_Sans } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
@@ -21,7 +21,19 @@ const workSans = Work_Sans({
 
 export const metadata: Metadata = {
   title: "RGL Estudio",
-  description: "Plataforma moderna de gestion financiera y suscripciones",
+  description: "Plataforma de gestión de servicios, reservas y suscripciones de RGL Estudio.",
+  applicationName: "RGL Estudio",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "RGL Estudio",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#ae2900",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({

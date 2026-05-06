@@ -29,13 +29,14 @@ export function Navbar() {
   const pathname = usePathname();
   const supabase = useSupabase();
   const isHome = pathname === "/";
+  const hasHero = isHome || pathname === "/catalogo";
 
   useEffect(() => {
-    if (!isHome) return;
+    if (!hasHero) return;
     const onScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [isHome]);
+  }, [hasHero]);
 
   useEffect(() => {
     let isMounted = true;
@@ -105,7 +106,7 @@ export function Navbar() {
 
   const accountHref = isAdmin ? "/dashboard" : "/perfil";
 
-  const transparent = isHome && !scrolled;
+  const transparent = hasHero && !scrolled;
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 w-full transition-colors duration-300 ${transparent ? "bg-transparent" : "bg-background"}`}>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Home } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
@@ -85,13 +86,13 @@ export default function TransaccionesAdminPage() {
       if (result.success) {
         setOpenDialog(false);
         queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-        alert("✅ Pago registrado exitosamente");
+        toast.success("Pago registrado exitosamente");
       } else {
-        alert(`❌ Error: ${result.error}`);
+        toast.error(result.error ?? "Error al registrar el pago");
       }
     } catch (err) {
       console.error(err);
-      alert("Error al registrar el pago");
+      toast.error("Error al registrar el pago");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,13 +105,13 @@ export default function TransaccionesAdminPage() {
       const result = await markTransactionAsFailed(tx.id);
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-        alert("✅ Transacción marcada como fallida");
+        toast.success("Transacción marcada como fallida");
       } else {
-        alert(`❌ Error: ${result.error}`);
+        toast.error(result.error ?? "Error al cancelar la transacción");
       }
     } catch (err) {
       console.error(err);
-      alert("Error al cancelar la transacción");
+      toast.error("Error al cancelar la transacción");
     }
   };
 
@@ -121,13 +122,13 @@ export default function TransaccionesAdminPage() {
       const result = await cleanExpiredTransactions();
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-        alert(`✅ Operación completada: ${result.message}`);
+        toast.success(result.message ?? "Operación completada");
       } else {
-        alert(`❌ Error: ${result.error}`);
+        toast.error(result.error ?? "Error al limpiar transacciones expiradas");
       }
     } catch (err) {
       console.error(err);
-      alert("Error al limpiar transacciones expiradas");
+      toast.error("Error al limpiar transacciones expiradas");
     }
   };
 
