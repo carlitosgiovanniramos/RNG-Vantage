@@ -245,3 +245,7 @@ Las siguientes etapas pudieron iniciarse **gracias a lo que Carlos completó:**
 
 **Reporte generado:** 27 de Abril, 2026  
 **Verificado:** Código + Plan de Desarrollo
+
+----
+
+**Prueba de N8N**
