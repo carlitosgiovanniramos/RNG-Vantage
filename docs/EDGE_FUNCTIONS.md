@@ -44,6 +44,17 @@ Este documento detalla las funciones serverless alojadas en Supabase (Edge Funct
   }
   ```
 
+### Invocación Automática (CRON)
+- **Programación:** Diaria a las 06:00 UTC (01:00 hora Ecuador) vía `pg_cron`.
+- **Mecanismo:** `pg_net` hace un HTTP POST a la Edge Function con el `service_role_key` como Bearer token.
+- **Job name:** `daily-subscription-renewal`
+- **Monitoreo:** Verificar la tabla `cron.job_run_details` para ver el historial de ejecuciones:
+  ```sql
+  SELECT * FROM cron.job_run_details 
+  WHERE jobid = (SELECT jobid FROM cron.job WHERE jobname = 'daily-subscription-renewal')
+  ORDER BY start_time DESC LIMIT 10;
+  ```
+
 ---
 
 ## 3. `payment-webhook` (PLACEHOLDER)
