@@ -156,17 +156,19 @@ export default function ReservasAdminPage() {
       render: (res) => (
         <div className="flex gap-2">
           <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
-                onClick={() => setSelectedReservation(res)}
-              >
-                <Eye className="mr-1.5 size-3" />
-                Ver
-              </Button>
+            <DialogTrigger
+              render={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
+                  onClick={() => setSelectedReservation(res)}
+                />
+              }
+            >
+              <Eye className="mr-1.5 size-3" />
+              Ver
             </DialogTrigger>
             {selectedReservation?.id === res.id && (
               <DialogContent className="sm:max-w-md">
@@ -300,25 +302,29 @@ export default function ReservasAdminPage() {
                   </div>
                 </div>
 
-                <DialogClose asChild>
-                  <Button type="button" variant="outline" className="w-full">
-                    Cerrar
-                  </Button>
+                <DialogClose
+                  render={
+                    <Button type="button" variant="outline" className="w-full" />
+                  }
+                >
+                  Cerrar
                 </DialogClose>
               </DialogContent>
             )}
           </Dialog>
 
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
-              >
-                <ChevronDown className="size-3" />
-              </Button>
+            <DropdownMenuTrigger
+              render={
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
+                />
+              }
+            >
+              <ChevronDown className="size-3" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel>Cambiar Estado</DropdownMenuLabel>
