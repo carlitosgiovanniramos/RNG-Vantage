@@ -1,17 +1,15 @@
 -- =============================================================
--- RGL Estudio: Seed data (datos de prueba)
+-- RGL Estudio: Seed data (servicios reales)
 -- =============================================================
 
--- Catalogo real de Ruth (10 servicios)
+-- Catalogo real de Ruth (8 servicios)
 -- Nota: por regla de negocio, solo manejo_redes puede renovarse automaticamente.
 insert into public.services (name, description, type, price, duration_months, is_active) values
-  ('Redes Sociales Inicial', 'Plan inicial de manejo de redes sociales para presencia constante en canales digitales.', 'manejo_redes', 299.99, 1, true),
-  ('Redes Sociales Work', 'Plan intermedio de manejo de redes sociales con mayor volumen de contenido.', 'manejo_redes', 319.99, 1, true),
-  ('Redes Sociales Premium', 'Plan premium de manejo de redes sociales con estrategia y ejecucion avanzada.', 'manejo_redes', 555.00, 1, true),
-  ('Auditoria', 'Diagnostico integral de canales digitales con recomendaciones de mejora.', 'auditoria', 70.00, 1, true),
-  ('Sesion Fotografica', 'Sesion fotografica profesional para contenido de marca.', 'otro', 130.00, 1, true),
-  ('Sesion Audiovisual (2 videos)', 'Produccion audiovisual de 2 videos editados para redes.', 'otro', 150.00, 1, true),
-  ('Sesion Audiovisual (6 videos)', 'Produccion audiovisual de 6 videos editados para redes.', 'otro', 230.00, 1, true),
-  ('Sesion Audiovisual (15 videos)', 'Produccion audiovisual de 15 videos editados para campanas completas.', 'otro', 500.00, 1, true),
-  ('Curso x 3 meses', 'Capacitacion estructurada de marketing digital durante 3 meses.', 'capacitacion', 500.00, 3, true),
-  ('Modelo por 1 hora', 'Servicio de modelo por hora para sesiones de contenido.', 'otro', 25.00, 1, true);
+  ('Auditoria de Marca', 'Reunion especializada mensual con la agencia. Incluye: analisis de marca, analisis de estrategias de contenido, consultas personalizadas por mensaje y 1 llamada por Zoom (1h30min) para presentacion de proyecto y estrategia de marketing.', 'auditoria', 70.00, 1, true),
+  ('Curso de Marketing (3 meses)', 'Aprende a crear contenido desde cero. Incluye: fotografia y video, creacion y planificacion de contenido, estrategia de comunicacion, edicion de video en CapCut, edicion de fotografia en Photoshop, analisis de metricas en META ADS y TikTok ADS, creacion de contenido con IA.', 'capacitacion', 500.00, 3, true),
+  ('Sesion Audiovisual / Video Presentacion', 'Video presentacion para profesionales que desean ejercer su carrera. Duracion: 0:45 seg - 1:25 min. Incluye: guion estructurado, guia de poses, equipo de luminaria, iPhone 15, microfonos DJI mini, Dron DJI NEO2. No incluye costos por cambio de fecha ni devolucion.', 'otro', 150.00, 1, true),
+  ('Sesion Fotografica (1 hora)', 'Sesion para graduacion, retrato o boda civil privada. Entrega en 5 dias. Pago: 50% reserva + 50% el dia de la sesion. Incluye: 50 fotografias profesionales editadas, Camara Sony X600, equipo de luces y asistencia en poses. No incluye produccion audiovisual ni fotos sin edicion.', 'otro', 150.00, 1, true),
+  ('Redes Sociales - Paquete Inicial', 'Incluye: planificacion estrategica de contenido, 1 produccion audiovisual (1min-1:30min), 4 horas de grabacion, 5 spots publicitarios (0:35-0:55 seg), iPhone 15, microfonos DJI mini, equipo de luz e informe basico de contenido. No incluye transporte, automatizacion de mensajeria ni sesion fotografica.', 'manejo_redes', 430.00, 1, true),
+  ('Redes Sociales - Paquete Standard', 'Incluye: dos dias de produccion, planificacion estrategica, 2 producciones audiovisuales (1min30seg), 10 spots publicitarios, 5 fotografias profesionales editadas, 5 afiches publicitarios para Facebook e Instagram, Camara Sony X600, asistencia en poses, informe mensual y analisis de metricas. Precios no incluyen 15% IVA.', 'manejo_redes', 610.00, 1, true),
+  ('Redes Sociales - Paquete Premium', 'Incluye: 2 dias de produccion, 2 producciones audiovisuales (1:30min-3:00min), 15 spots publicitarios, 20 fotografias profesionales editadas, 18 flyers publicitarios para Facebook e Instagram, planificacion estrategica, Dron DJI NEO2, Camara Sony X600, automatizacion de mensajeria y comentarios, informe mensual y analisis de metricas. Precios no incluyen 15% IVA.', 'manejo_redes', 850.00, 1, true),
+  ('Modelo para Producciones Audiovisual', 'Modelo profesional de buena presentacion, diccion y desenvuelta frente a camara. Precio por hora. No incluye costos por transporte, movilizacion, snacks, bebidas ni alimentacion.', 'otro', 50.00, 1, true);
