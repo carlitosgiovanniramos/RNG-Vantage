@@ -17,6 +17,12 @@ export function Footer() {
           >
             Política de Privacidad
           </Link>
+          <Link
+            href="/terminos-servicio"
+            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
+          >
+            Términos de Servicio
+          </Link>
 
         </nav>
 
