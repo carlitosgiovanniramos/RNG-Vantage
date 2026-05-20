@@ -195,7 +195,57 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_dashboard_summary: {
+        Row: {
+          mrr: number
+          monthly_income: number
+          active_subscriptions: number
+          recurring_subscriptions: number
+          one_time_subscriptions: number
+          pending_reservations: number
+        }
+      }
+      v_monthly_income: {
+        Row: {
+          month: string
+          total: number
+        }
+      }
+      v_service_mix: {
+        Row: {
+          service_type: string
+          count: number
+        }
+      }
+      v_subscriptions_detail: {
+        Row: {
+          id: string
+          user_id: string
+          service_id: string
+          starts_at: string
+          ends_at: string
+          status: string
+          auto_renew: boolean
+          created_at: string
+          client_name: string
+          service_name: string
+          service_type: string
+          price: number
+        }
+      }
+      v_transactions_detail: {
+        Row: {
+          id: string
+          user_id: string | null
+          subscription_id: string | null
+          amount: number
+          payment_method: string
+          status: string
+          notes: string | null
+          created_at: string
+          client_name: string
+        }
+      }
     }
     Functions: {
       [_ in never]: never
@@ -225,3 +275,6 @@ export type TablesInsert<T extends keyof Database["public"]["Tables"]> =
 
 export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Update"]
+
+export type Views<T extends keyof Database["public"]["Views"]> =
+  Database["public"]["Views"][T]["Row"]
