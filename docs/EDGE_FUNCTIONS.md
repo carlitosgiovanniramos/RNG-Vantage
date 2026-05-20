@@ -59,12 +59,6 @@ Este documento detalla las funciones serverless alojadas en Supabase (Edge Funct
 
 ---
 
-## 4. `hello-world` (BOILERPLATE)
-**Propósito:** Función de prueba estándar de Supabase para validar que el CLI y Deno están configurados correctamente.
-- Puede ser invocada públicamente si no hay restricciones, o se puede eliminar con seguridad para evitar llamadas innecesarias.
-
----
-
 ## Invocación y Testeo (cURL)
 
 Para testear localmente o contra producción, debes proporcionar los secretos de entorno correspondientes y un JWT válido de un usuario con rol administrador.

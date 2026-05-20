@@ -40,7 +40,7 @@ export function CheckoutForm({
       } else {
         router.push(`/checkout?service_id=${serviceId}&success=1`);
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Error de conexión. Intenta nuevamente.");
     } finally {
       if (!success) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 
 export default function AuthLayout({
@@ -32,10 +33,13 @@ export default function AuthLayout({
             </div>
 
             <figure className="relative overflow-hidden border border-border/70 bg-[#e8e3dd]">
-              <img
+              <Image
                 src="/images/auth-vantage.gif"
                 alt="Visual corporativo Vantage para acceso de clientes y administradores"
+                width={800}
+                height={400}
                 className="h-64 w-full object-cover object-left"
+                unoptimized
               />
               <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-foreground/90 via-foreground/45 to-transparent px-4 py-3 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.16em] text-background">
                 visión estratégica de marca
