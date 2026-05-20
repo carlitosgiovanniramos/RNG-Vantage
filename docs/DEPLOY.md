@@ -16,12 +16,13 @@ Las variables `SUPABASE_URL` y `SUPABASE_ANON_KEY` se inyectan automáticamente 
 
 ## 2. Migraciones de Base de Datos
 
-Las migraciones de la base de datos están almacenadas en `supabase/migrations/` y deben ejecutarse en orden. Las 5 migraciones actuales son:
-1. `20260325120000_init.sql` (Creación inicial de tablas y enums)
-2. `20260402000000_split_full_name.sql`
-3. `20260403010000_fix_profiles_admin_policy.sql`
-4. `20260404000000_fix_security_and_business_logic.sql`
-5. `20260520000000_create_views.sql` (Creación de vistas SQL optimizadas)
+Las migraciones de la base de datos están almacenadas en `supabase/migrations/` y deben ejecutarse en orden. Las 6 migraciones actuales son:
+1. `20260325120000_init.sql` (Creación inicial de tablas, enums, triggers y RLS)
+2. `20260402000000_split_full_name.sql` (Separación de nombre completo en first_name/last_name)
+3. `20260403010000_fix_profiles_admin_policy.sql` (Corrección de políticas RLS para admin)
+4. `20260404000000_fix_security_and_business_logic.sql` (Índices de rendimiento y lógica de negocio)
+5. `20260520000000_create_views.sql` (5 vistas SQL optimizadas para el dashboard)
+6. `20260520100000_setup_cron_subscription_renewal.sql` (pg_cron + pg_net para renovación automática diaria)
 
 **Comando de Despliegue de DB:**
 Para empujar las migraciones a un proyecto remoto de Supabase (producción):

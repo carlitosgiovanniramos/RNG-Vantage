@@ -5,7 +5,7 @@ Este documento detalla la arquitectura de alto nivel del proyecto RNGVantage, in
 ## Stack Tecnológico
 
 El proyecto está construido sobre un stack moderno y escalable:
-- **Framework Frontend**: Next.js 15 (App Router)
+- **Framework Frontend**: Next.js 16 (App Router, React 19)
 - **Estilos y UI**: Tailwind CSS v4, componentes basados en Shadcn UI
 - **Backend / Base de Datos**: Supabase (PostgreSQL 17, Auth, Edge Functions, Realtime)
 - **Manejo de Estado y Datos**: TanStack Query (React Query)
@@ -28,8 +28,8 @@ lib/
 hooks/           → use-admin-realtime.ts, use-supabase.ts
 types/           → database.ts, index.ts
 supabase/
-  functions/     → dashboard-metrics, subscription-renewal, payment-webhook, hello-world
-  migrations/    → 5 migraciones secuenciales en SQL
+  functions/     → dashboard-metrics, subscription-renewal, payment-webhook
+  migrations/    → 6 migraciones secuenciales en SQL
 ```
 
 ## Diagrama de Base de Datos (ER)
@@ -67,5 +67,18 @@ La seguridad está implementada en múltiples capas:
 ## Realtime
 
 La aplicación utiliza Supabase Realtime para mantener el dashboard actualizado en vivo:
-- **`use-admin-realtime.ts`**: Un custom hook que suscribe al cliente web a cambios de la base de datos (eventos `postgres_changes`) para tablas específicas (`reservations`, `transactions`, `subscriptions`).
-- Al detectar una mutación (ej. un `INSERT`), el hook dispara invalidaciones de TanStack Query (`queryClient.invalidateQueries`) para refrescar las listas sin recargar la página e invoca un `toast` de notificación al administrador.
+- **`RealtimeRefresher`** (`components/realtime-refresher.tsx`): Componente que suscribe al cliente web a cambios de la base de datos (eventos `postgres_changes`) para tablas específicas (`reservations`, `transactions`, `subscriptions`).
+- Al detectar una mutación (ej. un `INSERT`), el componente invoca `router.refresh()` para refrescar los datos del Server Component y muestra un `toast` de notificación al administrador.
+- Se utiliza en las 4 páginas del dashboard: métricas, reservas, suscripciones y transacciones.
+
+## CRON Jobs
+
+El sistema utiliza `pg_cron` + `pg_net` para automatizar tareas recurrentes:
+- **`daily-subscription-renewal`**: Se ejecuta diariamente a las 06:00 UTC (01:00 Ecuador). Hace un HTTP POST a la Edge Function `subscription-renewal` para procesar suscripciones expiradas con `auto_renew=true`.
+
+## PWA
+
+La aplicación está configurada como Progressive Web App mediante Serwist:
+- **Service Worker** (`app/sw.ts`): Precaching de assets estáticos y caching en runtime.
+- **Manifest** (`app/manifest.ts`): Configurado con nombre "RGL Estudio", colores de marca y 3 iconos SVG (192px, 512px, maskable).
+- El service worker solo se activa en producción (`npm run build && npm start`).
