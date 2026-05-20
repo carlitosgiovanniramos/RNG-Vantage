@@ -53,7 +53,7 @@ export default async function CapacitacionPage() {
             <p className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.22em] text-primary mb-3">
               RGL Estudio · Ecuador
             </p>
-            <h1 className="text-5xl sm:text-6xl md:text-8xl font-spaceGrotesk font-black uppercase tracking-tighter text-white leading-none mb-4">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-spaceGrotesk font-black uppercase tracking-tighter text-white leading-none mb-4">
               Capacitación
             </h1>
             <p className="text-white/75 font-workSans text-base sm:text-lg max-w-[520px] leading-relaxed mb-8">

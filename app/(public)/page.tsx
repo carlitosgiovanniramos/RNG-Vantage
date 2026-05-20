@@ -76,7 +76,7 @@ export default async function LandingPage() {
               Autoridad en Marketing Digital
             </div>
 
-            <h1 className="text-6xl sm:text-7xl md:text-9xl font-spaceGrotesk font-black tracking-tighter leading-[0.85] mb-8 uppercase text-white">
+            <h1 className="text-5xl sm:text-7xl md:text-9xl font-spaceGrotesk font-black tracking-tighter leading-[0.85] mb-8 uppercase text-white">
               RGL Estudio
             </h1>
 
@@ -179,7 +179,7 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-16">
             <div className="flex flex-col">
-              <div className="text-[8rem] sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
+              <div className="text-7xl sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
                 1
               </div>
               <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
@@ -190,7 +190,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="flex flex-col">
-              <div className="text-[8rem] sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
+              <div className="text-7xl sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
                 2
               </div>
               <Package className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
@@ -201,7 +201,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="flex flex-col">
-              <div className="text-[8rem] sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
+              <div className="text-7xl sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
                 3
               </div>
               <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
@@ -217,7 +217,7 @@ export default async function LandingPage() {
       {/* --- Final CTA --- */}
       <section className="py-24 sm:py-40 px-4 sm:px-8 relative overflow-hidden bg-background">
         <div className="max-w-[1440px] mx-auto text-center relative z-10">
-          <h2 className="text-4xl sm:text-6xl md:text-9xl font-spaceGrotesk font-black uppercase tracking-tighter mb-12 leading-[1.1] sm:leading-none text-foreground">
+          <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-spaceGrotesk font-black uppercase tracking-tighter mb-12 leading-[1.1] sm:leading-none text-foreground">
             Empieza a transformar <br className="hidden sm:block" /> tu negocio hoy
           </h2>
           <div className="flex justify-center">
