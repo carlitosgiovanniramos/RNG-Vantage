@@ -55,7 +55,7 @@ export async function getDashboardMetrics(): Promise<{
 
 /**
  * Fallback que replica la logica de la Edge Function
- * ejecutando queries directas desde el server component.
+ * usando vistas SQL precalculadas en vez de queries directas.
  * Util para desarrollo local sin Supabase Edge Functions.
  */
 async function getFallbackMetrics(
@@ -66,79 +66,33 @@ async function getFallbackMetrics(
   source: "fallback";
 }> {
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const chartStart = new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
-  const [subscriptionsResult, transactionsResult, reservationsResult] =
-    await Promise.all([
-      supabase
-        .from("subscriptions")
-        .select("id, auto_renew, services(type, price)")
-        .eq("status", "active"),
-      supabase
-        .from("transactions")
-        .select("amount, created_at")
-        .eq("status", "completed")
-        .gte("created_at", chartStart.toISOString()),
-      supabase
-        .from("reservations")
-        .select("id", { count: "exact", head: true })
-        .eq("status", "pending"),
-    ]);
+  const [summaryResult, incomeResult, mixResult] = await Promise.all([
+    supabase.from("v_dashboard_summary").select("*").single(),
+    supabase.from("v_monthly_income").select("*").order("month"),
+    supabase.from("v_service_mix").select("*"),
+  ]);
 
-  if (subscriptionsResult.error || transactionsResult.error || reservationsResult.error) {
+  if (summaryResult.error || incomeResult.error || mixResult.error) {
     const msg = [
-      subscriptionsResult.error?.message,
-      transactionsResult.error?.message,
-      reservationsResult.error?.message,
+      summaryResult.error?.message,
+      incomeResult.error?.message,
+      mixResult.error?.message,
     ]
       .filter(Boolean)
       .join("; ");
     return { data: null, error: msg, source: "fallback" };
   }
 
-  // Procesar suscripciones
-  type ServiceJoin = { type: string; price: number };
-  type SubRow = {
-    id: string;
-    auto_renew: boolean;
-    services: ServiceJoin | ServiceJoin[] | null;
-  };
+  const summary = summaryResult.data;
 
-  const subscriptions = (subscriptionsResult.data ?? []) as SubRow[];
-
-  function normalizeService(
-    s: ServiceJoin | ServiceJoin[] | null,
-  ): ServiceJoin | null {
-    if (!s) return null;
-    return Array.isArray(s) ? (s[0] ?? null) : s;
-  }
-
-  let mrr = 0;
-  let recurringSubscriptions = 0;
-  const serviceMixCounts = new Map<string, number>();
-
-  for (const sub of subscriptions) {
-    const service = normalizeService(sub.services);
-    if (!service) continue;
-
-    serviceMixCounts.set(
-      service.type,
-      (serviceMixCounts.get(service.type) ?? 0) + 1,
-    );
-
-    if (service.type === "manejo_redes") {
-      mrr += Number(service.price ?? 0);
-      recurringSubscriptions += 1;
-    }
-  }
-
-  // Procesar transacciones
-  type TxRow = { amount: number | null; created_at: string };
-  const transactions = (transactionsResult.data ?? []) as TxRow[];
-
-  let monthlyIncome = 0;
-  const incomeByMonth = new Map<string, number>();
+  // Construir serie de 6 meses (rellenar meses sin datos con 0)
+  const incomeByMonth = new Map(
+    (incomeResult.data ?? []).map((row: { month: string; total: number }) => [
+      row.month,
+      Number(row.total),
+    ]),
+  );
 
   function getMonthKey(date: Date): string {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
@@ -148,42 +102,30 @@ async function getFallbackMetrics(
     return date.toLocaleString("es-EC", { month: "short" }).replace(".", "");
   }
 
-  for (const tx of transactions) {
-    const amount = Number(tx.amount ?? 0);
-    const txDate = new Date(tx.created_at);
-    const key = getMonthKey(txDate);
-
-    incomeByMonth.set(key, (incomeByMonth.get(key) ?? 0) + amount);
-
-    if (txDate >= monthStart) {
-      monthlyIncome += amount;
-    }
-  }
-
   const monthlyIncomeSeries = Array.from({ length: 6 }, (_, i) => {
     const date = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
     const key = getMonthKey(date);
     return {
       label: formatMonthLabel(date),
-      value: Number(incomeByMonth.get(key) ?? 0),
+      value: incomeByMonth.get(key) ?? 0,
     };
   });
 
-  const serviceMix = Array.from(serviceMixCounts.entries()).map(
-    ([type, value]) => ({
-      name: type.replace(/_/g, " "),
-      value,
+  const serviceMix = (mixResult.data ?? []).map(
+    (row: { service_type: string; count: number }) => ({
+      name: row.service_type.replace(/_/g, " "),
+      value: Number(row.count),
     }),
   );
 
   return {
     data: {
-      mrr,
-      monthly_income: monthlyIncome,
-      active_subscriptions: subscriptions.length,
-      recurring_subscriptions: recurringSubscriptions,
-      one_time_subscriptions: subscriptions.length - recurringSubscriptions,
-      pending_reservations: reservationsResult.count ?? 0,
+      mrr: Number(summary.mrr),
+      monthly_income: Number(summary.monthly_income),
+      active_subscriptions: Number(summary.active_subscriptions),
+      recurring_subscriptions: Number(summary.recurring_subscriptions),
+      one_time_subscriptions: Number(summary.one_time_subscriptions),
+      pending_reservations: Number(summary.pending_reservations),
       monthly_income_series: monthlyIncomeSeries,
       service_mix: serviceMix,
     },
@@ -191,3 +133,4 @@ async function getFallbackMetrics(
     source: "fallback",
   };
 }
+
