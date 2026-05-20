@@ -351,7 +351,7 @@ export default function ServiciosAdminPage() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-spaceGrotesk text-base font-black uppercase tracking-[0.12em]">
               {editingServiceId ? "Editar Servicio" : "Nuevo Servicio"}

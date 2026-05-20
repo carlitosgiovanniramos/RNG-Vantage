@@ -203,7 +203,7 @@ export function Navbar() {
                 <Menu className="h-6 w-6" />
                 <span className="sr-only">Abrir menú de navegación</span>
               </SheetTrigger>
-              <SheetContent side="right" className="w-75 p-0 sm:w-100">
+              <SheetContent side="right" className="w-[85vw] p-0 sm:max-w-sm">
                 <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
 
                 {/* Logo en el panel */}
