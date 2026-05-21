@@ -1,22 +1,38 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getServices,
-  createService,
-  updateService,
-  deleteService,
-} from "./actions";
-import { CreateServiceInput } from "@/lib/validators/service";
-import type { Database } from "@/types/database";
+import { toast } from "sonner";
+import { ArrowLeft, PencilLine, Plus, Power, Trash2 } from "lucide-react";
+
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, PencilLine, Sparkles, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+import { CreateServiceInput } from "@/lib/validators/service";
+import type { Database } from "@/types/database";
+import {
+  createService,
+  deleteService,
+  getServices,
+  updateService,
+} from "./actions";
 
 type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
+type ServiceTableRow = Record<string, unknown> & ServiceRow;
 type CreateServiceFieldErrors = Partial<
   Record<keyof CreateServiceInput, string[]>
 >;
@@ -24,6 +40,14 @@ type CreateServiceFormError =
   | { fieldErrors?: CreateServiceFieldErrors }
   | string
   | null;
+
+const SERVICE_TYPE_OPTIONS: { value: CreateServiceInput["type"]; label: string }[] =
+  [
+    { value: "manejo_redes", label: "Manejo de Redes" },
+    { value: "auditoria", label: "Auditoría" },
+    { value: "capacitacion", label: "Capacitación" },
+    { value: "otro", label: "Otro" },
+  ];
 
 const EMPTY_SERVICE_FORM: CreateServiceInput = {
   name: "",
@@ -34,14 +58,31 @@ const EMPTY_SERVICE_FORM: CreateServiceInput = {
   is_active: true,
 };
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("es-EC", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+}
+
+function formatDuration(months: number) {
+  return `${months} ${months === 1 ? "mes" : "meses"}`;
+}
+
+function getServiceTypeLabel(type: CreateServiceInput["type"]) {
+  return SERVICE_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+}
+
 export default function ServiciosAdminPage() {
   const queryClient = useQueryClient();
-
-  // Form state
-  const [formData, setFormData] = useState<CreateServiceInput>(EMPTY_SERVICE_FORM);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] =
+    useState<CreateServiceInput>(EMPTY_SERVICE_FORM);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [formError, setFormError] = useState<CreateServiceFormError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [updatingServiceId, setUpdatingServiceId] = useState<string | null>(null);
+
   const formFieldErrors =
     typeof formError === "object" && formError !== null
       ? formError.fieldErrors
@@ -52,7 +93,6 @@ export default function ServiciosAdminPage() {
     isLoading,
     isError,
     error,
-    refetch,
   } = useQuery<ServiceRow[], Error>({
     queryKey: ["admin-services"],
     queryFn: async () => {
@@ -64,61 +104,22 @@ export default function ServiciosAdminPage() {
     },
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
-    const { name, value, type } = e.target;
-
-    let parsedValue: string | number | boolean = value;
-    if (type === "number") {
-      parsedValue = value === "" ? 0 : Number(value);
-    } else if (type === "checkbox") {
-      parsedValue = (e.target as HTMLInputElement).checked;
-    }
-
-    setFormData((prev) => ({ ...prev, [name]: parsedValue }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const resetForm = () => {
+    setFormData(EMPTY_SERVICE_FORM);
+    setEditingServiceId(null);
     setFormError(null);
-
-    const result = editingServiceId
-      ? await updateService(editingServiceId, formData)
-      : await createService(formData);
-
-    const { success, error, details } = result;
-
-    if (success) {
-      alert(
-        editingServiceId
-          ? "Servicio actualizado exitosamente!"
-          : "Servicio creado exitosamente!",
-      );
-      setFormData(EMPTY_SERVICE_FORM);
-      setEditingServiceId(null);
-      await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
-      await refetch();
-    } else {
-      setFormError(details || error || "Error desconocido");
-    }
-
-    setIsSubmitting(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("¿Seguro que deseas eliminar este servicio?")) return;
-
-    const { success, error } = await deleteService(id);
-    if (success) {
-      await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
-      await refetch();
-    } else {
-      alert("Error al eliminar: " + error);
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (!open && !isSubmitting) {
+      resetForm();
     }
+  };
+
+  const handleOpenNewServiceDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
   };
 
   const handleStartEdit = (service: ServiceRow) => {
@@ -132,20 +133,107 @@ export default function ServiciosAdminPage() {
       duration_months: service.duration_months,
       is_active: service.is_active,
     });
+    setIsDialogOpen(true);
   };
 
-  const handleCancelEdit = () => {
-    setEditingServiceId(null);
+  const handleInputChange = (
+    event: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value, type } = event.target;
+
+    let parsedValue: string | number | boolean = value;
+    if (type === "number") {
+      parsedValue = value === "" ? 0 : Number(value);
+    } else if (type === "checkbox") {
+      parsedValue = (event.target as HTMLInputElement).checked;
+    }
+
+    setFormData((current) => ({ ...current, [name]: parsedValue }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
     setFormError(null);
-    setFormData(EMPTY_SERVICE_FORM);
+
+    const payload = {
+      ...formData,
+      description: formData.description?.trim() || undefined,
+      name: formData.name.trim(),
+      price: Number(formData.price),
+      duration_months: Number(formData.duration_months),
+    };
+
+    const result = editingServiceId
+      ? await updateService(editingServiceId, payload)
+      : await createService(payload);
+
+    setIsSubmitting(false);
+
+    if (!result.success) {
+      setFormError(result.details || result.error || "Error desconocido");
+      toast.error("No se pudo guardar el servicio", {
+        description: result.error ?? "Revisa los campos e intenta de nuevo.",
+      });
+      return;
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
+    setIsDialogOpen(false);
+    resetForm();
+    toast.success(
+      editingServiceId
+        ? "Servicio actualizado correctamente"
+        : "Servicio creado correctamente",
+    );
   };
 
-  const serviceColumns: DataTableColumn<ServiceRow>[] = [
+  const handleToggleActive = async (service: ServiceRow) => {
+    setUpdatingServiceId(service.id);
+    const { success, error } = await updateService(service.id, {
+      is_active: !service.is_active,
+    });
+    setUpdatingServiceId(null);
+
+    if (!success) {
+      toast.error("No se pudo cambiar el estado", {
+        description: error ?? "Intenta nuevamente.",
+      });
+      return;
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
+    toast.success(
+      service.is_active ? "Servicio desactivado" : "Servicio activado",
+    );
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("¿Seguro que deseas eliminar este servicio?")) return;
+
+    const { success, error } = await deleteService(id);
+    if (!success) {
+      toast.error("Error al eliminar", {
+        description: error ?? "Intenta nuevamente.",
+      });
+      return;
+    }
+
+    await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
+    toast.success("Servicio eliminado correctamente");
+  };
+
+  const inactiveClass = (service: ServiceRow) =>
+    cn(!service.is_active && "opacity-50");
+
+  const serviceColumns: DataTableColumn<ServiceTableRow>[] = [
     {
       key: "name",
       header: "Nombre",
       render: (service) => (
-        <div>
+        <div className={inactiveClass(service)}>
           <div className="font-spaceGrotesk text-sm font-bold uppercase tracking-[0.08em] text-foreground">
             {service.name}
           </div>
@@ -157,30 +245,51 @@ export default function ServiciosAdminPage() {
     },
     {
       key: "type",
-      header: "Tipo / Precio",
+      header: "Tipo",
       render: (service) => (
-        <div>
-          <div className="capitalize text-foreground/80">
-            {service.type.replace("_", " ")}
-          </div>
-          <div className="font-spaceGrotesk text-base font-black text-foreground">
-            ${service.price} / {service.duration_months}m
-          </div>
-        </div>
+        <span className={cn("text-foreground/80", inactiveClass(service))}>
+          {getServiceTypeLabel(service.type)}
+        </span>
+      ),
+    },
+    {
+      key: "price",
+      header: "Precio",
+      render: (service) => (
+        <span
+          className={cn(
+            "font-spaceGrotesk text-base font-black text-foreground",
+            inactiveClass(service),
+          )}
+        >
+          {formatCurrency(Number(service.price ?? 0))}
+        </span>
+      ),
+    },
+    {
+      key: "duration_months",
+      header: "Duración",
+      render: (service) => (
+        <span className={cn("text-foreground/80", inactiveClass(service))}>
+          {formatDuration(Number(service.duration_months ?? 0))}
+        </span>
       ),
     },
     {
       key: "is_active",
       header: "Estado",
-      render: (service) => (
-        <StatusBadge status={service.is_active ? "active" : "expired"} />
-      ),
+      render: (service) =>
+        service.is_active ? (
+          <StatusBadge status="active" />
+        ) : (
+          <StatusBadge status="inactive" className="opacity-70" />
+        ),
     },
     {
       key: "actions",
       header: "Acciones",
       render: (service) => (
-        <div className="flex gap-2">
+        <div className={cn("flex flex-wrap gap-2", inactiveClass(service))}>
           <Button
             type="button"
             size="sm"
@@ -190,6 +299,17 @@ export default function ServiciosAdminPage() {
           >
             <PencilLine className="size-3" />
             Editar
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
+            onClick={() => handleToggleActive(service)}
+            disabled={updatingServiceId === service.id}
+          >
+            <Power className="size-3" />
+            {service.is_active ? "Desactivar" : "Activar"}
           </Button>
           <Button
             type="button"
@@ -205,6 +325,9 @@ export default function ServiciosAdminPage() {
       ),
     },
   ];
+
+  const activeCount = services.filter((service) => service.is_active).length;
+  const inactiveCount = services.length - activeCount;
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-8 md:py-10">
@@ -226,184 +349,239 @@ export default function ServiciosAdminPage() {
               controlado para el equipo de RGL Estudio.
             </p>
           </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            <ArrowLeft className="size-4" />
-            Volver al dashboard
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+              <DialogTrigger
+                render={
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="h-11 rounded-none px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
+                    onClick={handleOpenNewServiceDialog}
+                  />
+                }
+              >
+                <Plus className="size-4" />
+                Nuevo Servicio
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingServiceId ? "Editar Servicio" : "Nuevo Servicio"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Completa la información visible en el catálogo y define si
+                      el servicio estará activo.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nombre</Label>
+                      <Input
+                        id="name"
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="h-11"
+                        required
+                      />
+                      {formFieldErrors?.name && (
+                        <p className="text-xs text-destructive">
+                          {formFieldErrors.name[0]}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Descripción</Label>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        value={formData.description || ""}
+                        onChange={handleInputChange}
+                        rows={4}
+                      />
+                      {formFieldErrors?.description && (
+                        <p className="text-xs text-destructive">
+                          {formFieldErrors.description[0]}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="type">Tipo</Label>
+                      <select
+                        id="type"
+                        name="type"
+                        value={formData.type}
+                        onChange={handleInputChange}
+                        className="h-11 w-full border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      >
+                        {SERVICE_TYPE_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      {formFieldErrors?.type && (
+                        <p className="text-xs text-destructive">
+                          {formFieldErrors.type[0]}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="price">Precio</Label>
+                        <Input
+                          id="price"
+                          type="number"
+                          name="price"
+                          step="0.01"
+                          min="0"
+                          value={formData.price}
+                          onChange={handleInputChange}
+                          className="h-11"
+                          required
+                        />
+                        {formFieldErrors?.price && (
+                          <p className="text-xs text-destructive">
+                            {formFieldErrors.price[0]}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="duration_months">Duración</Label>
+                        <Input
+                          id="duration_months"
+                          type="number"
+                          name="duration_months"
+                          min="1"
+                          value={formData.duration_months}
+                          onChange={handleInputChange}
+                          className="h-11"
+                          required
+                        />
+                        {formFieldErrors?.duration_months && (
+                          <p className="text-xs text-destructive">
+                            {formFieldErrors.duration_months[0]}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <label
+                      htmlFor="is_active"
+                      className="flex items-center gap-3 border border-border/60 bg-muted/40 p-3"
+                    >
+                      <input
+                        type="checkbox"
+                        name="is_active"
+                        id="is_active"
+                        checked={formData.is_active}
+                        onChange={handleInputChange}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      <span className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.14em] text-foreground">
+                        Activo / Visible
+                      </span>
+                    </label>
+
+                    {typeof formError === "string" && (
+                      <p className="text-sm text-destructive">{formError}</p>
+                    )}
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleDialogOpenChange(false)}
+                      disabled={isSubmitting}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={isSubmitting}>
+                      {isSubmitting
+                        ? "Guardando..."
+                        : editingServiceId
+                          ? "Guardar cambios"
+                          : "Guardar servicio"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            <Link
+              href="/dashboard"
+              className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+            >
+              <ArrowLeft className="size-4" />
+              Volver al dashboard
+            </Link>
+          </div>
         </div>
       </header>
 
-      <div className="grid gap-6 xl:grid-cols-[370px_minmax(0,1fr)]">
-        <aside className="h-fit border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:p-7 xl:sticky xl:top-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-spaceGrotesk text-base font-black uppercase tracking-[0.14em] text-foreground">
-              {editingServiceId ? "Editar Servicio" : "Nuevo Servicio"}
-            </h2>
-            <span className="inline-flex h-8 items-center gap-1 bg-primary/10 px-2.5 font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.14em] text-primary">
-              <Sparkles className="size-3" />
-              Admin
-            </span>
+      <section className="grid gap-4 sm:grid-cols-3">
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Total
+          </p>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {services.length}
+          </p>
+        </article>
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Activos
+          </p>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {activeCount}
+          </p>
+        </article>
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Inactivos
+          </p>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {inactiveCount}
+          </p>
+        </article>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="font-spaceGrotesk text-2xl font-black uppercase tracking-[0.08em] text-foreground md:text-3xl">
+            Catálogo de Servicios
+          </h2>
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            {services.length} servicio(s) en catálogo
+          </p>
+        </div>
+
+        {isLoading ? (
+          <div className="border border-border/60 bg-card/80 p-8 text-center">
+            Cargando servicios...
           </div>
-
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                Nombre
-              </label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
-                required
-              />
-              {formFieldErrors?.name && (
-                <p className="mt-1 text-xs text-red-500">
-                  {formFieldErrors.name[0]}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                Descripción
-              </label>
-              <textarea
-                name="description"
-                value={formData.description || ""}
-                onChange={handleInputChange}
-                rows={4}
-                className="mt-2 w-full resize-none border border-border/60 bg-background/90 px-3 py-2 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div>
-              <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                Tipo
-              </label>
-              <select
-                name="type"
-                value={formData.type}
-                onChange={handleInputChange}
-                className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="manejo_redes">Manejo de Redes</option>
-                <option value="auditoria">Auditoría</option>
-                <option value="capacitacion">Capacitación</option>
-                <option value="otro">Otro</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                  Precio ($)
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  step="0.01"
-                  min="0"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
-                  required
-                />
-              </div>
-              <div>
-                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                  Duración
-                </label>
-                <input
-                  type="number"
-                  name="duration_months"
-                  min="1"
-                  value={formData.duration_months}
-                  onChange={handleInputChange}
-                  className="mt-2 h-11 w-full border border-border/60 bg-background/90 px-3 text-sm outline-none transition focus:border-primary/70 focus:ring-2 focus:ring-primary/20"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 pt-2">
-              <input
-                type="checkbox"
-                name="is_active"
-                id="is_active"
-                checked={formData.is_active}
-                onChange={handleInputChange}
-                className="h-4 w-4 accent-primary"
-              />
-              <label
-                htmlFor="is_active"
-                className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.14em] text-foreground"
-              >
-                Activo / Visible
-              </label>
-            </div>
-
-            {typeof formError === "string" && (
-              <p className="mt-2 text-sm text-red-500">{formError}</p>
-            )}
-
-            {editingServiceId && (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-11 w-full border-border/70 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
-                onClick={handleCancelEdit}
-              >
-                Cancelar edición
-              </Button>
-            )}
-
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-11 w-full font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.18em]"
-            >
-              {isSubmitting
-                ? "Guardando..."
-                : editingServiceId
-                  ? "Guardar cambios"
-                  : "Guardar servicio"}
-            </Button>
-          </form>
-        </aside>
-
-        <section className="space-y-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="font-spaceGrotesk text-2xl font-black uppercase tracking-[0.08em] text-foreground md:text-3xl">
-              Catálogo de Servicios
-            </h2>
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-              {services.length} servicio(s) en catálogo
-            </p>
+        ) : isError ? (
+          <div className="border border-border/60 bg-card/80 p-8 text-center text-red-500">
+            Error: {error.message}
           </div>
-
-          {isLoading ? (
-            <div className="border border-border/60 bg-card/80 p-8 text-center">
-              Cargando servicios...
-            </div>
-          ) : isError ? (
-            <div className="border border-border/60 bg-card/80 p-8 text-center text-red-500">
-              Error: {error.message}
-            </div>
-          ) : (
-            <DataTable
-              data={services}
-              columns={serviceColumns}
-              pageSize={8}
-              filterPlaceholder="Buscar por nombre, tipo o descripción"
-            />
-          )}
-        </section>
-      </div>
+        ) : (
+          <DataTable
+            data={services as ServiceTableRow[]}
+            columns={serviceColumns}
+            pageSize={8}
+            filterPlaceholder="Buscar por nombre, tipo o descripción"
+          />
+        )}
+      </section>
     </div>
   );
 }
