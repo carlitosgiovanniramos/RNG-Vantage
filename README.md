@@ -70,17 +70,38 @@ Vista del cliente con historial de suscripciones y reservas propias. Paginado en
 
 ## Base de datos
 
-El esquema completo se encuentra en `supabase/migrations/20260325120000_init.sql`. Las tablas principales son:
+El esquema se define en 6 migraciones secuenciales en `supabase/migrations/`. Las tablas principales son:
 
-- `profiles` — extiende `auth.users` con nombre, teléfono y rol (`client` / `admin`)
+- `profiles` — extiende `auth.users` con nombre, apellido y rol (`client` / `admin`)
 - `services` — catálogo de servicios con tipo, precio y duración
 - `reservations` — solicitudes de reserva de clientes
 - `subscriptions` — contrataciones activas o pendientes por cliente y servicio
 - `transactions` — historial de pagos vinculados a suscripciones
 
+Adicionalmente, existen 5 vistas SQL optimizadas para el dashboard (`v_dashboard_summary`, `v_monthly_income`, `v_service_mix`, `v_subscriptions_detail`, `v_transactions_detail`).
+
 Todas las tablas tienen RLS habilitado. Los clientes solo acceden a sus propios registros; los administradores acceden a todos mediante validación del claim `app_metadata.role` en el JWT, evitando escalada de privilegios desde el cliente.
 
-Los índices de rendimiento están definidos en `supabase/migrations/20260404000000_fix_security_and_business_logic.sql`.
+### Edge Functions (Supabase)
+
+| Función | Estado | Propósito |
+|---------|--------|-----------|
+| `dashboard-metrics` | Activa | Centraliza las métricas financieras del dashboard en una sola llamada |
+| `subscription-renewal` | Activa | Renueva suscripciones expiradas con `auto_renew=true` (solo `manejo_redes`) |
+| `payment-webhook` | Placeholder (501) | Preparado para integrar pasarelas de pago (Stripe, MercadoPago) |
+
+Un CRON diario (`pg_cron`) invoca `subscription-renewal` automáticamente a las 01:00 hora Ecuador.
+
+---
+
+## Documentación adicional
+
+| Documento | Contenido |
+|-----------|-----------|
+| [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Stack, estructura, ER, auth, seguridad, realtime, CRON, PWA |
+| [`docs/EDGE_FUNCTIONS.md`](docs/EDGE_FUNCTIONS.md) | Detalle de las 3 Edge Functions con endpoints, auth y respuestas |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Guía de despliegue: migraciones, Edge Functions, Vercel, checklist |
+| [`docs/RESPONSIVE_TESTING.md`](docs/RESPONSIVE_TESTING.md) | Reporte de pruebas responsivas en breakpoints 320-1280px |
 
 ---
 

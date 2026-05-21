@@ -12,9 +12,9 @@ function formatPrice(price: number): string {
 }
 
 const HIGHLIGHTS = [
-  { icon: Users, label: "Grupos reducidos", desc: "Máximo 12 participantes por taller para garantizar atención personalizada." },
-  { icon: Award, label: "Certificado incluido", desc: "Recibes un certificado de asistencia digital al completar el programa." },
-  { icon: CalendarCheck, label: "Horarios flexibles", desc: "Sesiones presenciales y en línea adaptadas a tu agenda." },
+  { icon: Users, label: "Aprende desde cero", desc: "No necesitas experiencia previa. Te guiamos paso a paso en cada módulo del curso." },
+  { icon: Award, label: "Duración 3 meses", desc: "Programa completo de marketing digital con acompañamiento durante todo el proceso." },
+  { icon: CalendarCheck, label: "Práctica real", desc: "Aprende con herramientas reales: CapCut, Photoshop, META ADS, TikTok ADS e IA." },
 ];
 
 const STEPS = [
@@ -53,7 +53,7 @@ export default async function CapacitacionPage() {
             <p className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.22em] text-primary mb-3">
               RGL Estudio · Ecuador
             </p>
-            <h1 className="text-5xl sm:text-6xl md:text-8xl font-spaceGrotesk font-black uppercase tracking-tighter text-white leading-none mb-4">
+            <h1 className="text-4xl sm:text-6xl md:text-8xl font-spaceGrotesk font-black uppercase tracking-tighter text-white leading-none mb-4">
               Capacitación
             </h1>
             <p className="text-white/75 font-workSans text-base sm:text-lg max-w-[520px] leading-relaxed mb-8">
@@ -230,12 +230,13 @@ export default async function CapacitacionPage() {
               </h2>
               <ul className="space-y-4">
                 {[
-                  "Material digital descargable",
-                  "Sesión práctica con casos reales",
-                  "Acceso a grabación por 30 días",
-                  "Certificado de asistencia",
-                  "Soporte vía WhatsApp por 7 días",
-                  "Grupo privado de seguimiento",
+                  "Fotografía y video profesional",
+                  "Creación y planificación de contenido",
+                  "Estrategia de comunicación",
+                  "Edición de video en CapCut",
+                  "Edición de fotografía en Photoshop",
+                  "Análisis de métricas en META ADS y TikTok ADS",
+                  "Creación de contenido con Inteligencia Artificial",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <CheckCircle2 className="size-5 shrink-0 text-primary" />

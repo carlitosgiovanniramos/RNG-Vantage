@@ -71,3 +71,7 @@ Desktop.ini
 
 # logs
 *.log
+
+# Claude Agent
+.claude/
+

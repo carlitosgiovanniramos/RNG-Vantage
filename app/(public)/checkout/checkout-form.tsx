@@ -40,7 +40,7 @@ export function CheckoutForm({
       } else {
         router.push(`/checkout?service_id=${serviceId}&success=1`);
       }
-    } catch (err) {
+    } catch {
       setErrorMsg("Error de conexión. Intenta nuevamente.");
     } finally {
       if (!success) {
@@ -60,7 +60,7 @@ export function CheckoutForm({
       <form onSubmit={handleSubmit} className="mt-6 space-y-4">
         <input type="hidden" name="service_id" value={serviceId} />
 
-        <label className="flex items-start gap-3 border border-border/60 bg-muted/30 p-4">
+        <label className="flex items-start gap-3 border border-border/60 bg-muted/30 p-4 cursor-pointer">
           <input
             type="checkbox"
             name="auto_renew"
