@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { CreateServiceInput } from "@/lib/validators/service";
-import type { Database } from "@/types/database";
+import type { Database, ServiceType } from "@/types/database";
 import {
   createService,
   deleteService,
@@ -31,7 +31,12 @@ import {
   updateService,
 } from "./actions";
 
-type ServiceRow = Database["public"]["Tables"]["services"]["Row"];
+type ServiceRow = Omit<
+  Database["public"]["Tables"]["services"]["Row"],
+  "type"
+> & {
+  type: ServiceType;
+};
 type ServiceTableRow = Record<string, unknown> & ServiceRow;
 type CreateServiceFieldErrors = Partial<
   Record<keyof CreateServiceInput, string[]>
@@ -41,13 +46,12 @@ type CreateServiceFormError =
   | string
   | null;
 
-const SERVICE_TYPE_OPTIONS: { value: CreateServiceInput["type"]; label: string }[] =
-  [
-    { value: "manejo_redes", label: "Manejo de Redes" },
-    { value: "auditoria", label: "Auditoría" },
-    { value: "capacitacion", label: "Capacitación" },
-    { value: "otro", label: "Otro" },
-  ];
+const SERVICE_TYPE_OPTIONS: { value: ServiceType; label: string }[] = [
+  { value: "manejo_redes", label: "Manejo de Redes" },
+  { value: "auditoria", label: "Auditoría" },
+  { value: "capacitacion", label: "Capacitación" },
+  { value: "otro", label: "Otro" },
+];
 
 const EMPTY_SERVICE_FORM: CreateServiceInput = {
   name: "",
@@ -69,8 +73,14 @@ function formatDuration(months: number) {
   return `${months} ${months === 1 ? "mes" : "meses"}`;
 }
 
-function getServiceTypeLabel(type: CreateServiceInput["type"]) {
+function getServiceTypeLabel(type: ServiceType) {
   return SERVICE_TYPE_OPTIONS.find((option) => option.value === type)?.label ?? type;
+}
+
+function normalizeServiceType(value: string): ServiceType | null {
+  return SERVICE_TYPE_OPTIONS.some((option) => option.value === value)
+    ? (value as ServiceType)
+    : null;
 }
 
 export default function ServiciosAdminPage() {
@@ -100,7 +110,18 @@ export default function ServiciosAdminPage() {
       if (error) {
         throw new Error(error);
       }
-      return (data as ServiceRow[] | null) ?? [];
+
+      const raw =
+        (data as Database["public"]["Tables"]["services"]["Row"][] | null) ??
+        [];
+
+      return raw
+        .map((service) => {
+          const type = normalizeServiceType(service.type);
+          if (!type) return null;
+          return { ...service, type };
+        })
+        .filter((service): service is ServiceRow => Boolean(service));
     },
   });
 

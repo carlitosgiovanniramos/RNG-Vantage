@@ -17,25 +17,13 @@ export function Footer() {
           >
             Política de Privacidad
           </Link>
-          {/* TODO: Crear páginas para estas rutas cuando se implementen */}
           <Link
-            href="#"
+            href="/terminos-servicio"
             className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
           >
             Términos de Servicio
           </Link>
-          <Link
-            href="#"
-            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
-          >
-            Seguridad
-          </Link>
-          <Link
-            href="#"
-            className="hover:text-[#ff7855] dark:hover:text-[#ae2900] hover:opacity-100 transition-all"
-          >
-            Estado
-          </Link>
+
         </nav>
 
         {/* Copyright */}

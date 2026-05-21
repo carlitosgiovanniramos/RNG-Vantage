@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" fill="#ae2900"/>
+  <rect x="16" y="16" width="160" height="160" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.3"/>
+  <text
+    x="96"
+    y="118"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="82"
+    font-weight="900"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="-2"
+  >RG</text>
+  <text
+    x="96"
+    y="148"
+    font-family="Arial, sans-serif"
+    font-size="14"
+    font-weight="700"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="4"
+    opacity="0.8"
+  >ESTUDIO</text>
+</svg>

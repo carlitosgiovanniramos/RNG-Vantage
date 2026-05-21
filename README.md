@@ -1,247 +1,153 @@
-# RGL Estudio
+# RGL Estudio — Plataforma de Gestión
 
-Sistema web para automatizacion de ventas, reservas y control financiero de un emprendimiento de marketing digital.
+Sistema web de gestión de servicios, reservas y suscripciones para RGL Estudio, desarrollado como proyecto integrador del octavo semestre en la carrera de Ingeniería en Seguridad Informática.
 
-Arquitectura principal:
-- Frontend: Next.js 16 (App Router) + React 19 + TypeScript
-- Backend/BaaS: Supabase (PostgreSQL, Auth, RLS, Edge Functions)
-- UI: Tailwind + shadcn
+---
 
-## Estado Actual
+## Stack tecnológico
 
-Version: 0.1.0
+| Capa | Tecnología |
+|---|---|
+| Framework | Next.js 16.1.6 (App Router, React 19) |
+| Lenguaje | TypeScript 5 |
+| Base de datos | Supabase (PostgreSQL) |
+| Autenticación | Supabase Auth |
+| Estilos | Tailwind CSS 4 |
+| Componentes UI | Base UI + shadcn/ui |
+| Estado del servidor | TanStack Query v5 |
+| Formularios | React Hook Form + Zod |
+| Gráficas | Recharts |
+| Notificaciones | Sonner |
+| PWA | Serwist (service worker) |
+| Fechas | date-fns |
+| Testing | Vitest + Playwright |
 
-Estado funcional actual:
-- Catalogo con precios reales aplicado
-- Reglas de renovacion diferenciadas por tipo de servicio aplicadas
-- Checkout alineado a negocio aplicado
-- Dashboard con MRR corregido aplicado
-- Fix de politica RLS admin en profiles aplicado
-- Migracion full_name -> first_name/last_name aplicada
+---
 
-## Estabilizacion Post-Merge (Abril 2026)
+## Arquitectura
 
-Adicional a los cambios funcionales, se completo una estabilizacion tecnica despues del merge de ramas para dejar develop listo para continuar:
+El proyecto sigue la estructura de App Router de Next.js con rutas agrupadas por rol:
 
-- Conflictos de merge resueltos en catalogo, validadores, landing y service worker.
-- Dependencias faltantes agregadas para compilacion:
-  - date-fns
-  - sonner
-  - react-day-picker
-  - next-themes
-- Ajustes de calidad aplicados:
-  - app/(public)/reservar/page.tsx: reemplazo de watch() por useWatch().
-  - components/ui/sheet.tsx: eliminacion de import no usado.
-- Validacion final ejecutada:
-  - npm run lint: OK
-  - npm run build: OK
+```
+app/
+├── (auth)/          — login, registro, recuperación de contraseña
+├── (public)/        — catálogo, capacitación, reservas, checkout, perfil
+└── (dashboard)/     — panel administrativo (solo rol admin)
+```
 
-## Actualizacion De Negocio Aplicada (Abril 2026)
+La lógica de acceso está controlada por middleware de Supabase que valida la sesión en cada solicitud, y por RLS (Row-Level Security) en la base de datos que restringe las operaciones según el rol del usuario autenticado.
 
-Se aplicaron todos los cambios solicitados para alinear el sistema con la operacion real.
+La comunicación entre cliente y base de datos se realiza principalmente a través de Server Actions de Next.js, evitando exponer endpoints REST innecesarios. Las páginas que requieren actualizaciones en tiempo real utilizan Supabase Realtime mediante canales `postgres_changes`.
 
-### 1) Precios y servicios reales en base de datos
+---
 
-Archivo actualizado:
-- supabase/seed.sql
+## Módulos
 
-Seed actual (10 servicios):
-- Redes Sociales Inicial - 299.99 - manejo_redes
-- Redes Sociales Work - 319.99 - manejo_redes
-- Redes Sociales Premium - 555.00 - manejo_redes
-- Auditoria - 70.00 - auditoria
-- Sesion Fotografica - 130.00 - otro
-- Sesion Audiovisual (2 videos) - 150.00 - otro
-- Sesion Audiovisual (6 videos) - 230.00 - otro
-- Sesion Audiovisual (15 videos) - 500.00 - otro
-- Curso x 3 meses - 500.00 - capacitacion
-- Modelo por 1 hora - 25.00 - otro
+### Catálogo de servicios (`/catalogo`)
+Lista todos los servicios activos registrados en la base de datos, filtrados por tipo (manejo de redes, auditoría, capacitación). Cada tarjeta enlaza directamente al flujo de contratación.
 
-### 2) Regla clave: suscripcion vs servicio unico
+### Módulo de Capacitación (`/capacitacion`)
+Página dedicada a los servicios de tipo `capacitacion`. Muestra los programas disponibles, el proceso de inscripción y las condiciones de cada taller. Redirige al formulario de reservas para agendar una sesión.
 
-Regla oficial vigente:
-- Suscripcion mensual: solo type = manejo_redes
-- Servicio unico: type = auditoria | capacitacion | otro
+### Reservas (`/reservar`)
+Formulario público (no requiere cuenta) para agendar una sesión de diagnóstico o capacitación. Valida los datos con Zod y los persiste en la tabla `reservations`. Cumple con la LOPDP mediante checkbox de consentimiento explícito.
 
-Implicaciones:
-- duration_months sigue existiendo para todos
-- auto_renew solo puede ser efectivo para manejo_redes
-- para servicios unicos se fuerza auto_renew = false
+### Checkout y suscripciones (`/checkout`)
+Flujo de contratación de un servicio. Crea un registro en `subscriptions` con estado `pending` y genera automáticamente una transacción pendiente de cobro. La activación la realiza el administrador desde el panel de transacciones.
 
-### 3) Checkout actualizado (Carlos)
+### Panel administrativo (`/dashboard`)
+Exclusivo para usuarios con `role = 'admin'`. Incluye:
 
-Archivos nuevos/actualizados:
-- app/(public)/checkout/actions.ts
-- app/(public)/checkout/page.tsx
+- **Dashboard** — MRR, ingresos del mes, suscripciones activas y reservas pendientes con gráficas de los últimos seis meses.
+- **Reservas** — gestión de estado (pendiente, confirmada, cancelada).
+- **Suscripciones** — vista de ciclo de vida por cliente y servicio.
+- **Transacciones** — registro de pagos con método y notas. Permite marcar como completado o fallido, y limpia automáticamente transacciones expiradas (más de 24 horas pendientes).
 
-Que hace ahora:
-- valida service_id
-- carga servicio desde services
-- si el servicio no existe o esta inactivo, muestra error
-- calcula ends_at usando duration_months
-- fuerza auto_renew = false para servicios no recurrentes
-- solo permite renovacion seleccionable para manejo_redes
+### Perfil de usuario (`/perfil`)
+Vista del cliente con historial de suscripciones y reservas propias. Paginado en el servidor.
 
-### 4) Renovacion automatica actualizada (Carlos)
+---
 
-Archivos nuevos:
-- supabase/functions/subscription-renewal/index.ts
-- supabase/functions/subscription-renewal/deno.json
+## Base de datos
 
-Comportamiento:
-- toma suscripciones activas vencidas
-- renueva solo si:
-  - auto_renew = true
-  - service.type = manejo_redes
-- si no cumple, expira suscripcion y deja auto_renew = false
-- retorna resumen: processed, renewed, expired, skipped, failures
+El esquema se define en 6 migraciones secuenciales en `supabase/migrations/`. Las tablas principales son:
 
-### 5) Catalogo y landing actualizados (Juan)
+- `profiles` — extiende `auth.users` con nombre, apellido y rol (`client` / `admin`)
+- `services` — catálogo de servicios con tipo, precio y duración
+- `reservations` — solicitudes de reserva de clientes
+- `subscriptions` — contrataciones activas o pendientes por cliente y servicio
+- `transactions` — historial de pagos vinculados a suscripciones
 
-Archivos nuevos/actualizados:
-- app/(public)/catalogo/catalogo-grid.tsx
-- app/(public)/catalogo/page.tsx
-- app/page.tsx
+Adicionalmente, existen 5 vistas SQL optimizadas para el dashboard (`v_dashboard_summary`, `v_monthly_income`, `v_service_mix`, `v_subscriptions_detail`, `v_transactions_detail`).
 
-Cambios visibles:
-- etiqueta de precio:
-  - manejo_redes: USD / mes
-  - auditoria/capacitacion/otro: precio unico
-- cards principales de landing con precios reales
+Todas las tablas tienen RLS habilitado. Los clientes solo acceden a sus propios registros; los administradores acceden a todos mediante validación del claim `app_metadata.role` en el JWT, evitando escalada de privilegios desde el cliente.
 
-### 6) Dashboard actualizado (Christian)
+### Edge Functions (Supabase)
 
-Archivo actualizado:
-- app/(dashboard)/dashboard/page.tsx
+| Función | Estado | Propósito |
+|---------|--------|-----------|
+| `dashboard-metrics` | Activa | Centraliza las métricas financieras del dashboard en una sola llamada |
+| `subscription-renewal` | Activa | Renueva suscripciones expiradas con `auto_renew=true` (solo `manejo_redes`) |
+| `payment-webhook` | Placeholder (501) | Preparado para integrar pasarelas de pago (Stripe, MercadoPago) |
 
-Cambios:
-- MRR calcula solo suscripciones con service.type = manejo_redes
-- separa conteo de recurrentes vs servicios unicos
-- mantiene ingresos del mes y reservas pendientes
+Un CRON diario (`pg_cron`) invoca `subscription-renewal` automáticamente a las 01:00 hora Ecuador.
 
-### 7) Migraciones y seguridad de datos (Alejandro + Carlos)
+---
 
-Migraciones relevantes:
-- supabase/migrations/00000000000000_init.sql
-- supabase/migrations/20260402000000_split_full_name.sql
-- supabase/migrations/20260403010000_fix_profiles_admin_policy.sql
+## Documentación adicional
 
-Fix critico RLS aplicado:
-- Se reemplazo la politica admin de profiles para evitar recursion infinita.
-- Politica vigente usa auth.jwt() ->> role = admin.
+| Documento | Contenido |
+|-----------|-----------|
+| [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Stack, estructura, ER, auth, seguridad, realtime, CRON, PWA |
+| [`docs/EDGE_FUNCTIONS.md`](docs/EDGE_FUNCTIONS.md) | Detalle de las 3 Edge Functions con endpoints, auth y respuestas |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Guía de despliegue: migraciones, Edge Functions, Vercel, checklist |
+| [`docs/RESPONSIVE_TESTING.md`](docs/RESPONSIVE_TESTING.md) | Reporte de pruebas responsivas en breakpoints 320-1280px |
 
-Impacto adicional en tipos:
-- types/database.ts ahora usa first_name/last_name en profiles y reservations.
+---
 
-## Cambios De Auth Relacionados
+## Variables de entorno
 
-Archivos nuevos/actualizados:
-- app/(auth)/actions.ts
-- app/(auth)/login/page.tsx
-- app/(auth)/register/page.tsx
-- lib/validators/auth.ts
-- lib/validators/index.ts
+Crear el archivo `.env.local` en la raíz del proyecto con:
 
-Resumen:
-- login y signup con validaciones fuertes de credenciales
-- manejo de confirmacion de correo y reenvio
-- upsert de profile con data_consent_at
-- redireccion por rol (admin -> /dashboard, client -> /catalogo)
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<proyecto>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+```
 
-## Rutas Principales Actuales
+La `SUPABASE_SERVICE_ROLE_KEY` es necesaria para que el servidor pueda registrar transacciones y activar suscripciones saltando RLS (operaciones exclusivas de administración).
 
-Publico:
-- /
-- /catalogo
-- /reservar
-- /politica-privacidad
+---
 
-Auth:
-- /login
-- /register
-
-Cliente:
-- /checkout
-
-Admin:
-- /dashboard
-- /reservas
-- /servicios
-- /subscriptions
-- /transacciones
-
-## Esquema Actual (Resumen)
-
-Tablas principales:
-- profiles
-- services
-- reservations
-- subscriptions
-- transactions
-
-Campos clave de negocio:
-- services.type: manejo_redes | auditoria | capacitacion | otro
-- subscriptions.auto_renew: control de renovacion
-- subscriptions.ends_at: fecha de expiracion/renovacion
-
-## Como Ejecutar El Proyecto
-
-Requisitos:
-- Node.js
-- npm
-
-Comandos:
+## Instalación y ejecución
 
 ```bash
 npm install
 npm run dev
 ```
 
-Validacion local usada en esta actualizacion:
+La aplicación levanta en `http://localhost:3000`. El service worker de la PWA solo se activa en producción (`npm run build && npm start`).
 
-```bash
-npm run lint
-npm run build
-```
+---
 
-## Como Aplicar En Supabase Cloud
+## Scripts disponibles
 
-### Opcion A: con Supabase CLI
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con Webpack |
+| `npm run build` | Build de producción |
+| `npm run lint` | Análisis estático con ESLint |
+| `npm run test` | Tests unitarios en modo watch (Vitest) |
+| `npm run test:run` | Tests unitarios en una pasada |
+| `npm run test:e2e` | Tests end-to-end (Playwright) |
 
-```bash
-supabase db push
-supabase db seed
-supabase functions deploy subscription-renewal
-```
+---
 
-Luego configurar un schedule para subscription-renewal.
+## Equipo
 
-### Opcion B: sin Supabase CLI
-
-1. SQL Editor:
-- ejecutar migraciones pendientes
-- ejecutar contenido de supabase/seed.sql si deseas recargar catalogo
-
-2. Edge Functions:
-- crear funcion subscription-renewal
-- pegar codigo de supabase/functions/subscription-renewal/index.ts
-
-3. Variables/Secrets:
-- SUPABASE_URL
-- SUPABASE_SERVICE_ROLE_KEY
-
-4. Scheduling:
-- configurar ejecucion periodica (por ejemplo, diaria)
-
-## Checklist Rapido De Verificacion
-
-- Catalogo muestra /mes solo en manejo_redes
-- Checkout crea suscripcion y respeta regla de auto_renew
-- Servicios unicos quedan no renovables
-- Dashboard MRR ignora servicios unicos
-- RLS de profiles no bloquea consultas
-- Edge function procesa vencimientos sin renovar tipos no recurrentes
-
-## Nota Operativa
-
-Actualmente, si en tu terminal no existe el comando supabase, instala Supabase CLI o aplica los cambios desde el Dashboard web de Supabase (SQL Editor + Edge Functions + Scheduler).
+| Integrante | Rol principal |
+|---|---|
+| Juan López | Frontend Lead, UX, PWA, catálogo, capacitación |
+| Carlos Ramos | Motor de suscripción, API de dashboard |
+| Christian Hurtado | Layouts mobile-first, flujo de checkout |
+| Alejandro Andrade | Gestión de transacciones, endpoints, optimización de consultas |

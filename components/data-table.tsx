@@ -70,14 +70,14 @@ export function DataTable<T extends Record<string, unknown>>({
             setPage(1);
           }}
           placeholder={filterPlaceholder}
-          className="h-12 w-full border-border/60 bg-background/90 text-sm sm:max-w-sm"
+          className="h-12 w-full border-border/60 bg-background/90 font-workSans text-sm sm:max-w-sm"
         />
         <p className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
           {filteredData.length} resultado(s)
         </p>
       </div>
 
-      <div className="overflow-hidden border border-border/60 bg-card/80 backdrop-blur-sm">
+      <div className="overflow-x-auto border border-border/60 bg-card/80 backdrop-blur-sm">
         <Table>
           <TableHeader>
             <TableRow className="border-0 bg-muted/60 hover:bg-muted/60">
@@ -107,7 +107,7 @@ export function DataTable<T extends Record<string, unknown>>({
                   {columns.map((column) => (
                     <TableCell
                       key={`${index}-${String(column.key)}`}
-                      className={cn("px-5 py-4 text-sm text-foreground/90", column.className)}
+                      className={cn("px-5 py-4 font-workSans text-sm text-foreground/90", column.className)}
                     >
                       {column.render
                         ? column.render(row)
@@ -120,7 +120,7 @@ export function DataTable<T extends Record<string, unknown>>({
               <TableRow className="border-0">
                 <TableCell
                   colSpan={columns.length}
-                  className="h-20 py-6 text-center text-muted-foreground"
+                  className="h-20 py-6 font-workSans text-center text-muted-foreground"
                 >
                   Sin resultados
                 </TableCell>
@@ -140,6 +140,7 @@ export function DataTable<T extends Record<string, unknown>>({
             size="sm"
             onClick={() => setPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
+            className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
           >
             Anterior
           </Button>
@@ -148,6 +149,7 @@ export function DataTable<T extends Record<string, unknown>>({
             size="sm"
             onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
+            className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
           >
             Siguiente
           </Button>

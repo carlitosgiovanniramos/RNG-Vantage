@@ -162,7 +162,14 @@ export default function ReservarPage() {
                   onSelect={(date) => {
                     if (date) {
                       setDisplayDate(date);
-                      setValue("preferred_date", date.toISOString(), { shouldValidate: true });
+                      // Fijar las 9:00 AM hora Ecuador (UTC-5 → 14:00 UTC)
+                      const at9am = new Date(Date.UTC(
+                        date.getFullYear(),
+                        date.getMonth(),
+                        date.getDate(),
+                        14, 0, 0, 0
+                      ));
+                      setValue("preferred_date", at9am.toISOString(), { shouldValidate: true });
                       setCalendarOpen(false);
                     }
                   }}

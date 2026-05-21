@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
       .maybeSingle(); // .single() lanza error si no existe el perfil; maybeSingle() devuelve null
 
     if (!profile || profile.role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL("/catalogo", request.url));
     }
   }
 

@@ -21,3 +21,27 @@ export const updateTransactionSchema = z.object({
 
 export type CreateTransactionInput = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionSchema>;
+
+/**
+ * Schema para marcar una transacción como pagada (Tarea 5)
+ * Ruth usa esto cuando registra que un cliente ya le pagó
+ */
+export const markTransactionAsPaidSchema = z.object({
+  transaction_id: z
+    .string()
+    .uuid("ID de transacción inválido"),
+  payment_method: z
+    .enum(paymentMethods)
+    .refine(
+      (method) => ["cash", "transfer", "card", "pending"].includes(method),
+      "Método de pago debe ser: efectivo, transferencia, tarjeta u otro"
+    ),
+  notes: z
+    .string()
+    .max(500, "Las notas no pueden exceder 500 caracteres")
+    .optional(),
+});
+
+export type MarkTransactionAsPaidInput = z.infer<
+  typeof markTransactionAsPaidSchema
+>;

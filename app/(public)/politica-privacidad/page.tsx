@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function PoliticaPrivacidadPage() {
   return (
     <div className="py-16 sm:py-24 px-4 sm:px-8">
@@ -10,6 +12,9 @@ export default function PoliticaPrivacidadPage() {
           </h1>
           <p className="font-workSans text-muted-foreground text-base">
             Vigente desde el 4 de abril de 2026 · Alineada con la Ley Orgánica de Protección de Datos Personales (LOPDP) de Ecuador
+          </p>
+          <p className="font-workSans text-muted-foreground text-base mt-2">
+            El uso de nuestros servicios también está sujeto a nuestros <Link href="/terminos-servicio" className="text-foreground underline underline-offset-4 hover:opacity-80">Términos de Servicio</Link>.
           </p>
         </div>
 

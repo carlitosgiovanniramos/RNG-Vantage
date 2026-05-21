@@ -1,70 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Home } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
-import {
-  ArrowLeft,
-  CalendarDays,
-  Home,
-  Plus,
-  ReceiptText,
-  RefreshCw,
-} from "lucide-react";
+import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 
-import { DataCard } from "@/components/data-card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { PaymentMethod, TransactionStatus } from "@/types/database";
 import {
-  createPayment,
-  getPaymentFormOptions,
   getTransactions,
-  updateTransactionStatus,
-  type AdminTransactionRow,
-  type CreatePaymentInput,
-  type PaymentSubscriptionOption,
+  markTransactionAsCompleted,
+  markTransactionAsFailed,
+  cleanExpiredTransactions,
 } from "./actions";
 
-type TransactionTableRow = Record<string, unknown> & AdminTransactionRow;
-type StatusFilter = "all" | TransactionStatus;
-
-const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "Todos" },
-  { value: "pending", label: "Pendiente" },
-  { value: "completed", label: "Completado" },
-  { value: "failed", label: "Fallido" },
-  { value: "refunded", label: "Reembolsado" },
-];
-
-const PAYMENT_METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
-  { value: "cash", label: "Efectivo" },
-  { value: "transfer", label: "Transferencia" },
-  { value: "card", label: "Tarjeta" },
-  { value: "pending", label: "Pendiente" },
-];
-
-const TRANSACTION_STATUS_OPTIONS: { value: TransactionStatus; label: string }[] =
-  [
-    { value: "pending", label: "Pendiente" },
-    { value: "completed", label: "Completado" },
-    { value: "failed", label: "Fallido" },
-    { value: "refunded", label: "Reembolsado" },
-  ];
+export type TransactionRow = {
+  id: string;
+  user_id: string;
+  subscription_id: string | null;
+  amount: number;
+  status: "pending" | "completed" | "failed" | "refunded";
+  payment_method: "cash" | "transfer" | "card" | "pending";
+  created_at: string;
+  notes: string | null;
+  client_name?: string;
+};
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-EC", {
@@ -73,73 +39,24 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString("es-EC", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-function getStatusBadge(status: TransactionStatus) {
-  if (status === "completed") {
-    return <StatusBadge status="completed" />;
-  }
-
-  if (status === "pending") {
-    return <StatusBadge status="pending" />;
-  }
-
-  return <StatusBadge status="expired" />;
-}
-
-function getPaymentLabel(method: PaymentMethod) {
-  return (
-    PAYMENT_METHOD_OPTIONS.find((option) => option.value === method)?.label ??
-    method
-  );
-}
-
-function isInsideDateRange(transactionDate: string, from: string, to: string) {
-  const date = new Date(transactionDate);
-
-  if (from) {
-    const start = new Date(`${from}T00:00:00`);
-    if (date < start) {
-      return false;
-    }
-  }
-
-  if (to) {
-    const end = new Date(`${to}T23:59:59`);
-    if (date > end) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 export default function TransaccionesAdminPage() {
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTx, setSelectedTx] = useState<TransactionRow | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [statusFilter, setStatusFilter] = useState<
+    TransactionRow["status"] | "all"
+  >("all");
+  const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState<CreatePaymentInput>({
-    subscription_id: "",
-    amount: 0,
-    payment_method: "transfer",
-    status: "completed",
-    notes: "",
-  });
   const queryClient = useQueryClient();
+  useAdminRealtime("transactions", "admin-transactions");
 
   const {
     data: transactions = [],
     isLoading,
     isError,
     error,
-  } = useQuery<AdminTransactionRow[], Error>({
+  } = useQuery<TransactionRow[], Error>({
     queryKey: ["admin-transactions"],
     queryFn: async () => {
       const { data, error } = await getTransactions();
@@ -150,157 +67,83 @@ export default function TransaccionesAdminPage() {
     },
   });
 
-  const {
-    data: subscriptionOptions = [],
-    isLoading: isLoadingOptions,
-  } = useQuery<PaymentSubscriptionOption[], Error>({
-    queryKey: ["payment-form-options"],
-    queryFn: async () => {
-      const { data, error } = await getPaymentFormOptions();
-      if (error) {
-        throw new Error(error);
-      }
-      return data ?? [];
-    },
-  });
-
-  const filteredTransactions = useMemo(
-    () =>
-      transactions.filter((transaction) => {
-        const matchesStatus =
-          statusFilter === "all" || transaction.status === statusFilter;
-        const matchesDate = isInsideDateRange(
-          transaction.created_at,
-          dateFrom,
-          dateTo,
-        );
-
-        return matchesStatus && matchesDate;
-      }),
-    [dateFrom, dateTo, statusFilter, transactions],
-  );
-
-  const filteredTotal = useMemo(
-    () =>
-      filteredTransactions.reduce(
-        (total, transaction) => total + Number(transaction.amount ?? 0),
-        0,
-      ),
-    [filteredTransactions],
-  );
-
-  const completedTotal = useMemo(
-    () =>
-      filteredTransactions
-        .filter((transaction) => transaction.status === "completed")
-        .reduce(
-          (total, transaction) => total + Number(transaction.amount ?? 0),
-          0,
-        ),
-    [filteredTransactions],
-  );
-
-  const resetForm = () => {
-    setForm({
-      subscription_id: "",
-      amount: 0,
-      payment_method: "transfer",
-      status: "completed",
-      notes: "",
-    });
+  const handleOpenDialog = (tx: TransactionRow) => {
+    setSelectedTx(tx);
+    setPaymentMethod("cash");
+    setNotes("");
+    setOpenDialog(true);
   };
 
-  const handleSubscriptionChange = (subscriptionId: string) => {
-    const option = subscriptionOptions.find((item) => item.id === subscriptionId);
-
-    setForm((current) => ({
-      ...current,
-      subscription_id: subscriptionId,
-      amount: option?.price ?? current.amount,
-    }));
-  };
-
-  const handleCreatePayment = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!form.subscription_id) {
-      toast.error("Selecciona una suscripción");
-      return;
-    }
-
-    if (Number(form.amount) <= 0) {
-      toast.error("El monto debe ser mayor a cero");
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!selectedTx) return;
 
     setIsSubmitting(true);
-    const { success, error } = await createPayment({
-      ...form,
-      amount: Number(form.amount),
-      notes: form.notes?.trim() || undefined,
-    });
-    setIsSubmitting(false);
-
-    if (!success) {
-      toast.error("No se pudo registrar el pago", {
-        description: error ?? "Intenta nuevamente.",
+    try {
+      const result = await markTransactionAsCompleted({
+        transaction_id: selectedTx.id,
+        payment_method: paymentMethod,
+        notes: notes || undefined,
       });
-      return;
-    }
 
-    await queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-    setIsDialogOpen(false);
-    resetForm();
-    toast.success("Pago registrado correctamente");
+      if (result.success) {
+        setOpenDialog(false);
+        queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
+        toast.success("Pago registrado exitosamente");
+      } else {
+        toast.error(result.error ?? "Error al registrar el pago");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al registrar el pago");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleStatusUpdate = async (
-    transaction: AdminTransactionRow,
-    status: TransactionStatus,
-  ) => {
-    if (transaction.status === status) {
-      return;
+  const handleMarkFailed = async (tx: TransactionRow) => {
+    if (!confirm("¿Estás seguro de que quieres marcar esta transacción como fallida/cancelada?")) return;
+    
+    try {
+      const result = await markTransactionAsFailed(tx.id);
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
+        toast.success("Transacción marcada como fallida");
+      } else {
+        toast.error(result.error ?? "Error al cancelar la transacción");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al cancelar la transacción");
     }
-
-    const { success, error } = await updateTransactionStatus(
-      transaction.id,
-      status,
-    );
-
-    if (!success) {
-      toast.error("No se pudo actualizar la transacción", {
-        description: error ?? "Intenta nuevamente.",
-      });
-      return;
-    }
-
-    await queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-    toast.success("Estado de transacción actualizado");
   };
 
-  const clearFilters = () => {
-    setStatusFilter("all");
-    setDateFrom("");
-    setDateTo("");
+  const handleCleanExpired = async () => {
+    if (!confirm("¿Revisar y cancelar transacciones pendientes con más de 24 horas?")) return;
+    
+    try {
+      const result = await cleanExpiredTransactions();
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
+        toast.success(result.message ?? "Operación completada");
+      } else {
+        toast.error(result.error ?? "Error al limpiar transacciones expiradas");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al limpiar transacciones expiradas");
+    }
   };
 
-  const columns: DataTableColumn<TransactionTableRow>[] = [
+  const columns: DataTableColumn<TransactionRow>[] = [
     {
-      key: "created_at",
-      header: "Fecha",
-      render: (tx) => formatDateTime(tx.created_at),
+      key: "id",
+      header: "ID",
+      render: (tx) => `${tx.id.substring(0, 8)}...`,
     },
     {
       key: "client_name",
       header: "Cliente",
-      render: (tx) => (
-        <div>
-          <div className="font-medium">{tx.client_name}</div>
-          <div className="text-xs text-muted-foreground">
-            {tx.user_id ? `${tx.user_id.substring(0, 8)}...` : "Sin usuario"}
-          </div>
-        </div>
-      ),
+      render: (tx) => tx.client_name || "Sin cliente",
     },
     {
       key: "amount",
@@ -310,34 +153,69 @@ export default function TransaccionesAdminPage() {
     {
       key: "payment_method",
       header: "Método",
-      render: (tx) => getPaymentLabel(tx.payment_method),
+      render: (tx) => tx.payment_method,
     },
     {
       key: "status",
       header: "Estado",
-      render: (tx) => getStatusBadge(tx.status),
+      render: (tx) => {
+        if (tx.status === "completed") {
+          return <StatusBadge status="completed" />;
+        }
+        if (tx.status === "pending") {
+          return <StatusBadge status="pending" />;
+        }
+        if (tx.status === "failed" || tx.status === "refunded") {
+          return (
+            <span className="inline-flex items-center bg-red-100 px-2.5 py-0.5 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.12em] text-red-800 dark:bg-red-900/40 dark:text-red-300">
+              {tx.status === "failed" ? "Fallido" : "Cancelado"}
+            </span>
+          );
+        }
+        return <StatusBadge status="expired" />;
+      },
+    },
+    {
+      key: "created_at",
+      header: "Fecha",
+      render: (tx) =>
+        new Date(tx.created_at).toLocaleString("es-EC", {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }),
     },
     {
       key: "actions",
       header: "Acciones",
       render: (tx) => (
-        <select
-          value={tx.status}
-          onChange={(event) =>
-            handleStatusUpdate(tx, event.target.value as TransactionStatus)
-          }
-          className="h-9 min-w-36 border border-border/70 bg-background px-2 text-xs font-medium text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-          aria-label="Cambiar estado de transacción"
-        >
-          {TRANSACTION_STATUS_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <div className="flex gap-2 items-center">
+          {tx.status === "pending" ? (
+            <>
+              <Button size="sm" onClick={() => handleOpenDialog(tx)}>
+                Registrar Pago
+              </Button>
+              <Button size="sm" variant="destructive" onClick={() => handleMarkFailed(tx)}>
+                Marcar Fallido
+              </Button>
+            </>
+          ) : (
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              {tx.status === "completed" ? "Completado" : "Cancelado"}
+            </span>
+          )}
+        </div>
       ),
     },
   ];
+
+  const filteredTransactions =
+    statusFilter === "all"
+      ? transactions
+      : transactions.filter((tx) => tx.status === statusFilter);
+  const totalFiltered = filteredTransactions.reduce(
+    (sum, tx) => sum + Number(tx.amount ?? 0),
+    0,
+  );
 
   if (isLoading) {
     return <div className="p-8 text-center">Cargando transacciones...</div>;
@@ -359,157 +237,16 @@ export default function TransaccionesAdminPage() {
           <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
             Transacciones
           </h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
-            Administra pagos, filtra movimientos y controla el estado financiero
-            de las suscripciones.
-          </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger
-              render={
-                <Button
-                  type="button"
-                  size="lg"
-                  className="h-11 rounded-none px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
-                />
-              }
-            >
-              <Plus className="size-4" />
-              Registrar Pago
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
-              <form onSubmit={handleCreatePayment} className="space-y-5">
-                <DialogHeader>
-                  <DialogTitle>Registrar pago</DialogTitle>
-                  <DialogDescription>
-                    Registra una transacción asociada a una suscripción activa o
-                    pendiente.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="subscription">Cliente / Servicio</Label>
-                    <select
-                      id="subscription"
-                      value={form.subscription_id}
-                      onChange={(event) =>
-                        handleSubscriptionChange(event.target.value)
-                      }
-                      disabled={isLoadingOptions}
-                      className="h-11 w-full border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    >
-                      <option value="">
-                        {isLoadingOptions
-                          ? "Cargando suscripciones..."
-                          : "Selecciona una suscripción"}
-                      </option>
-                      {subscriptionOptions.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.client_name} - {option.service_name} (
-                          {formatCurrency(option.price)})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="amount">Monto</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={form.amount}
-                        onChange={(event) =>
-                          setForm((current) => ({
-                            ...current,
-                            amount: Number(event.target.value),
-                          }))
-                        }
-                        className="h-11"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="payment_method">Método</Label>
-                      <select
-                        id="payment_method"
-                        value={form.payment_method}
-                        onChange={(event) =>
-                          setForm((current) => ({
-                            ...current,
-                            payment_method: event.target.value as PaymentMethod,
-                          }))
-                        }
-                        className="h-11 w-full border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      >
-                        {PAYMENT_METHOD_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="status">Estado</Label>
-                    <select
-                      id="status"
-                      value={form.status}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          status: event.target.value as TransactionStatus,
-                        }))
-                      }
-                      className="h-11 w-full border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    >
-                      {TRANSACTION_STATUS_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notas</Label>
-                    <Textarea
-                      id="notes"
-                      value={form.notes}
-                      maxLength={500}
-                      onChange={(event) =>
-                        setForm((current) => ({
-                          ...current,
-                          notes: event.target.value,
-                        }))
-                      }
-                      placeholder="Referencia, observación o detalle interno"
-                    />
-                  </div>
-                </div>
-
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsDialogOpen(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Registrando..." : "Guardar pago"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCleanExpired}
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+          >
+            Limpiar Expiradas (24h)
+          </Button>
 
           <Link
             href="/dashboard"
@@ -528,83 +265,110 @@ export default function TransaccionesAdminPage() {
         </div>
       </header>
 
-      <div className="grid gap-5 md:grid-cols-3">
-        <DataCard
-          title="Total filtrado"
-          value={formatCurrency(filteredTotal)}
-          icon={<ReceiptText className="size-5" />}
-        />
-        <DataCard
-          title="Ingresos completados"
-          value={formatCurrency(completedTotal)}
-          icon={<CalendarDays className="size-5" />}
-        />
-        <DataCard
-          title="Resultados"
-          value={filteredTransactions.length}
-          icon={<RefreshCw className="size-5" />}
-        />
-      </div>
-
-      <section className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-        <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto] lg:items-end">
-          <div className="space-y-2">
-            <Label htmlFor="status-filter">Estado</Label>
-            <select
-              id="status-filter"
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value as StatusFilter)
-              }
-              className="h-11 w-full border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-            >
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="date-from">Desde</Label>
-            <Input
-              id="date-from"
-              type="date"
-              value={dateFrom}
-              onChange={(event) => setDateFrom(event.target.value)}
-              className="h-11"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="date-to">Hasta</Label>
-            <Input
-              id="date-to"
-              type="date"
-              value={dateTo}
-              onChange={(event) => setDateTo(event.target.value)}
-              className="h-11"
-            />
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="h-11 rounded-none px-4"
-            onClick={clearFilters}
+      <section className="flex flex-wrap items-center gap-4 border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+        <div className="min-w-[180px] space-y-2">
+          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Estado
+          </p>
+          <Select
+            value={statusFilter}
+            onValueChange={(value) =>
+              setStatusFilter(value as TransactionRow["status"] | "all")
+            }
           >
-            Limpiar filtros
-          </Button>
+            <SelectTrigger>
+              <SelectValue placeholder="Filtrar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="pending">Pendiente</SelectItem>
+              <SelectItem value="completed">Completado</SelectItem>
+              <SelectItem value="failed">Fallido</SelectItem>
+              <SelectItem value="refunded">Reembolsado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="ml-auto border border-border/60 bg-background/80 px-4 py-3">
+          <p className="font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            Total filtrado
+          </p>
+          <p className="mt-1 font-spaceGrotesk text-2xl font-black text-foreground">
+            {formatCurrency(totalFiltered)}
+          </p>
         </div>
       </section>
 
       <DataTable
-        data={filteredTransactions as TransactionTableRow[]}
+        data={filteredTransactions}
         columns={columns}
-        pageSize={10}
-        filterPlaceholder="Buscar por cliente, ID, estado o método"
+        pageSize={5}
+        filterPlaceholder="Buscar por ID, estado o método"
       />
+
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-spaceGrotesk text-base font-black uppercase tracking-[0.12em]">Registrar Pago</DialogTitle>
+          </DialogHeader>
+
+          {selectedTx && (
+            <div className="space-y-4">
+              <div className="border border-border/60 bg-muted/40 p-4">
+                <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                  Transacción: {selectedTx.id.substring(0, 12)}...
+                </p>
+                <p className="mt-1 font-spaceGrotesk text-xl font-black text-foreground">
+                  {formatCurrency(Number(selectedTx.amount ?? 0))}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">Método de Pago</label>
+                <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cash">Efectivo</SelectItem>
+                    <SelectItem value="transfer">Transferencia</SelectItem>
+                    <SelectItem value="card">Tarjeta</SelectItem>
+                    <SelectItem value="pending">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">Notas (opcional)</label>
+                <Textarea
+                  placeholder="Referencia del banco, comprobante, etc..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="min-h-20 font-workSans"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setOpenDialog(false)}
+                  disabled={isSubmitting}
+                  className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
+                >
+                  {isSubmitting ? "Guardando..." : "Registrar Pago"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

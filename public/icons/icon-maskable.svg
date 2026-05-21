@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Maskable: safe zone is the inner 80% (fondo rojo cubre todo el canvas) -->
+  <rect width="512" height="512" fill="#ae2900"/>
+  <text
+    x="256"
+    y="300"
+    font-family="Arial Black, Arial, sans-serif"
+    font-size="200"
+    font-weight="900"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="-6"
+  >RG</text>
+  <text
+    x="256"
+    y="368"
+    font-family="Arial, sans-serif"
+    font-size="34"
+    font-weight="700"
+    text-anchor="middle"
+    fill="#ffffff"
+    letter-spacing="10"
+    opacity="0.85"
+  >ESTUDIO</text>
+</svg>
