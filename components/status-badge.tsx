@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 export type StatusValue =
   | "pending"
   | "active"
+  | "inactive"
   | "expired"
   | "completed"
   | "cancelled"
@@ -25,6 +26,11 @@ const statusMap: Record<StatusValue, { label: string; className: string }> = {
     label: "Activo",
     className:
       "border-0 bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-200",
+  },
+  inactive: {
+    label: "Inactivo",
+    className:
+      "border-0 bg-zinc-100 text-zinc-800 dark:bg-zinc-800/60 dark:text-zinc-200",
   },
   expired: {
     label: "Expirado",
