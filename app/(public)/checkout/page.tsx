@@ -253,6 +253,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             serviceId={service.id}
             isRecurringService={isRecurringService}
             success={success}
+            amount={service.price}
           />
 
           {success && (

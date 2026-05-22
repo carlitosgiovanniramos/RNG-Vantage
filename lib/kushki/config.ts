@@ -27,7 +27,7 @@ function requireEnv(name: string): string {
 }
 
 function resolveEnv(): KushkiEnv {
-  const raw = (process.env.KUSHKI_ENV ?? "sandbox").trim().toLowerCase();
+  const raw = (process.env.NEXT_PUBLIC_KUSHKI_ENV ?? "sandbox").trim().toLowerCase();
   if (raw !== "sandbox" && raw !== "production") {
     throw new Error(
       `[kushki] KUSHKI_ENV debe ser "sandbox" o "production" (recibido: "${raw}")`,
