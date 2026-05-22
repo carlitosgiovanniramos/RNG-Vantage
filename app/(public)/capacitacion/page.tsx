@@ -11,6 +11,15 @@ function formatPrice(price: number): string {
   return new Intl.NumberFormat("es-EC", { style: "currency", currency: "USD" }).format(price);
 }
 
+function getDescriptionItems(description?: string | null): string[] {
+  return (description ?? "Taller practico bajo consulta.")
+    .replace(/^Incluye:\s*/i, "")
+    .split(/\. |; /)
+    .map((item) => item.replace(/\.$/, "").trim())
+    .filter(Boolean)
+    .slice(0, 4);
+}
+
 const HIGHLIGHTS = [
   { icon: Users, label: "Aprende desde cero", desc: "No necesitas experiencia previa. Te guiamos paso a paso en cada módulo del curso." },
   { icon: Award, label: "Duración 3 meses", desc: "Programa completo de marketing digital con acompañamiento durante todo el proceso." },
@@ -81,17 +90,21 @@ export default async function CapacitacionPage() {
       {/* Highlights */}
       <section className="border-b border-border/60 bg-card/50 px-4 py-16 sm:px-8">
         <div className="mx-auto max-w-[1440px]">
-          <div className="grid gap-px bg-border sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-3">
             {HIGHLIGHTS.map(({ icon: Icon, label, desc }) => (
-              <div key={label} className="flex flex-col gap-4 bg-card p-8">
-                <div className="flex size-12 items-center justify-center bg-primary/10">
-                  <Icon className="size-6 text-primary" />
+              <div
+                key={label}
+                className="group relative overflow-hidden border border-white bg-card p-8 transition-all duration-300 hover:-translate-y-1 hover:border-primary hover:bg-primary hover:shadow-[8px_8px_0_rgba(148,163,153,0.35)]"
+              >
+                <div className="absolute inset-x-0 top-0 h-1 bg-transparent transition-colors duration-300 group-hover:bg-primary" />
+                <div className="mb-6 flex size-12 items-center justify-center border border-primary/30 bg-primary/10 transition-colors duration-300 group-hover:border-primary-foreground/60 group-hover:bg-primary-foreground/10">
+                  <Icon className="size-6 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="mb-2 font-spaceGrotesk text-lg font-black uppercase tracking-tight text-foreground">
+                  <h3 className="mb-2 font-spaceGrotesk text-lg font-black uppercase tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary-foreground">
                     {label}
                   </h3>
-                  <p className="font-workSans text-sm leading-relaxed text-muted-foreground">
+                  <p className="font-workSans text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-primary-foreground/80">
                     {desc}
                   </p>
                 </div>
@@ -131,37 +144,64 @@ export default async function CapacitacionPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-3">
-              {safeServices.map((service, i) => (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {safeServices.map((service, i) => {
+                const descriptionItems = getDescriptionItems(service.description);
+                const isGrayHover = i % 2 === 0;
+
+                return (
                 <div
                   key={service.id}
-                  className="group relative flex flex-col bg-card p-8 transition-colors duration-500 hover:bg-primary sm:p-10"
+                  className={`group relative flex min-h-[560px] flex-col overflow-hidden border p-8 transition-all duration-300 hover:-translate-y-1 hover:shadow-[12px_12px_0_rgba(148,163,153,0.45)] sm:p-10 ${
+                    isGrayHover
+                      ? "border-white bg-card hover:border-[#3d4140]/70 hover:bg-[#343736]"
+                      : "border-white bg-card hover:border-primary hover:bg-primary"
+                  }`}
                 >
+                  <div className={`absolute inset-x-0 top-0 h-1.5 bg-transparent transition-colors duration-300 ${isGrayHover ? "group-hover:bg-[#686c6a]" : "group-hover:bg-primary"}`} />
                   <span
                     aria-hidden
-                    className="absolute right-8 top-6 select-none font-spaceGrotesk text-6xl font-black leading-none text-foreground/8 transition-colors duration-500 group-hover:text-primary-foreground/8"
+                    className="absolute right-8 top-8 select-none font-spaceGrotesk text-6xl font-black leading-none text-foreground/10 transition-colors duration-300 group-hover:text-primary-foreground/15"
                   >
                     {String(i + 1).padStart(2, "0")}
                   </span>
 
-                  <GraduationCap className="mb-8 size-12 shrink-0 text-primary transition-colors duration-500 group-hover:text-primary-foreground" />
+                  <div className="mb-8 flex items-center gap-4">
+                    <div className={`flex size-14 shrink-0 items-center justify-center border transition-colors duration-300 ${
+                      "border-primary/40 bg-primary/5 group-hover:border-primary-foreground/60 group-hover:bg-primary-foreground/10"
+                    }`}>
+                      <GraduationCap className="size-8 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
+                    </div>
+                    <span className={`border px-3 py-1 font-spaceGrotesk text-[0.65rem] font-black uppercase tracking-[0.18em] transition-colors duration-300 ${
+                      "border-primary/30 bg-primary/5 text-primary group-hover:border-primary-foreground/60 group-hover:bg-primary-foreground/10 group-hover:text-primary-foreground"
+                    }`}>
+                      Capacitacion
+                    </span>
+                  </div>
 
-                  <h3 className="mb-3 font-spaceGrotesk text-2xl font-black uppercase tracking-tighter text-foreground transition-colors duration-500 group-hover:text-primary-foreground sm:text-3xl">
+                  <h3 className="mb-5 font-spaceGrotesk text-2xl font-black uppercase leading-[0.98] tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary-foreground sm:text-3xl">
                     {service.name}
                   </h3>
 
-                  <p className="mb-8 flex-1 font-workSans text-sm leading-relaxed text-muted-foreground transition-colors duration-500 group-hover:text-primary-foreground/75">
-                    {service.description ?? "Taller práctico bajo consulta."}
-                  </p>
+                  <div className="mb-7 flex-1 border-y border-primary/20 py-5 transition-colors duration-300 group-hover:border-primary-foreground/25">
+                    <ul className="space-y-3">
+                      {descriptionItems.map((item) => (
+                        <li key={item} className="flex gap-3 font-workSans text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-primary-foreground/85">
+                          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
                   {service.duration_months > 1 && (
-                    <p className="mb-4 font-workSans text-xs text-muted-foreground transition-colors duration-500 group-hover:text-primary-foreground/60">
+                    <p className="mb-4 font-workSans text-xs text-muted-foreground transition-colors duration-300 group-hover:text-primary-foreground/70">
                       Duración: {service.duration_months} meses
                     </p>
                   )}
 
                   <div className="mb-8">
-                    <span className="font-spaceGrotesk text-3xl font-black text-foreground transition-colors duration-500 group-hover:text-primary-foreground sm:text-4xl">
+                    <span className="font-spaceGrotesk text-3xl font-black text-foreground transition-colors duration-300 group-hover:text-primary-foreground sm:text-4xl">
                       {formatPrice(Number(service.price))}
                     </span>
                   </div>
@@ -169,19 +209,28 @@ export default async function CapacitacionPage() {
                   <div className="flex gap-3">
                     <Link
                       href={`/checkout?service_id=${service.id}`}
-                      className="flex-1 inline-flex h-11 items-center justify-center border border-foreground px-4 font-spaceGrotesk text-xs font-black uppercase tracking-wide text-foreground transition-colors duration-500 group-hover:border-primary-foreground group-hover:text-primary-foreground hover:bg-foreground/5"
+                      className={`inline-flex h-11 flex-1 items-center justify-center border px-4 font-spaceGrotesk text-xs font-black uppercase tracking-wide transition-colors duration-300 ${
+                        isGrayHover
+                          ? "border-foreground text-foreground hover:bg-foreground hover:text-background group-hover:border-primary-foreground group-hover:text-primary-foreground group-hover:hover:bg-primary-foreground group-hover:hover:text-[#343736]"
+                          : "border-foreground text-foreground hover:bg-foreground hover:text-background group-hover:border-primary-foreground group-hover:text-primary-foreground group-hover:hover:bg-primary-foreground group-hover:hover:text-primary"
+                      }`}
                     >
                       Contratar
                     </Link>
                     <Link
                       href="/reservar"
-                      className="flex-1 inline-flex h-11 items-center justify-center bg-foreground px-4 font-spaceGrotesk text-xs font-black uppercase tracking-wide text-background transition-colors duration-500 group-hover:bg-primary-foreground group-hover:text-primary"
+                      className={`inline-flex h-11 flex-1 items-center justify-center px-4 font-spaceGrotesk text-xs font-black uppercase tracking-wide transition-colors duration-300 ${
+                        isGrayHover
+                          ? "bg-foreground text-background group-hover:bg-primary-foreground group-hover:text-[#343736]"
+                          : "bg-foreground text-background group-hover:bg-primary-foreground group-hover:text-primary"
+                      }`}
                     >
                       Reservar
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

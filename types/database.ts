@@ -19,6 +19,7 @@ export type Database = {
           last_name: string | null
           avatar_url: string | null
           role: string
+          is_active: boolean
           data_consent_at: string | null
           created_at: string
           updated_at: string
@@ -29,6 +30,7 @@ export type Database = {
           last_name?: string | null
           avatar_url?: string | null
           role?: string
+          is_active?: boolean
           data_consent_at?: string | null
           created_at?: string
           updated_at?: string
@@ -39,6 +41,7 @@ export type Database = {
           last_name?: string | null
           avatar_url?: string | null
           role?: string
+          is_active?: boolean
           data_consent_at?: string | null
           created_at?: string
           updated_at?: string

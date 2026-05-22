@@ -12,6 +12,7 @@ import {
   Menu,
   Repeat,
   Settings,
+  UsersRound,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -47,6 +48,11 @@ const navItems: NavItem[] = [
     label: "Servicios",
     href: "/servicios",
     icon: <Settings className="size-4" />,
+  },
+  {
+    label: "Clientes",
+    href: "/clientes",
+    icon: <UsersRound className="size-4" />,
   },
   {
     label: "Suscripciones",
@@ -147,15 +153,15 @@ export default function DashboardLayout({
     <div className="relative min-h-screen overflow-x-hidden bg-background">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(174,41,0,0.08),transparent_35%),radial-gradient(circle_at_85%_0%,rgba(174,41,0,0.05),transparent_28%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(174,41,0,0.07),transparent_30%),linear-gradient(135deg,rgba(255,255,255,0.72),rgba(218,222,219,0.34))]"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,rgba(44,47,46,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(44,47,46,0.06)_1px,transparent_1px)] [background-size:48px_48px]"
+        className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(to_right,rgba(44,47,46,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(44,47,46,0.055)_1px,transparent_1px)] [background-size:44px_44px]"
       />
 
       <div className="relative flex min-h-screen">
-        <aside className="hidden w-72 shrink-0 flex-col border-r border-border/60 bg-card/80 backdrop-blur-sm md:flex">
+        <aside className="hidden w-72 shrink-0 flex-col border-r border-border/70 bg-card/90 shadow-[18px_0_60px_rgba(44,47,46,0.05)] backdrop-blur-xl md:flex">
           <div className="flex items-center gap-3 px-6 py-7">
             <Image
               src="/images/logo-rng.webp"
@@ -182,10 +188,10 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 border border-transparent px-4 py-3 font-spaceGrotesk text-[0.72rem] font-bold uppercase tracking-[0.18em] transition-colors",
+                    "flex items-center gap-3 border border-transparent px-4 py-3 font-spaceGrotesk text-[0.72rem] font-bold uppercase tracking-[0.18em] transition-all",
                     isActive
-                      ? "border-primary/40 bg-primary/10 text-primary"
-                      : "text-foreground/80 hover:border-border/60 hover:bg-muted",
+                      ? "border-primary/30 bg-primary/10 text-primary shadow-[5px_5px_0_var(--border)]"
+                      : "text-foreground/75 hover:border-border hover:bg-muted/80 hover:text-foreground",
                   )}
                 >
                   <span className="text-primary/80">{item.icon}</span>
@@ -220,7 +226,7 @@ export default function DashboardLayout({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-border/60 bg-background/80 backdrop-blur-sm">
+          <header className="sticky top-0 z-30 border-b border-border/70 bg-background/88 backdrop-blur-xl">
             <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
               <div className="flex items-center gap-3">
                 <Sheet open={open} onOpenChange={setOpen}>

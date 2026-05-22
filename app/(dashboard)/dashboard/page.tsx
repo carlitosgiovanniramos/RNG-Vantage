@@ -55,15 +55,8 @@ export default async function DashboardPage() {
   return (
     <section className="mx-auto w-full max-w-7xl space-y-10 px-6 py-10 md:py-14">
       <RealtimeRefresher tables={["subscriptions", "transactions", "reservations"]} />
-      <header className="relative overflow-hidden border border-border/60 bg-card/85 p-8 backdrop-blur-sm md:p-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-28 left-20 h-60 w-60 rounded-full bg-primary/10 blur-3xl"
-        />
+      <header className="relative overflow-hidden border border-border/70 bg-card/90 p-8 shadow-[12px_12px_0_var(--border)] backdrop-blur-xl md:p-10">
+        <div aria-hidden className="absolute inset-x-0 top-0 h-1 bg-primary" />
         <div className="relative space-y-6">
           <div className="space-y-2">
             <p className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.22em] text-primary">
@@ -155,11 +148,8 @@ export default async function DashboardPage() {
           value={metrics.pending_reservations}
           icon={<CalendarClock className="size-5" />}
         />
-        <article className="relative overflow-hidden border border-border/60 bg-card/80 p-6 backdrop-blur-sm md:p-8">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-20 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
-          />
+        <article className="relative overflow-hidden border border-border/70 bg-card/90 p-6 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl md:p-8">
+          <div aria-hidden className="absolute inset-x-0 top-0 h-1 bg-primary" />
           <div className="relative space-y-5">
             <h2 className="font-spaceGrotesk text-lg font-black uppercase tracking-[0.12em] text-foreground">
               Resumen Operativo
