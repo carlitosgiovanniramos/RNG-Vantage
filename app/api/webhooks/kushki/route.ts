@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getKushkiConfig } from "@/lib/kushki/config";
 import { kushkiWebhookSchema } from "@/lib/validators/payment";
-import type { KushkiTransactionStatus } from "@/lib/kushki/types";
+import { mapKushkiStatus, isFinalTransactionStatus } from "@/lib/kushki/webhook";
 
 /**
  * Webhook de Kushki: concilia el estado de los pagos.
@@ -25,25 +25,6 @@ import type { KushkiTransactionStatus } from "@/lib/kushki/types";
 // Se usa el cliente admin (service role) -> runtime Node explicito.
 export const runtime = "nodejs";
 
-/** Estados finales: una transaccion en estos estados no se reprocesa. */
-const FINAL_STATUSES = ["completed", "failed", "refunded"] as const;
-
-/** Mapea el estado de Kushki al estado interno de la transaccion. */
-function mapKushkiStatus(
-  status: KushkiTransactionStatus,
-): "completed" | "failed" | "pending" {
-  switch (status) {
-    case "APPROVAL":
-      return "completed";
-    case "DECLINED":
-    case "EXPIRED":
-      return "failed";
-    case "PENDING":
-    case "INITIALIZED":
-    default:
-      return "pending";
-  }
-}
 
 export async function POST(req: Request) {
   // 1. Verificar el secreto compartido
@@ -95,7 +76,7 @@ export async function POST(req: Request) {
   }
 
   // 4. Idempotencia: estado final -> no reprocesar
-  if ((FINAL_STATUSES as readonly string[]).includes(transaction.status)) {
+  if (isFinalTransactionStatus(transaction.status)) {
     return NextResponse.json(
       { received: true, idempotent: true },
       { status: 200 },
