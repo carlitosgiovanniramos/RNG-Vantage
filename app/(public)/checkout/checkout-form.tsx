@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CreditCard, RefreshCw, Wallet } from "lucide-react";
+import { ArrowRight, CreditCard, Landmark, RefreshCw, Wallet } from "lucide-react";
 import { createSubscription } from "./actions";
 import { CardForm } from "./card-form";
+import { TransferForm } from "./transfer-form";
 
-type PaymentMethod = "card" | "cash";
+type PaymentMethod = "card" | "transfer" | "cash";
+
+const PAYMENT_METHODS = [
+  { id: "card", label: "Tarjeta", icon: CreditCard },
+  { id: "transfer", label: "Transferencia", icon: Landmark },
+  { id: "cash", label: "Efectivo", icon: Wallet },
+] as const;
 
 export function CheckoutForm({
   serviceId,
@@ -25,8 +32,7 @@ export function CheckoutForm({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
 
-  // Flujo manual de efectivo: registra la suscripcion como pendiente
-  // y Ruth la confirma manualmente (comportamiento original).
+  // Flujo manual de efectivo: Ruth confirma el pago manualmente.
   async function handleCashCheckout() {
     setLoading(true);
     setErrorMsg(null);
@@ -53,7 +59,6 @@ export function CheckoutForm({
     }
   }
 
-  // Pago ya registrado: formulario desactivado.
   if (success) {
     return (
       <button
@@ -75,34 +80,25 @@ export function CheckoutForm({
       )}
 
       {/* Selector de metodo de pago */}
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setMethod("card")}
-          className={`inline-flex items-center justify-center gap-2 border px-3 py-3 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
-            method === "card"
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
-          }`}
-        >
-          <CreditCard className="h-4 w-4" />
-          Tarjeta
-        </button>
-        <button
-          type="button"
-          onClick={() => setMethod("cash")}
-          className={`inline-flex items-center justify-center gap-2 border px-3 py-3 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.12em] transition-colors ${
-            method === "cash"
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
-          }`}
-        >
-          <Wallet className="h-4 w-4" />
-          Efectivo
-        </button>
+      <div className="grid grid-cols-3 gap-2">
+        {PAYMENT_METHODS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setMethod(id)}
+            className={`flex flex-col items-center justify-center gap-1.5 border px-2 py-3 font-spaceGrotesk text-[0.6rem] font-bold uppercase tracking-[0.1em] transition-colors ${
+              method === id
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Renovacion automatica (compartida por ambos metodos) */}
+      {/* Renovacion automatica (compartida por todos los metodos) */}
       <label className="flex cursor-pointer items-start gap-3 border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
         <input
           type="checkbox"
@@ -125,14 +121,13 @@ export function CheckoutForm({
       </label>
 
       {/* Contenido segun el metodo elegido */}
-      {method === "card" ? (
-        <CardForm
-          serviceId={serviceId}
-          autoRenew={autoRenew}
-          amount={amount}
-          onError={setErrorMsg}
-        />
-      ) : (
+      {method === "card" && (
+        <CardForm serviceId={serviceId} autoRenew={autoRenew} amount={amount} onError={setErrorMsg} />
+      )}
+      {method === "transfer" && (
+        <TransferForm serviceId={serviceId} autoRenew={autoRenew} amount={amount} onError={setErrorMsg} />
+      )}
+      {method === "cash" && (
         <button
           type="button"
           onClick={handleCashCheckout}

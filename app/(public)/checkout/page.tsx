@@ -8,6 +8,7 @@ type CheckoutPageProps = {
     service_id?: string;
     success?: string;
     error?: string;
+    transfer?: string;
   }>;
 };
 
@@ -92,6 +93,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
   const descriptionItems = getDescriptionItems(service.description);
   const success = params.success === "1";
   const errorMessage = params.error ? ERROR_MESSAGES[params.error] : null;
+  const transferReturn = params.transfer === "return";
 
   return (
     <section className="mx-auto w-full max-w-6xl px-6 py-12">
@@ -157,6 +159,19 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
 
           <p className="mt-4 font-workSans text-sm text-emerald-900 dark:text-emerald-100">
             Cuando realices el pago, envia el comprobante al administrador. Tu suscripcion sera activada cuando el pago sea verificado.
+          </p>
+        </div>
+      )}
+
+      {transferReturn && !success && (
+        <div className="mb-6 border border-amber-200 bg-amber-50 px-6 py-5 text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
+          <h3 className="mb-1 font-spaceGrotesk text-base font-black uppercase tracking-tight">
+            Transferencia en proceso
+          </h3>
+          <p className="font-workSans text-sm">
+            Estamos confirmando tu transferencia con el banco. Tu suscripcion se
+            activara automaticamente en cuanto el pago sea verificado. Puedes
+            cerrar esta pagina.
           </p>
         </div>
       )}
