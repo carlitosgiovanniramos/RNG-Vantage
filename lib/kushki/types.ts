@@ -31,6 +31,12 @@ export interface KushkiTransferResponse {
   pendingReference?: string;
 }
 
+/** Respuesta de POST /subscriptions/v1/card (creacion de suscripcion). */
+export interface KushkiSubscriptionResponse {
+  subscriptionId: string;
+  status?: KushkiTransactionStatus;
+}
+
 /** Payload que Kushki envia al webhook configurado. */
 export interface KushkiWebhookEvent {
   transactionId: string;
@@ -39,6 +45,8 @@ export interface KushkiWebhookEvent {
   status: KushkiTransactionStatus;
   paymentMethod?: string;
   amount?: number;
+  /** Presente cuando el evento es el cobro de una suscripcion recurrente. */
+  subscriptionId?: string;
   metadata?: Record<string, unknown>;
 }
 

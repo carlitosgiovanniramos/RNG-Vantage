@@ -9,6 +9,7 @@ type CheckoutPageProps = {
     success?: string;
     error?: string;
     transfer?: string;
+    method?: string;
   }>;
 };
 
@@ -92,6 +93,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     : "Servicio unico";
   const descriptionItems = getDescriptionItems(service.description);
   const success = params.success === "1";
+  const paidByCard = params.method === "card";
   const errorMessage = params.error ? ERROR_MESSAGES[params.error] : null;
   const transferReturn = params.transfer === "return";
 
@@ -127,7 +129,9 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             Solicitud de contratacion registrada
           </h3>
           <p className="mb-4 font-workSans text-sm text-emerald-800 dark:text-emerald-200">
-            Tu suscripcion esta pendiente de pago.
+            {paidByCard
+              ? "Tu pago fue procesado correctamente y tu suscripcion ya esta activa."
+              : "Tu suscripcion esta pendiente de pago."}
           </p>
 
           <div className="my-4 grid gap-2 border-y border-emerald-200 py-4 dark:border-emerald-800/60">
@@ -141,25 +145,35 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Estado</span>
-              <span className="bg-amber-100 px-3 py-0.5 font-spaceGrotesk text-xs font-bold uppercase tracking-wide text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
-                Pendiente de pago
-              </span>
+              {paidByCard ? (
+                <span className="bg-emerald-200 px-3 py-0.5 font-spaceGrotesk text-xs font-bold uppercase tracking-wide text-emerald-900 dark:bg-emerald-800/50 dark:text-emerald-200">
+                  Pagado
+                </span>
+              ) : (
+                <span className="bg-amber-100 px-3 py-0.5 font-spaceGrotesk text-xs font-bold uppercase tracking-wide text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                  Pendiente de pago
+                </span>
+              )}
             </div>
           </div>
 
-          <div className="border border-emerald-200/60 bg-emerald-100/50 p-4 dark:border-emerald-800/40 dark:bg-emerald-950/40">
-            <h4 className="mb-3 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-300">Datos de transferencia</h4>
-            <ul className="space-y-1 font-workSans text-sm text-emerald-900/90 dark:text-emerald-100/90">
-              <li><span className="font-bold">Banco:</span> Banco Pichincha</li>
-              <li><span className="font-bold">Cuenta:</span> Ahorros 2200000000</li>
-              <li><span className="font-bold">Titular:</span> Ruth Noemi Gomez Lescano</li>
-              <li><span className="font-bold">Concepto:</span> Pago de suscripcion RGL Estudio</li>
-            </ul>
-          </div>
+          {!paidByCard && (
+            <>
+              <div className="border border-emerald-200/60 bg-emerald-100/50 p-4 dark:border-emerald-800/40 dark:bg-emerald-950/40">
+                <h4 className="mb-3 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.16em] text-emerald-800 dark:text-emerald-300">Datos de transferencia</h4>
+                <ul className="space-y-1 font-workSans text-sm text-emerald-900/90 dark:text-emerald-100/90">
+                  <li><span className="font-bold">Banco:</span> Banco Pichincha</li>
+                  <li><span className="font-bold">Cuenta:</span> Ahorros 2200000000</li>
+                  <li><span className="font-bold">Titular:</span> Ruth Noemi Gomez Lescano</li>
+                  <li><span className="font-bold">Concepto:</span> Pago de suscripcion RGL Estudio</li>
+                </ul>
+              </div>
 
-          <p className="mt-4 font-workSans text-sm text-emerald-900 dark:text-emerald-100">
-            Cuando realices el pago, envia el comprobante al administrador. Tu suscripcion sera activada cuando el pago sea verificado.
-          </p>
+              <p className="mt-4 font-workSans text-sm text-emerald-900 dark:text-emerald-100">
+                Cuando realices el pago, envia el comprobante al administrador. Tu suscripcion sera activada cuando el pago sea verificado.
+              </p>
+            </>
+          )}
         </div>
       )}
 

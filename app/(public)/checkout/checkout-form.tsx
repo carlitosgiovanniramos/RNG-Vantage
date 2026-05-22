@@ -122,7 +122,14 @@ export function CheckoutForm({
 
       {/* Contenido segun el metodo elegido */}
       {method === "card" && (
-        <CardForm serviceId={serviceId} autoRenew={autoRenew} amount={amount} onError={setErrorMsg} />
+        <CardForm
+          key={isRecurringService && autoRenew ? "card-recurring" : "card-onetime"}
+          serviceId={serviceId}
+          autoRenew={autoRenew}
+          amount={amount}
+          recurring={isRecurringService && autoRenew}
+          onError={setErrorMsg}
+        />
       )}
       {method === "transfer" && (
         <TransferForm serviceId={serviceId} autoRenew={autoRenew} amount={amount} onError={setErrorMsg} />

@@ -5,7 +5,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createSubscriptionSchema } from "@/lib/validators/subscription";
 import { kushkiCardChargeSchema, kushkiTransferInitSchema } from "@/lib/validators/payment";
 import { kushkiFetch, KushkiApiError } from "@/lib/kushki/client";
-import type { KushkiChargeResponse, KushkiTransferResponse } from "@/lib/kushki/types";
+import { sendEmail } from "@/lib/email/client";
+import {
+  paymentConfirmedEmail,
+  subscriptionActivatedEmail,
+} from "@/lib/email/templates";
+import type {
+  KushkiChargeResponse,
+  KushkiTransferResponse,
+  KushkiSubscriptionResponse,
+} from "@/lib/kushki/types";
 
 /**
  * Cobra una suscripcion con tarjeta a traves de Kushki.
@@ -164,8 +173,10 @@ export async function chargeWithCard(input: {
     };
   }
 
-  // 10. Cargo aprobado -> actualizar transaccion y suscripcion
-  await supabaseAdmin
+  // 10. Cargo aprobado -> actualizar transaccion y suscripcion.
+  // El cliente YA fue cobrado: si estos updates fallan se devuelve exito
+  // igualmente, pero se registra el error para reconciliacion manual.
+  const { error: txUpdateError } = await supabaseAdmin
     .from("transactions")
     .update({
       status: "completed",
@@ -174,12 +185,39 @@ export async function chargeWithCard(input: {
     })
     .eq("id", createdTransaction.id);
 
+  if (txUpdateError) {
+    console.error(
+      `[kushki] Cargo aprobado (ticket ${charge.ticketNumber}) pero fallo al actualizar la transaccion ${createdTransaction.id}:`,
+      txUpdateError.message,
+    );
+  }
+
   // Suscripcion se activa con cliente admin: el rol authenticated
   // no debe poder auto-activar su propia suscripcion via RLS.
-  await supabaseAdmin
+  const { error: subUpdateError } = await supabaseAdmin
     .from("subscriptions")
     .update({ status: "active" })
     .eq("id", createdSubscription.id);
+
+  if (subUpdateError) {
+    console.error(
+      `[kushki] Cargo aprobado pero fallo al activar la suscripcion ${createdSubscription.id}:`,
+      subUpdateError.message,
+    );
+  }
+
+  // Notificar al cliente (best-effort: nunca rompe el flujo de pago).
+  if (user.email) {
+    const emailContent = paymentConfirmedEmail({
+      serviceName: service.name,
+      amount: service.price,
+    });
+    await sendEmail({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+    });
+  }
 
   // 11. Resultado
   return {
@@ -374,6 +412,161 @@ export async function initTransfer(input: {
       redirect_url: transfer.redirectUrl ?? null,
       reference: transfer.pendingReference ?? null,
     },
+    service: {
+      name: service.name,
+      price: service.price,
+    },
+  };
+}
+
+/**
+ * Crea una suscripcion recurrente con tarjeta a traves de Kushki.
+ *
+ * A diferencia de `chargeWithCard` (cargo unico), crea una suscripcion
+ * en Kushki: la pasarela cobra la tarjeta automaticamente cada mes y
+ * notifica cada cobro por el webhook. Las transacciones de cada cobro
+ * (incluido el primero) las registra el webhook, no esta accion.
+ *
+ * Solo aplica a servicios `manejo_redes` (los unicos recurrentes).
+ */
+export async function subscribeWithCard(input: {
+  service_id: string;
+  auto_renew: boolean;
+  token: string;
+}) {
+  // 1. Validar entrada
+  const parsed = kushkiCardChargeSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: "Datos de pago invalidos." };
+  }
+  const { service_id, token } = parsed.data;
+
+  const supabase = await createClient();
+
+  // 2. Usuario autenticado
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: "Debes iniciar sesion para continuar." };
+  }
+
+  // 3. Servicio
+  const { data: service, error: serviceError } = await supabase
+    .from("services")
+    .select("*")
+    .eq("id", service_id)
+    .single();
+  if (serviceError || !service) {
+    return { success: false, error: "El servicio no existe o no pudo ser encontrado." };
+  }
+  if (!service.is_active) {
+    return { success: false, error: "El servicio seleccionado no esta activo." };
+  }
+  // Solo manejo_redes admite suscripcion recurrente.
+  if (service.type !== "manejo_redes") {
+    return { success: false, error: "Este servicio no admite suscripcion recurrente." };
+  }
+
+  // 4. Fechas
+  const startsAt = new Date();
+  const endsAt = new Date(startsAt);
+  endsAt.setMonth(startsAt.getMonth() + (service.duration_months || 1));
+
+  // 5. Validar datos de suscripcion
+  const validation = createSubscriptionSchema.safeParse({
+    user_id: user.id,
+    service_id: service.id,
+    starts_at: startsAt.toISOString(),
+    ends_at: endsAt.toISOString(),
+    auto_renew: true,
+  });
+  if (!validation.success) {
+    return { success: false, error: "Datos de suscripcion invalidos." };
+  }
+
+  // 6. Crear suscripcion (pending)
+  const { data: createdSubscription, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .insert({ ...validation.data, status: "pending" })
+    .select("id")
+    .single();
+  if (subscriptionError || !createdSubscription) {
+    return { success: false, error: "Error al crear la suscripcion." };
+  }
+
+  // 7. Crear la suscripcion recurrente en Kushki
+  let kushkiSubscription: KushkiSubscriptionResponse;
+  try {
+    kushkiSubscription = await kushkiFetch<KushkiSubscriptionResponse>(
+      "/subscriptions/v1/card",
+      {
+        method: "POST",
+        auth: "private",
+        body: {
+          token,
+          planName: service.name,
+          periodicity: "monthly",
+          contactDetails: { email: user.email ?? "" },
+          // ATENCION: revisar el desglose de IVA con la contabilidad.
+          amount: {
+            subtotalIva: 0,
+            subtotalIva0: service.price,
+            ice: 0,
+            iva: 0,
+            currency: "USD",
+          },
+        },
+      },
+    );
+  } catch (err) {
+    const message =
+      err instanceof KushkiApiError
+        ? err.message
+        : "No se pudo crear la suscripcion. Intenta nuevamente.";
+    return {
+      success: false,
+      error: message,
+      subscription_id: createdSubscription.id,
+    };
+  }
+
+  // 8. Guardar el ID de Kushki y activar la suscripcion (cliente admin).
+  // Las transacciones de cada cobro las registra el webhook.
+  const supabaseAdmin = createAdminClient();
+  const { error: subUpdateError } = await supabaseAdmin
+    .from("subscriptions")
+    .update({
+      status: "active",
+      gateway_subscription_id: kushkiSubscription.subscriptionId,
+    })
+    .eq("id", createdSubscription.id);
+
+  if (subUpdateError) {
+    console.error(
+      `[kushki] Suscripcion creada en Kushki (${kushkiSubscription.subscriptionId}) pero fallo al actualizar la suscripcion ${createdSubscription.id}:`,
+      subUpdateError.message,
+    );
+  }
+
+  // Notificar al cliente (best-effort).
+  if (user.email) {
+    const emailContent = subscriptionActivatedEmail({
+      serviceName: service.name,
+      amount: service.price,
+    });
+    await sendEmail({
+      to: user.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+    });
+  }
+
+  // 9. Resultado
+  return {
+    success: true,
+    subscription_id: createdSubscription.id,
+    gateway_subscription_id: kushkiSubscription.subscriptionId,
     service: {
       name: service.name,
       price: service.price,

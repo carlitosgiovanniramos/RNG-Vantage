@@ -67,11 +67,22 @@ function mapSupabaseAuthError(errorMessage: string): string {
   return errorMessage;
 }
 
+/**
+ * Solo admite rutas internas. Previene open redirect: si `path` apunta a
+ * un dominio externo o es protocol-relative, se descarta.
+ */
+function safeRelativeRedirect(path: string | null): string | null {
+  if (!path) return null;
+  if (!path.startsWith("/")) return null;
+  if (path.startsWith("//") || path.startsWith("/\\")) return null;
+  return path;
+}
+
 export async function login(_prevState: AuthFormState, formData: FormData) {
   const supabase = await createClient();
   const email = ((formData.get("email") as string) ?? "").trim();
   const password = formData.get("password") as string;
-  const redirectTo = (formData.get("redirect") as string) || null;
+  const redirectTo = safeRelativeRedirect((formData.get("redirect") as string) || null);
 
   if (!email || !password) {
     return {

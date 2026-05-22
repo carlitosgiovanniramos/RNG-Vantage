@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { chargeWithCard } from "./payment-actions";
+import { chargeWithCard, subscribeWithCard } from "./payment-actions";
 
 import { IKushki, init } from "@kushki/js-sdk";
 import { ICard, initCardToken } from "@kushki/js-sdk/Card";
@@ -43,7 +43,10 @@ async function initKushkiCardFields(amount: number, isSubscription: boolean): Pr
       subtotalIva0: amount,
       iva: 0,
     },
-    isSubscription: isSubscription,
+    // `true` cuando el servicio es recurrente y el cliente activo la
+    // auto-renovacion: Kushki genera un token de suscripcion en vez de
+    // uno de cargo unico.
+    isSubscription,
     fields: {
       cardholderName: {
         selector: "kushki-card-name",
@@ -110,11 +113,18 @@ export function CardForm({
   serviceId,
   autoRenew,
   amount,
+  recurring,
   onError,
 }: {
   serviceId: string;
   autoRenew: boolean;
   amount: number;
+  /**
+   * `true` => suscripcion recurrente (servicio manejo_redes + auto-renovar).
+   * El padre re-monta el componente con `key` cuando esto cambia, asi que
+   * `recurring` es constante durante toda la vida del componente.
+   */
+  recurring: boolean;
   onError: (msg: string | null) => void;
 }) {
   const [loading, setLoading] = useState(false);
@@ -123,23 +133,26 @@ export function CardForm({
 
   useEffect(() => {
     let cancelled = false;
-    
-    // Solo inicializa si no esta listo
-    if (!sdkReady) {
-      initKushkiCardFields(amount, autoRenew)
-        .then(() => {
-          if (!cancelled) setSdkReady(true);
-        })
-        .catch((error) => {
-          console.error("Error al inicializar Kushki:", error);
-          if (!cancelled) onError("No se pudo cargar la pasarela de pago.");
-        });
-    }
+
+    initKushkiCardFields(amount, recurring)
+      .then(() => {
+        if (!cancelled) setSdkReady(true);
+      })
+      .catch((error) => {
+        console.error("Error al inicializar Kushki:", error);
+        if (!cancelled) onError("No se pudo cargar la pasarela de pago.");
+      });
 
     return () => {
       cancelled = true;
+      // Liberar la instancia: si el componente se re-monta (cambio de
+      // pestana de pago o de modo recurrente) la proxima vez se
+      // inicializa contra los nuevos contenedores del DOM.
+      kushkiInstance = null;
+      cardInstance = null;
     };
-  }, [onError, amount, autoRenew, sdkReady]);
+    // `recurring` es constante por montaje (el padre re-monta via key).
+  }, [amount, onError, recurring]);
 
   async function handlePay() {
     setLoading(true);
@@ -147,11 +160,17 @@ export function CardForm({
     try {
       const token = await requestCardToken();
 
-      const res = await chargeWithCard({
-        service_id: serviceId,
-        auto_renew: autoRenew,
-        token,
-      });
+      const res = recurring
+        ? await subscribeWithCard({
+            service_id: serviceId,
+            auto_renew: true,
+            token,
+          })
+        : await chargeWithCard({
+            service_id: serviceId,
+            auto_renew: autoRenew,
+            token,
+          });
 
       if (!res.success) {
         onError(res.error || "No se pudo procesar el pago.");
@@ -163,7 +182,7 @@ export function CardForm({
         }
         return;
       }
-      router.push(`/checkout?service_id=${serviceId}&success=1`);
+      router.push(`/checkout?service_id=${serviceId}&success=1&method=card`);
     } catch {
       onError("Error al procesar el pago. Revisa los datos de la tarjeta.");
     } finally {
@@ -207,7 +226,13 @@ export function CardForm({
         className="inline-flex h-12 w-full items-center justify-between bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
       >
         <span>
-          {loading ? "Procesando..." : !sdkReady ? "Cargando..." : `Pagar ${formatUsd(amount)}`}
+          {loading
+            ? "Procesando..."
+            : !sdkReady
+              ? "Cargando..."
+              : recurring
+                ? `Suscribirme · ${formatUsd(amount)}/mes`
+                : `Pagar ${formatUsd(amount)}`}
         </span>
         <ArrowRight className="h-4 w-4" />
       </button>
