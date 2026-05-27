@@ -1,7 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { markTransactionAsPaidSchema } from "@/lib/validators/transaction";
+import { sendEmail } from "@/lib/email/client";
+import { paymentConfirmedEmail } from "@/lib/email/templates";
 
 /**
  * Tipo para una fila de transacción en la tabla
@@ -50,11 +53,11 @@ export async function markTransactionAsCompleted(data: unknown) {
   // Verificar que es admin (consultando su rol en profiles)
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, is_active")
     .eq("id", user.user.id)
     .single();
 
-  if (profileError || profile?.role !== "admin") {
+  if (profileError || profile?.role !== "admin" || profile?.is_active === false) {
     return {
       success: false,
       error: "Solo administradores pueden registrar pagos.",
@@ -64,7 +67,7 @@ export async function markTransactionAsCompleted(data: unknown) {
   // PASO 2: Obtener la transacción para extraer el subscription_id
   const { data: transaction, error: getError } = await supabase
     .from("transactions")
-    .select("id, subscription_id, status")
+    .select("id, subscription_id, status, user_id, amount")
     .eq("id", transaction_id)
     .single();
 
@@ -73,6 +76,13 @@ export async function markTransactionAsCompleted(data: unknown) {
     return {
       success: false,
       error: "Transacción no encontrada.",
+    };
+  }
+
+  if (transaction.status !== "pending") {
+    return {
+      success: false,
+      error: "Esta transacción ya fue procesada.",
     };
   }
 
@@ -116,6 +126,27 @@ export async function markTransactionAsCompleted(data: unknown) {
     }
   }
 
+  // Notificar al cliente que su pago fue confirmado (best-effort).
+  if (transaction.user_id) {
+    try {
+      const admin = createAdminClient();
+      const { data: authUser } = await admin.auth.admin.getUserById(
+        transaction.user_id,
+      );
+      const customerEmail = authUser?.user?.email;
+      if (customerEmail) {
+        const emailContent = paymentConfirmedEmail({ amount: transaction.amount });
+        await sendEmail({
+          to: customerEmail,
+          subject: emailContent.subject,
+          html: emailContent.html,
+        });
+      }
+    } catch (err) {
+      console.error("[markTransactionAsCompleted] Error enviando correo:", err);
+    }
+  }
+
   return { success: true };
 }
 
@@ -134,11 +165,11 @@ export async function getTransactions() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, is_active")
     .eq("id", user.user.id)
     .single();
 
-  if (profile?.role !== "admin") {
+  if (profile?.role !== "admin" || profile?.is_active === false) {
     return { data: null, error: "Solo administradores pueden ver transacciones." };
   }
 
@@ -200,8 +231,8 @@ export async function markTransactionAsFailed(transaction_id: string) {
   const { data: user, error: userError } = await supabase.auth.getUser();
   if (userError || !user?.user) return { success: false, error: "No estás autenticado." };
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.user.id).single();
-  if (profile?.role !== "admin") return { success: false, error: "No autorizado." };
+  const { data: profile } = await supabase.from("profiles").select("role, is_active").eq("id", user.user.id).single();
+  if (profile?.role !== "admin" || profile?.is_active === false) return { success: false, error: "No autorizado." };
 
   const { data: transaction, error: getError } = await supabase
     .from("transactions")
@@ -241,8 +272,8 @@ export async function cleanExpiredTransactions() {
   const { data: user } = await supabase.auth.getUser();
   if (!user?.user) return { success: false, error: "No estás autenticado." };
 
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.user.id).single();
-  if (profile?.role !== "admin") return { success: false, error: "No autorizado." };
+  const { data: profile } = await supabase.from("profiles").select("role, is_active").eq("id", user.user.id).single();
+  if (profile?.role !== "admin" || profile?.is_active === false) return { success: false, error: "No autorizado." };
 
   // Calcular la fecha hace 24 horas
   const date24hAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

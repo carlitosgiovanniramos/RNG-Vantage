@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Network, BarChart, GraduationCap, Settings2, TrendingUp, Calendar, Package, type LucideIcon } from "lucide-react";
+import { Network, BarChart, GraduationCap, Settings2, TrendingUp, Calendar, Package, CheckCircle2, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import type { Database, ServiceType } from "@/types/database";
 
@@ -29,10 +29,31 @@ const TYPE_ICONS: Record<ServiceType, LucideIcon> = {
   otro: Settings2,
 };
 
+const TYPE_LABELS: Record<ServiceType, string> = {
+  manejo_redes: "Redes Sociales",
+  auditoria: "Auditoria",
+  capacitacion: "Capacitacion",
+  otro: "Otro",
+};
+
 function getPriceDisplay(service: Service): string {
   if (service.price === 0) return "Gratis";
   if (service.type === "manejo_redes") return `$${service.price}/mes`;
   return `$${service.price}`;
+}
+
+function getShortDescription(description?: string | null): string {
+  return (description ?? "Servicio disponible bajo consulta.")
+    .replace(/^Incluye:\s*/i, "")
+    .trim();
+}
+
+function getDescriptionItems(description?: string | null): string[] {
+  return getShortDescription(description)
+    .split(/\. |; /)
+    .map((item) => item.replace(/\.$/, "").trim())
+    .filter(Boolean)
+    .slice(0, 3);
 }
 
 export default async function LandingPage() {
@@ -55,70 +76,65 @@ export default async function LandingPage() {
   return (
     <div className="flex flex-col">
       {/* --- Hero Section --- */}
-      <section className="relative px-4 sm:px-8 pt-12 pb-0 overflow-hidden">
-        <div className="max-w-[1440px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* -mt-[90px] cancela el espaciador del layout para que la foto cubra detrás del navbar fixed */}
+      <section className="relative -mt-[90px] h-screen overflow-hidden">
+        {/* Foto de fondo — object-[center_20%] para mostrar la cara */}
+        <Image
+          alt="RGL Estudio — Ruth Gómez"
+          src="/images/ruth-hero.webp"
+          fill
+          className="object-cover object-[center_20%]"
+          sizes="100vw"
+          priority
+        />
+        {/* Overlay oscuro para legibilidad */}
+        <div className="absolute inset-0 bg-black/50" />
 
-          {/* Texto Principal */}
-          <div className="lg:col-span-8 z-10">
+        {/* Contenido centrado verticalmente */}
+        <div className="relative z-10 h-full flex items-center px-4 sm:px-8 lg:px-16">
+          <div className="max-w-[860px] pt-[90px]">
             <div className="inline-block bg-primary text-white px-4 py-1 font-spaceGrotesk text-xs tracking-widest uppercase mb-6">
               Autoridad en Marketing Digital
             </div>
 
-            <h1 className="text-6xl sm:text-7xl md:text-9xl font-spaceGrotesk font-black tracking-tighter leading-[0.85] mb-8 uppercase text-foreground">
+            <h1 className="text-5xl sm:text-7xl md:text-9xl font-spaceGrotesk font-black tracking-tighter leading-[0.85] mb-8 uppercase text-white">
               RGL Estudio
             </h1>
 
-            <p className="text-lg sm:text-xl md:text-2xl font-workSans max-w-2xl mb-12 text-muted-foreground leading-relaxed">
-              Automatización de ventas, reservas y control financiero para tu emprendimiento de marketing digital. <span className="text-primary font-bold">Escala sin límites.</span>
+            <p className="text-lg sm:text-xl md:text-2xl font-workSans max-w-2xl mb-12 text-white/80 leading-relaxed">
+              Automatización de ventas, reservas y control financiero para tu emprendimiento de marketing digital. <span className="text-white font-bold">Escala sin límites.</span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6">
               <Link href="/catalogo">
-                <Button variant="default" className="h-auto w-full sm:w-auto rounded-none px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[8px_8px_0px_0px_rgba(44,47,46,1)] dark:shadow-[8px_8px_0px_0px_rgba(245,247,245,1)]">
+                <Button variant="default" className="h-auto w-full sm:w-auto rounded-none px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-primary/85 active:scale-95">
                   Ver Servicios
                 </Button>
               </Link>
               <Link href="/reservar">
-                <Button variant="outline" className="h-auto w-full sm:w-auto rounded-none border-4 border-foreground text-foreground px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-foreground hover:text-background active:scale-95">
+                <Button variant="outline" className="h-auto w-full sm:w-auto rounded-none border-4 border-white text-white bg-transparent px-10 py-5 font-spaceGrotesk font-black text-lg uppercase tracking-tight hover:bg-white hover:text-foreground active:scale-95">
                   Reservar Capacitación
                 </Button>
               </Link>
             </div>
           </div>
-
-          {/* Imagen Lateral (Solo Desktop) */}
-          <div className="lg:col-span-4 relative hidden lg:block">
-            <div className="w-full aspect-square bg-muted relative">
-              <Image
-                alt="Panel de visualización de datos"
-                src="/images/hero-dashboard.webp"
-                fill
-                className="object-cover grayscale contrast-125 brightness-90"
-                sizes="(max-width: 1024px) 0vw, 25vw"
-                priority
-              />
-              <div className="absolute -bottom-6 -left-6 bg-primary p-8 text-primary-foreground">
-                <TrendingUp className="h-12 w-12" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Kinetic Marquee */}
-        <div className="mt-36 -mx-4 sm:-mx-8 bg-foreground py-4 overflow-hidden whitespace-nowrap">
-          <div className="flex space-x-20 animate-marquee items-center">
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Escala</span>
-            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Automatiza</span>
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Controla</span>
-            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Crece</span>
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Eficiencia</span>
-            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Scale</span>
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Automate</span>
-            <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Crece</span>
-            <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Controla</span>
-          </div>
         </div>
       </section>
+
+      {/* Kinetic Marquee — fuera del hero, aparece al hacer scroll */}
+      <div className="bg-foreground py-4 overflow-hidden whitespace-nowrap">
+        <div className="flex space-x-20 animate-marquee items-center">
+          <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Escala</span>
+          <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Automatiza</span>
+          <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Controla</span>
+          <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Crece</span>
+          <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Eficiencia</span>
+          <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Scale</span>
+          <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Automate</span>
+          <span className="text-primary font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase">Crece</span>
+          <span className="text-background font-spaceGrotesk font-black text-2xl sm:text-4xl uppercase opacity-20">Controla</span>
+        </div>
+      </div>
 
       {/* --- Nuestros Servicios (Bento Grid) --- */}
       {landingServices.length > 0 && (
@@ -138,31 +154,70 @@ export default async function LandingPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-[1px] bg-muted">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {landingServices.map((service, i) => {
                 const Icon = TYPE_ICONS[service.type] ?? Settings2;
                 const priceStr = getPriceDisplay(service);
+                const descriptionItems = getDescriptionItems(service.description);
+                const isGrayHover = i % 2 === 0;
                 return (
                   <div
                     key={service.id}
-                    className="bg-card p-8 sm:p-12 group hover:bg-primary transition-colors duration-500 relative"
+                    className={`group relative flex min-h-[470px] flex-col overflow-hidden border p-7 pt-10 transition-all duration-300 hover:-translate-y-1 hover:shadow-[10px_10px_0_rgba(148,163,153,0.45)] sm:p-9 sm:pt-12 ${
+                      isGrayHover
+                        ? "border-white bg-card hover:border-[#3d4140]/70 hover:bg-[#343736]"
+                        : "border-white bg-card hover:border-primary hover:bg-primary"
+                    }`}
                   >
-                    <Icon className="h-12 w-12 sm:h-16 sm:w-16 mb-8 sm:mb-12 text-primary group-hover:text-primary-foreground transition-colors" />
+                    <div className={`absolute inset-x-0 top-0 h-1.5 bg-transparent transition-colors duration-300 ${isGrayHover ? "group-hover:bg-[#686c6a]" : "group-hover:bg-primary"}`} />
 
-                    <h3 className="text-2xl sm:text-3xl font-spaceGrotesk font-black uppercase mb-4 text-foreground group-hover:text-primary-foreground transition-colors">
+                    <div className="mb-8 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className={`flex h-14 w-14 items-center justify-center border transition-colors duration-300 ${
+                          "border-primary/45 bg-background group-hover:border-primary-foreground/70 group-hover:bg-primary-foreground/10"
+                        }`}>
+                          <Icon className="h-7 w-7 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
+                        </div>
+                        <span className={`border px-3 py-1 font-spaceGrotesk text-[0.65rem] font-black uppercase tracking-[0.18em] transition-colors duration-300 ${
+                          "border-primary/30 bg-primary/5 text-primary group-hover:border-primary-foreground/60 group-hover:bg-primary-foreground/10 group-hover:text-primary-foreground"
+                        }`}>
+                          {TYPE_LABELS[service.type]}
+                        </span>
+                      </div>
+                      <div className="font-spaceGrotesk select-none text-5xl font-black leading-none text-foreground/10 transition-colors duration-300 group-hover:text-primary-foreground/15 sm:text-6xl">
+                        {String(i + 1).padStart(2, "0")}
+                      </div>
+                    </div>
+
+                    <h3 className="mb-5 font-spaceGrotesk text-2xl font-black uppercase leading-[0.98] tracking-tight text-foreground transition-colors duration-300 group-hover:text-primary-foreground sm:text-3xl">
                       {service.name}
                     </h3>
 
-                    <p className="text-muted-foreground mb-8 sm:mb-12 group-hover:text-primary-foreground/80 transition-colors">
-                      {service.description ?? "Servicio disponible bajo consulta."}
-                    </p>
-
-                    <div className="text-3xl sm:text-4xl font-spaceGrotesk font-black text-foreground group-hover:text-primary-foreground transition-colors">
-                      {priceStr}
+                    <div className="mb-7 flex-1 border-y border-primary/20 py-5 transition-colors duration-300 group-hover:border-primary-foreground/25">
+                      <ul className="space-y-3">
+                        {descriptionItems.map((item) => (
+                          <li key={item} className="flex gap-3 font-workSans text-sm leading-relaxed text-muted-foreground transition-colors duration-300 group-hover:text-primary-foreground/85 sm:text-base">
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary transition-colors duration-300 group-hover:text-primary-foreground" />
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
 
-                    <div className="absolute top-8 right-8 text-muted-foreground/20 font-spaceGrotesk font-black text-5xl sm:text-6xl group-hover:text-primary-foreground/10 select-none">
-                      {String(i + 1).padStart(2, "0")}
+                    <div className="mt-auto flex items-end justify-between gap-4">
+                      <div className="font-spaceGrotesk text-3xl font-black text-foreground transition-colors duration-300 group-hover:text-primary-foreground sm:text-4xl">
+                        {priceStr}
+                      </div>
+                      <Link
+                        href={`/checkout?service_id=${service.id}`}
+                        className={`inline-flex h-10 items-center justify-center border px-4 font-spaceGrotesk text-[0.65rem] font-black uppercase tracking-[0.14em] transition-colors duration-300 ${
+                          isGrayHover
+                            ? "border-foreground/80 text-foreground hover:bg-foreground hover:text-background group-hover:border-primary-foreground group-hover:text-primary-foreground group-hover:hover:bg-primary-foreground group-hover:hover:text-[#343736]"
+                            : "border-foreground/80 text-foreground hover:bg-foreground hover:text-background group-hover:border-primary-foreground group-hover:text-primary-foreground group-hover:hover:bg-primary-foreground group-hover:hover:text-primary"
+                        }`}
+                      >
+                        Contratar
+                      </Link>
                     </div>
                   </div>
                 );
@@ -184,7 +239,7 @@ export default async function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-16">
             <div className="flex flex-col">
-              <div className="text-[8rem] sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
+              <div className="text-7xl sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
                 1
               </div>
               <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
@@ -195,7 +250,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="flex flex-col">
-              <div className="text-[8rem] sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
+              <div className="text-7xl sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
                 2
               </div>
               <Package className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
@@ -206,7 +261,7 @@ export default async function LandingPage() {
             </div>
 
             <div className="flex flex-col">
-              <div className="text-[8rem] sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
+              <div className="text-7xl sm:text-[12rem] font-spaceGrotesk font-black leading-none text-primary/20 -ml-2 sm:-ml-4 mb-4 select-none">
                 3
               </div>
               <TrendingUp className="h-10 w-10 sm:h-12 sm:w-12 mb-6 text-primary -mt-16" />
@@ -222,12 +277,12 @@ export default async function LandingPage() {
       {/* --- Final CTA --- */}
       <section className="py-24 sm:py-40 px-4 sm:px-8 relative overflow-hidden bg-background">
         <div className="max-w-[1440px] mx-auto text-center relative z-10">
-          <h2 className="text-4xl sm:text-6xl md:text-9xl font-spaceGrotesk font-black uppercase tracking-tighter mb-12 leading-[1.1] sm:leading-none text-foreground">
+          <h2 className="text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-spaceGrotesk font-black uppercase tracking-tighter mb-12 leading-[1.1] sm:leading-none text-foreground">
             Empieza a transformar <br className="hidden sm:block" /> tu negocio hoy
           </h2>
           <div className="flex justify-center">
             <Link href="/register">
-              <Button variant="default" className="h-auto rounded-none px-8 sm:px-16 py-6 sm:py-8 font-spaceGrotesk font-black text-xl sm:text-2xl uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[12px_12px_0px_0px_rgba(44,47,46,1)] dark:shadow-[12px_12px_0px_0px_rgba(245,247,245,1)]">
+              <Button variant="default" className="h-auto rounded-none px-8 sm:px-16 py-6 sm:py-8 font-spaceGrotesk font-black text-xl sm:text-2xl uppercase tracking-tight hover:bg-primary/85 active:scale-95 shadow-[12px_12px_0px_0px_rgba(148,163,153,0.55)]">
                 Comenzar Ahora
               </Button>
             </Link>

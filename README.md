@@ -1,247 +1,191 @@
-# RGL Estudio
+# RGL Estudio — Plataforma de Gestión
 
-Sistema web para automatizacion de ventas, reservas y control financiero de un emprendimiento de marketing digital.
+Sistema web de gestión de servicios, reservas, suscripciones y **pagos en línea** para RGL Estudio, desarrollado como proyecto integrador del octavo semestre en la carrera de Ingeniería en Seguridad Informática.
 
-Arquitectura principal:
-- Frontend: Next.js 16 (App Router) + React 19 + TypeScript
-- Backend/BaaS: Supabase (PostgreSQL, Auth, RLS, Edge Functions)
-- UI: Tailwind + shadcn
+---
 
-## Estado Actual
+## Stack tecnológico
 
-Version: 0.1.0
+| Capa | Tecnología |
+|---|---|
+| Framework | Next.js 16.1.6 (App Router, React 19) |
+| Lenguaje | TypeScript 5 |
+| Base de datos | Supabase (PostgreSQL) |
+| Autenticación | Supabase Auth |
+| Pasarela de pagos | Kushki (`@kushki/js-sdk`) |
+| Correos transaccionales | Resend |
+| Estilos | Tailwind CSS 4 |
+| Componentes UI | Base UI + shadcn/ui |
+| Estado del servidor | TanStack Query v5 |
+| Formularios | React Hook Form + Zod |
+| Gráficas | Recharts |
+| Notificaciones | Sonner |
+| PWA | Serwist (service worker) |
+| Fechas | date-fns |
+| Testing | Vitest + Playwright |
 
-Estado funcional actual:
-- Catalogo con precios reales aplicado
-- Reglas de renovacion diferenciadas por tipo de servicio aplicadas
-- Checkout alineado a negocio aplicado
-- Dashboard con MRR corregido aplicado
-- Fix de politica RLS admin en profiles aplicado
-- Migracion full_name -> first_name/last_name aplicada
+---
 
-## Estabilizacion Post-Merge (Abril 2026)
+## Arquitectura
 
-Adicional a los cambios funcionales, se completo una estabilizacion tecnica despues del merge de ramas para dejar develop listo para continuar:
+El proyecto sigue la estructura de App Router de Next.js con rutas agrupadas por rol:
 
-- Conflictos de merge resueltos en catalogo, validadores, landing y service worker.
-- Dependencias faltantes agregadas para compilacion:
-  - date-fns
-  - sonner
-  - react-day-picker
-  - next-themes
-- Ajustes de calidad aplicados:
-  - app/(public)/reservar/page.tsx: reemplazo de watch() por useWatch().
-  - components/ui/sheet.tsx: eliminacion de import no usado.
-- Validacion final ejecutada:
-  - npm run lint: OK
-  - npm run build: OK
+```
+app/
+├── (auth)/          — login, registro, recuperación de contraseña
+├── (public)/        — catálogo, capacitación, reservas, checkout, perfil
+├── (dashboard)/     — panel administrativo (solo rol admin)
+└── api/
+    └── webhooks/kushki/   — receptor de notificaciones de la pasarela
+    └── admin/             — endpoints internos de administración
+```
 
-## Actualizacion De Negocio Aplicada (Abril 2026)
+La lógica de acceso está controlada por middleware de Supabase que valida la sesión en cada solicitud, y por RLS (Row-Level Security) en la base de datos que restringe las operaciones según el rol del usuario autenticado.
 
-Se aplicaron todos los cambios solicitados para alinear el sistema con la operacion real.
+La comunicación entre cliente y base de datos se realiza principalmente a través de Server Actions de Next.js. Los pocos endpoints REST que existen (webhook de Kushki, export de transacciones) están protegidos por secreto compartido o por verificación de rol admin. Las páginas que requieren actualizaciones en tiempo real utilizan Supabase Realtime mediante canales `postgres_changes`.
 
-### 1) Precios y servicios reales en base de datos
+---
 
-Archivo actualizado:
-- supabase/seed.sql
+## Módulos
 
-Seed actual (10 servicios):
-- Redes Sociales Inicial - 299.99 - manejo_redes
-- Redes Sociales Work - 319.99 - manejo_redes
-- Redes Sociales Premium - 555.00 - manejo_redes
-- Auditoria - 70.00 - auditoria
-- Sesion Fotografica - 130.00 - otro
-- Sesion Audiovisual (2 videos) - 150.00 - otro
-- Sesion Audiovisual (6 videos) - 230.00 - otro
-- Sesion Audiovisual (15 videos) - 500.00 - otro
-- Curso x 3 meses - 500.00 - capacitacion
-- Modelo por 1 hora - 25.00 - otro
+### Catálogo de servicios (`/catalogo`)
+Lista todos los servicios activos registrados en la base de datos, filtrados por tipo (manejo de redes, auditoría, capacitación). Cada tarjeta enlaza directamente al flujo de contratación.
 
-### 2) Regla clave: suscripcion vs servicio unico
+### Módulo de Capacitación (`/capacitacion`)
+Página dedicada a los servicios de tipo `capacitacion`. Muestra los programas disponibles, el proceso de inscripción y las condiciones de cada taller. Redirige al formulario de reservas para agendar una sesión.
 
-Regla oficial vigente:
-- Suscripcion mensual: solo type = manejo_redes
-- Servicio unico: type = auditoria | capacitacion | otro
+### Reservas (`/reservar`)
+Formulario público (no requiere cuenta) para agendar una sesión de diagnóstico o capacitación. Valida los datos con Zod y los persiste en la tabla `reservations`. Cumple con la LOPDP mediante checkbox de consentimiento explícito.
 
-Implicaciones:
-- duration_months sigue existiendo para todos
-- auto_renew solo puede ser efectivo para manejo_redes
-- para servicios unicos se fuerza auto_renew = false
+### Checkout y pagos (`/checkout`)
+Flujo de contratación de un servicio con **tres métodos de pago**:
 
-### 3) Checkout actualizado (Carlos)
+- **Tarjeta** — pago en línea con Kushki. La tarjeta se tokeniza en el navegador (campos en iframes, requisito PCI). Para servicios de pago único es un cargo inmediato; para servicios recurrentes (`manejo_redes`) con auto-renovación, crea una **suscripción recurrente** que Kushki cobra automáticamente cada mes.
+- **Transferencia bancaria** — vía Kushki; el cliente completa la transferencia en su banco y la confirmación llega de forma asíncrona por webhook.
+- **Efectivo / manual** — registra la suscripción como pendiente; el administrador confirma el pago a mano.
 
-Archivos nuevos/actualizados:
-- app/(public)/checkout/actions.ts
-- app/(public)/checkout/page.tsx
+### Panel administrativo (`/dashboard`)
+Exclusivo para usuarios con `role = 'admin'`. Incluye:
 
-Que hace ahora:
-- valida service_id
-- carga servicio desde services
-- si el servicio no existe o esta inactivo, muestra error
-- calcula ends_at usando duration_months
-- fuerza auto_renew = false para servicios no recurrentes
-- solo permite renovacion seleccionable para manejo_redes
+- **Dashboard** — MRR, ingresos del mes, suscripciones activas y reservas pendientes con gráficas de los últimos seis meses.
+- **Reservas** — gestión de estado (pendiente, confirmada, cancelada).
+- **Servicios** — alta, edición y baja del catálogo.
+- **Suscripciones** — ciclo de vida por cliente y servicio; permite cancelar suscripciones (cancela también el cobro recurrente en Kushki).
+- **Transacciones** — registro de pagos con método y notas. Permite marcar como completado o fallido, limpiar transacciones expiradas y **exportar todo a CSV** para contabilidad.
+- **Pagos con incidencias** (`/pagos-fallidos`) — vista de monitoreo de transacciones fallidas y contracargos para seguimiento.
 
-### 4) Renovacion automatica actualizada (Carlos)
+### Portal del cliente (`/perfil`)
+Vista del cliente con sus suscripciones, **historial de pagos** y autogestión: puede **cancelar** sus suscripciones y **actualizar la tarjeta** de las recurrentes.
 
-Archivos nuevos:
-- supabase/functions/subscription-renewal/index.ts
-- supabase/functions/subscription-renewal/deno.json
+---
 
-Comportamiento:
-- toma suscripciones activas vencidas
-- renueva solo si:
-  - auto_renew = true
-  - service.type = manejo_redes
-- si no cumple, expira suscripcion y deja auto_renew = false
-- retorna resumen: processed, renewed, expired, skipped, failures
+## Pasarela de pagos (Kushki)
 
-### 5) Catalogo y landing actualizados (Juan)
+La integración con Kushki cubre cargo con tarjeta, suscripciones recurrentes y transferencias bancarias, con conciliación automática vía webhook y correos transaccionales en cada evento. El detalle completo (flujos, variables, webhook, dunning, checklist de producción) está en **[`docs/kushki-integration.md`](docs/kushki-integration.md)**.
 
-Archivos nuevos/actualizados:
-- app/(public)/catalogo/catalogo-grid.tsx
-- app/(public)/catalogo/page.tsx
-- app/page.tsx
+Funcionalidades asociadas:
 
-Cambios visibles:
-- etiqueta de precio:
-  - manejo_redes: USD / mes
-  - auditoria/capacitacion/otro: precio unico
-- cards principales de landing con precios reales
+- **Webhook de conciliación** (`/api/webhooks/kushki`) — confirma transferencias, registra los cobros recurrentes y procesa contracargos.
+- **Correos transaccionales** (vía Resend) — confirmación de pago, recibo de cobro mensual, aviso de cobro rechazado, etc.
+- **Manejo de cobros fallidos (dunning)** — un cobro recurrente rechazado avisa al cliente y, tras un período de gracia, expira la suscripción.
 
-### 6) Dashboard actualizado (Christian)
+---
 
-Archivo actualizado:
-- app/(dashboard)/dashboard/page.tsx
+## Base de datos
 
-Cambios:
-- MRR calcula solo suscripciones con service.type = manejo_redes
-- separa conteo de recurrentes vs servicios unicos
-- mantiene ingresos del mes y reservas pendientes
+El esquema se define en 10 migraciones secuenciales en `supabase/migrations/`. Las tablas principales son:
 
-### 7) Migraciones y seguridad de datos (Alejandro + Carlos)
+- `profiles` — extiende `auth.users` con nombre, apellido, rol (`client` / `admin`) y `is_active`
+- `services` — catálogo de servicios con tipo, precio y duración
+- `reservations` — solicitudes de reserva de clientes
+- `subscriptions` — contrataciones por cliente y servicio; incluye `gateway_subscription_id` para las suscripciones recurrentes de Kushki
+- `transactions` — historial de pagos vinculados a suscripciones; incluye columnas de conciliación de pasarela (`gateway`, `gateway_transaction_id`, `gateway_reference`, `gateway_status`)
 
-Migraciones relevantes:
-- supabase/migrations/00000000000000_init.sql
-- supabase/migrations/20260402000000_split_full_name.sql
-- supabase/migrations/20260403010000_fix_profiles_admin_policy.sql
+Adicionalmente, existen vistas SQL optimizadas para el dashboard (`v_dashboard_summary`, `v_monthly_income`, `v_service_mix`, etc.).
 
-Fix critico RLS aplicado:
-- Se reemplazo la politica admin de profiles para evitar recursion infinita.
-- Politica vigente usa auth.jwt() ->> role = admin.
+Todas las tablas tienen RLS habilitado. Los clientes solo acceden a sus propios registros; los administradores acceden a todos mediante validación del claim `app_metadata.role` en el JWT, evitando escalada de privilegios desde el cliente.
 
-Impacto adicional en tipos:
-- types/database.ts ahora usa first_name/last_name en profiles y reservations.
+### Edge Functions (Supabase)
 
-## Cambios De Auth Relacionados
+| Función | Estado | Propósito |
+|---------|--------|-----------|
+| `dashboard-metrics` | Activa | Centraliza las métricas financieras del dashboard en una sola llamada |
+| `subscription-renewal` | Activa | Renueva/expira suscripciones; un CRON diario (`pg_cron`) la invoca a las 01:00 hora Ecuador |
+| `payment-webhook` | Deprecada | Reemplazada por API Route `/api/webhooks/kushki` — era un placeholder que respondía `501` |
 
-Archivos nuevos/actualizados:
-- app/(auth)/actions.ts
-- app/(auth)/login/page.tsx
-- app/(auth)/register/page.tsx
-- lib/validators/auth.ts
-- lib/validators/index.ts
+El webhook de pagos **no** es una Edge Function: está implementado como Route Handler de Next.js en `app/api/webhooks/kushki/route.ts` que maneja los webhooks de Kushki directamente.
 
-Resumen:
-- login y signup con validaciones fuertes de credenciales
-- manejo de confirmacion de correo y reenvio
-- upsert de profile con data_consent_at
-- redireccion por rol (admin -> /dashboard, client -> /catalogo)
+---
 
-## Rutas Principales Actuales
+## Documentación adicional
 
-Publico:
-- /
-- /catalogo
-- /reservar
-- /politica-privacidad
+| Documento | Contenido |
+|-----------|-----------|
+| [`docs/kushki-integration.md`](docs/kushki-integration.md) | Integración de pagos: flujos, webhook, suscripciones, dunning, portal, checklist de producción |
+| [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) | Stack, estructura, ER, auth, seguridad, realtime, CRON, PWA |
+| [`docs/EDGE_FUNCTIONS.md`](docs/EDGE_FUNCTIONS.md) | Detalle de las Edge Functions con endpoints, auth y respuestas |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | Guía de despliegue: migraciones, Edge Functions, Vercel, checklist |
+| [`docs/RESPONSIVE_TESTING.md`](docs/RESPONSIVE_TESTING.md) | Reporte de pruebas responsivas en breakpoints 320-1280px |
 
-Auth:
-- /login
-- /register
+---
 
-Cliente:
-- /checkout
+## Variables de entorno
 
-Admin:
-- /dashboard
-- /reservas
-- /servicios
-- /subscriptions
-- /transacciones
+Crear el archivo `.env.local` en la raíz del proyecto (ver `.env.example`):
 
-## Esquema Actual (Resumen)
+```
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=https://<proyecto>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
 
-Tablas principales:
-- profiles
-- services
-- reservations
-- subscriptions
-- transactions
+# URL pública (callbacks de pago)
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
-Campos clave de negocio:
-- services.type: manejo_redes | auditoria | capacitacion | otro
-- subscriptions.auto_renew: control de renovacion
-- subscriptions.ends_at: fecha de expiracion/renovacion
+# Kushki — pasarela de pagos
+NEXT_PUBLIC_KUSHKI_ENV=sandbox
+NEXT_PUBLIC_KUSHKI_PUBLIC_MERCHANT_ID=<id-público>
+KUSHKI_PRIVATE_MERCHANT_ID=<id-privado>
+KUSHKI_WEBHOOK_SECRET=<secreto-del-webhook>
 
-## Como Ejecutar El Proyecto
+# Resend — correos transaccionales
+RESEND_API_KEY=<api-key>
+EMAIL_FROM=RGL Estudio <noreply@tu-dominio.com>
+```
 
-Requisitos:
-- Node.js
-- npm
+La `SUPABASE_SERVICE_ROLE_KEY` permite al servidor registrar transacciones y activar suscripciones saltando RLS (operaciones exclusivas de administración). Las variables de Kushki y Resend son opcionales en desarrollo: si faltan, los pagos fallan de forma controlada y los correos simplemente se omiten, sin romper la app.
 
-Comandos:
+---
+
+## Instalación y ejecución
 
 ```bash
 npm install
 npm run dev
 ```
 
-Validacion local usada en esta actualizacion:
+La aplicación levanta en `http://localhost:3000`. El service worker de la PWA solo se activa en producción (`npm run build && npm start`).
 
-```bash
-npm run lint
-npm run build
-```
+---
 
-## Como Aplicar En Supabase Cloud
+## Scripts disponibles
 
-### Opcion A: con Supabase CLI
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo con Webpack |
+| `npm run build` | Build de producción |
+| `npm run lint` | Análisis estático con ESLint |
+| `npm run test` | Tests unitarios en modo watch (Vitest) |
+| `npm run test:run` | Tests unitarios en una pasada |
+| `npm run test:e2e` | Tests end-to-end (Playwright) |
 
-```bash
-supabase db push
-supabase db seed
-supabase functions deploy subscription-renewal
-```
+---
 
-Luego configurar un schedule para subscription-renewal.
+## Equipo
 
-### Opcion B: sin Supabase CLI
-
-1. SQL Editor:
-- ejecutar migraciones pendientes
-- ejecutar contenido de supabase/seed.sql si deseas recargar catalogo
-
-2. Edge Functions:
-- crear funcion subscription-renewal
-- pegar codigo de supabase/functions/subscription-renewal/index.ts
-
-3. Variables/Secrets:
-- SUPABASE_URL
-- SUPABASE_SERVICE_ROLE_KEY
-
-4. Scheduling:
-- configurar ejecucion periodica (por ejemplo, diaria)
-
-## Checklist Rapido De Verificacion
-
-- Catalogo muestra /mes solo en manejo_redes
-- Checkout crea suscripcion y respeta regla de auto_renew
-- Servicios unicos quedan no renovables
-- Dashboard MRR ignora servicios unicos
-- RLS de profiles no bloquea consultas
-- Edge function procesa vencimientos sin renovar tipos no recurrentes
-
-## Nota Operativa
-
-Actualmente, si en tu terminal no existe el comando supabase, instala Supabase CLI o aplica los cambios desde el Dashboard web de Supabase (SQL Editor + Edge Functions + Scheduler).
+| Integrante | Rol principal |
+|---|---|
+| Juan López | Frontend Lead, UX, PWA, catálogo, capacitación |
+| Carlos Ramos | Motor de suscripción, API de dashboard |
+| Christian Hurtado | Layouts mobile-first, flujo de checkout |
+| Alejandro Andrade | Gestión de transacciones, endpoints, optimización de consultas |

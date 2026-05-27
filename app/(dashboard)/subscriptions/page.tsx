@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { SubscriptionsTable } from "@/app/(dashboard)/subscriptions/subscriptions-table";
+import { RealtimeRefresher } from "@/components/realtime-refresher";
 import type { Database } from "@/types/database";
 
 type ServiceJoin = {
@@ -127,6 +128,7 @@ export default async function SubscriptionsPage() {
         ))}
       </section>
 
+      <RealtimeRefresher tables={["subscriptions"]} />
       <SubscriptionsTable rows={subscriptionRows} />
     </div>
   );

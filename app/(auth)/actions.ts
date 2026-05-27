@@ -67,11 +67,22 @@ function mapSupabaseAuthError(errorMessage: string): string {
   return errorMessage;
 }
 
+/**
+ * Solo admite rutas internas. Previene open redirect: si `path` apunta a
+ * un dominio externo o es protocol-relative, se descarta.
+ */
+function safeRelativeRedirect(path: string | null): string | null {
+  if (!path) return null;
+  if (!path.startsWith("/")) return null;
+  if (path.startsWith("//") || path.startsWith("/\\")) return null;
+  return path;
+}
+
 export async function login(_prevState: AuthFormState, formData: FormData) {
   const supabase = await createClient();
   const email = ((formData.get("email") as string) ?? "").trim();
   const password = formData.get("password") as string;
-  const redirectTo = (formData.get("redirect") as string) || null;
+  const redirectTo = safeRelativeRedirect((formData.get("redirect") as string) || null);
 
   if (!email || !password) {
     return {
@@ -104,11 +115,19 @@ export async function login(_prevState: AuthFormState, formData: FormData) {
   // Get user role from profiles
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role,is_active")
     .eq("id", data.user.id)
     .maybeSingle();
 
   let resolvedRole = profile?.role ?? "client";
+
+  if (profile?.is_active === false) {
+    await supabase.auth.signOut();
+    return {
+      error: "Tu cuenta esta desactivada. Contacta al administrador para recuperar el acceso.",
+      values: { email },
+    };
+  }
 
   // Self-heal: if profile row is missing, create it for this authenticated user.
   if (!profile) {
@@ -127,6 +146,7 @@ export async function login(_prevState: AuthFormState, formData: FormData) {
       first_name: metadataFirstName,
       last_name: metadataLastName,
       role: "client",
+      is_active: true,
       data_consent_at: new Date().toISOString(),
     });
 
@@ -273,6 +293,7 @@ export async function signup(_prevState: AuthFormState, formData: FormData) {
           first_name: normalizedFirstName,
           last_name: normalizedLastName,
           role: "client",
+          is_active: true,
           data_consent_at: consentTimestamp,
         },
         { onConflict: "id" }
@@ -286,6 +307,7 @@ export async function signup(_prevState: AuthFormState, formData: FormData) {
             first_name: normalizedFirstName,
             last_name: normalizedLastName,
             role: "client",
+            is_active: true,
             data_consent_at: consentTimestamp,
           },
           { onConflict: "id" }

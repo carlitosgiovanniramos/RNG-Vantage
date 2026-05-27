@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Home } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
@@ -47,6 +49,7 @@ export default function TransaccionesAdminPage() {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  useAdminRealtime("transactions", "admin-transactions");
 
   const {
     data: transactions = [],
@@ -85,13 +88,13 @@ export default function TransaccionesAdminPage() {
       if (result.success) {
         setOpenDialog(false);
         queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-        alert("✅ Pago registrado exitosamente");
+        toast.success("Pago registrado exitosamente");
       } else {
-        alert(`❌ Error: ${result.error}`);
+        toast.error(result.error ?? "Error al registrar el pago");
       }
     } catch (err) {
       console.error(err);
-      alert("Error al registrar el pago");
+      toast.error("Error al registrar el pago");
     } finally {
       setIsSubmitting(false);
     }
@@ -104,13 +107,13 @@ export default function TransaccionesAdminPage() {
       const result = await markTransactionAsFailed(tx.id);
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-        alert("✅ Transacción marcada como fallida");
+        toast.success("Transacción marcada como fallida");
       } else {
-        alert(`❌ Error: ${result.error}`);
+        toast.error(result.error ?? "Error al cancelar la transacción");
       }
     } catch (err) {
       console.error(err);
-      alert("Error al cancelar la transacción");
+      toast.error("Error al cancelar la transacción");
     }
   };
 
@@ -121,13 +124,13 @@ export default function TransaccionesAdminPage() {
       const result = await cleanExpiredTransactions();
       if (result.success) {
         queryClient.invalidateQueries({ queryKey: ["admin-transactions"] });
-        alert(`✅ Operación completada: ${result.message}`);
+        toast.success(result.message ?? "Operación completada");
       } else {
-        alert(`❌ Error: ${result.error}`);
+        toast.error(result.error ?? "Error al limpiar transacciones expiradas");
       }
     } catch (err) {
       console.error(err);
-      alert("Error al limpiar transacciones expiradas");
+      toast.error("Error al limpiar transacciones expiradas");
     }
   };
 
@@ -164,7 +167,7 @@ export default function TransaccionesAdminPage() {
         }
         if (tx.status === "failed" || tx.status === "refunded") {
           return (
-            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/40 dark:text-red-300">
+            <span className="inline-flex items-center bg-red-100 px-2.5 py-0.5 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.12em] text-red-800 dark:bg-red-900/40 dark:text-red-300">
               {tx.status === "failed" ? "Fallido" : "Cancelado"}
             </span>
           );
@@ -245,6 +248,20 @@ export default function TransaccionesAdminPage() {
             Limpiar Expiradas (24h)
           </Button>
 
+          <a
+            href="/api/admin/export-transactions"
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+          >
+            Exportar CSV
+          </a>
+
+          <Link
+            href="/pagos-fallidos"
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+          >
+            Pagos fallidos
+          </Link>
+
           <Link
             href="/dashboard"
             className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
@@ -306,22 +323,22 @@ export default function TransaccionesAdminPage() {
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Registrar Pago</DialogTitle>
+            <DialogTitle className="font-spaceGrotesk text-base font-black uppercase tracking-[0.12em]">Registrar Pago</DialogTitle>
           </DialogHeader>
 
           {selectedTx && (
             <div className="space-y-4">
-              <div className="rounded-lg bg-muted p-3">
-                <p className="text-sm text-muted-foreground">
+              <div className="border border-border/60 bg-muted/40 p-4">
+                <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
                   Transacción: {selectedTx.id.substring(0, 12)}...
                 </p>
-                <p className="text-lg font-semibold">
+                <p className="mt-1 font-spaceGrotesk text-xl font-black text-foreground">
                   {formatCurrency(Number(selectedTx.amount ?? 0))}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Método de Pago</label>
+                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">Método de Pago</label>
                 <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v)}>
                   <SelectTrigger>
                     <SelectValue />
@@ -336,12 +353,12 @@ export default function TransaccionesAdminPage() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Notas (opcional)</label>
+                <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">Notas (opcional)</label>
                 <Textarea
                   placeholder="Referencia del banco, comprobante, etc..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  className="min-h-20"
+                  className="min-h-20 font-workSans"
                 />
               </div>
 
@@ -350,10 +367,15 @@ export default function TransaccionesAdminPage() {
                   variant="outline"
                   onClick={() => setOpenDialog(false)}
                   disabled={isSubmitting}
+                  className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
                 >
                   Cancelar
                 </Button>
-                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
+                >
                   {isSubmitting ? "Guardando..." : "Registrar Pago"}
                 </Button>
               </div>

@@ -4,6 +4,7 @@ import { Zap } from "lucide-react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
+import { CancelSubscriptionButton } from "./cancel-subscription-button";
 
 export type SubscriptionTableRow = {
   id: string;
@@ -31,8 +32,8 @@ export function SubscriptionsTable({ rows }: { rows: SubscriptionTableRow[] }) {
       header: "Cliente",
       render: (sub) => (
         <div>
-          <div className="font-medium">{sub.clientName}</div>
-          <div className="text-xs text-muted-foreground">
+          <div className="font-workSans font-bold text-foreground">{sub.clientName}</div>
+          <div className="font-workSans text-xs text-muted-foreground">
             {sub.clientEmail}
           </div>
         </div>
@@ -81,7 +82,7 @@ export function SubscriptionsTable({ rows }: { rows: SubscriptionTableRow[] }) {
       header: "Auto-renovacion",
       render: (sub) => (
         <span
-          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+          className={`inline-flex items-center gap-1 px-2.5 py-0.5 font-spaceGrotesk text-[0.65rem] font-bold uppercase tracking-[0.12em] ${
             sub.auto_renew
               ? "bg-emerald-100 text-emerald-800"
               : "bg-amber-100 text-amber-800"
@@ -90,6 +91,13 @@ export function SubscriptionsTable({ rows }: { rows: SubscriptionTableRow[] }) {
           <Zap className="size-3" />
           {sub.auto_renew ? "Activa" : "Manual"}
         </span>
+      ),
+    },
+    {
+      key: "id",
+      header: "Acciones",
+      render: (sub) => (
+        <CancelSubscriptionButton subscriptionId={sub.id} status={sub.status} />
       ),
     },
   ];

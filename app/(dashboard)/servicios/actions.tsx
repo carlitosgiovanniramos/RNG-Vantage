@@ -7,6 +7,31 @@ import {
   updateServiceSchema,
 } from "@/lib/validators/service";
 
+/**
+ * Verifica que el llamante sea un admin activo.
+ * Defensa en profundidad: ademas de la RLS, las mutaciones de servicios
+ * exigen explicitamente el rol admin.
+ */
+async function ensureAdmin() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { supabase, error: "No autorizado" };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile || profile.role !== "admin" || profile.is_active === false) {
+    return { supabase, error: "No autorizado" };
+  }
+
+  return { supabase, error: null };
+}
+
 export async function getServices() {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -19,12 +44,8 @@ export async function getServices() {
 }
 
 export async function createService(formData: unknown) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "No autorizado" };
+  const { supabase, error: authError } = await ensureAdmin();
+  if (authError) return { error: authError };
 
   // 1. Validación con Zod (Previene entrada de datos maliciosos)
   const parsedData = createServiceSchema.safeParse(formData);
@@ -46,12 +67,8 @@ export async function createService(formData: unknown) {
 }
 
 export async function updateService(id: string, formData: unknown) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "No autorizado" };
+  const { supabase, error: authError } = await ensureAdmin();
+  if (authError) return { error: authError };
 
   // Usamos el schema de actualización parcial (Partial Zod Schema)
   const parsedData = updateServiceSchema.safeParse(formData);
@@ -74,12 +91,8 @@ export async function updateService(id: string, formData: unknown) {
 }
 
 export async function deleteService(id: string) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "No autorizado" };
+  const { supabase, error: authError } = await ensureAdmin();
+  if (authError) return { error: authError };
 
   const { error } = await supabase.from("services").delete().eq("id", id);
 

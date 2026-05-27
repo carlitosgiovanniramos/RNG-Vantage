@@ -38,20 +38,20 @@ export function DataCard({
   return (
     <Card
       className={cn(
-        "group relative overflow-hidden border border-border/60 bg-card/85 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40",
+        "group relative overflow-hidden border border-border/70 bg-card/90 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[10px_10px_0_var(--border)]",
         className,
       )}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-primary/25 via-primary to-primary/25"
+        className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary"
       />
       <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
         <CardTitle className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-muted-foreground/80">
           {title}
         </CardTitle>
         {icon ? (
-          <div className="flex h-10 w-10 items-center justify-center bg-primary/10 text-primary transition-colors duration-300 group-hover:bg-primary/15">
+          <div className="flex h-10 w-10 items-center justify-center border border-border bg-background text-primary transition-colors duration-300 group-hover:border-primary/50">
             {icon}
           </div>
         ) : null}

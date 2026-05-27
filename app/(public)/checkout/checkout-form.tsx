@@ -2,102 +2,149 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ArrowRight, CreditCard, Landmark, RefreshCw, Wallet } from "lucide-react";
 import { createSubscription } from "./actions";
+import { CardForm } from "./card-form";
+import { TransferForm } from "./transfer-form";
+
+type PaymentMethod = "card" | "transfer" | "cash";
+
+const PAYMENT_METHODS = [
+  { id: "card", label: "Tarjeta", icon: CreditCard },
+  { id: "transfer", label: "Transferencia", icon: Landmark },
+  { id: "cash", label: "Efectivo", icon: Wallet },
+] as const;
 
 export function CheckoutForm({
   serviceId,
   isRecurringService,
   success,
+  amount,
 }: {
   serviceId: string;
   isRecurringService: boolean;
   success: boolean;
+  amount: number;
 }) {
+  const [method, setMethod] = useState<PaymentMethod>("card");
+  const [autoRenew, setAutoRenew] = useState(isRecurringService);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // Flujo manual de efectivo: Ruth confirma el pago manualmente.
+  async function handleCashCheckout() {
     setLoading(true);
     setErrorMsg(null);
-
-    const formData = new FormData(e.currentTarget);
-    const autoRenew = formData.get("auto_renew") === "on";
-
     try {
-      const res = await createSubscription({ service_id: serviceId, auto_renew: autoRenew });
-      
+      const res = await createSubscription({
+        service_id: serviceId,
+        auto_renew: autoRenew,
+      });
       if (!res.success) {
-        setErrorMsg(res.error || "Ocurrió un error inesperado.");
-        if (res.error === "Debes iniciar sesión para continuar.") {
-          // Opcionalmente redirigir al login después de unos segundos.
+        setErrorMsg(res.error || "Ocurrio un error inesperado.");
+        if (res.error === "Debes iniciar sesion para continuar.") {
           setTimeout(() => {
-            const redirectPath = encodeURIComponent(`/checkout?service_id=${serviceId}`);
-            router.push(`/login?redirect=${redirectPath}`);
+            const redirect = encodeURIComponent(`/checkout?service_id=${serviceId}`);
+            router.push(`/login?redirect=${redirect}`);
           }, 2000);
         }
       } else {
         router.push(`/checkout?service_id=${serviceId}&success=1`);
       }
-    } catch (err) {
-      setErrorMsg("Error de conexión. Intenta nuevamente.");
+    } catch {
+      setErrorMsg("Error de conexion. Intenta nuevamente.");
     } finally {
-      if (!success) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }
 
+  if (success) {
+    return (
+      <button
+        type="button"
+        disabled
+        className="mt-6 inline-flex h-12 w-full cursor-not-allowed items-center justify-center bg-muted px-5 font-spaceGrotesk text-sm font-bold uppercase tracking-[0.14em] text-muted-foreground opacity-50"
+      >
+        Confirmar contratacion
+      </button>
+    );
+  }
+
   return (
-    <>
+    <div className="mt-6 space-y-4">
       {errorMsg && (
-        <div className="mt-6 rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
+        <div className="border border-red-200 bg-red-50 px-4 py-3 font-workSans text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
           {errorMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <input type="hidden" name="service_id" value={serviceId} />
+      {/* Selector de metodo de pago */}
+      <div className="grid grid-cols-3 gap-2">
+        {PAYMENT_METHODS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setMethod(id)}
+            className={`flex flex-col items-center justify-center gap-1.5 border px-2 py-3 font-spaceGrotesk text-[0.6rem] font-bold uppercase tracking-[0.1em] transition-colors ${
+              method === id
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
 
-        <label className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
-          <input
-            type="checkbox"
-            name="auto_renew"
-            defaultChecked={isRecurringService}
-            disabled={!isRecurringService}
-            className="mt-0.5 h-4 w-4 rounded border-border"
-          />
+      {/* Renovacion automatica (compartida por todos los metodos) */}
+      <label className="flex cursor-pointer items-start gap-3 border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
+        <input
+          type="checkbox"
+          checked={autoRenew}
+          onChange={(e) => setAutoRenew(e.target.checked)}
+          disabled={!isRecurringService}
+          className="mt-1 h-4 w-4 border-border text-primary"
+        />
+        <span className="flex gap-3 font-workSans text-sm leading-relaxed">
+          <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <span>
-            Renovar automaticamente
-            <span className="block text-muted-foreground">
+            <span className="font-medium text-foreground">Renovar automaticamente</span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
               {isRecurringService
                 ? "Solo aplica para servicios de manejo de redes."
-                : "No aplica a servicios unicos: se forzara auto_renew = false."}
+                : "No aplica a servicios unicos."}
             </span>
           </span>
-        </label>
+        </span>
+      </label>
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
-          {success ? (
-            <button
-              type="button"
-              disabled
-              className="inline-flex h-10 items-center justify-center rounded-md bg-muted px-4 text-sm font-medium text-muted-foreground opacity-50 cursor-not-allowed"
-            >
-              Confirmar contratacion
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Procesando..." : "Confirmar contratacion"}
-            </button>
-          )}
-        </div>
-      </form>
-    </>
+      {/* Contenido segun el metodo elegido */}
+      {method === "card" && (
+        <CardForm
+          key={isRecurringService && autoRenew ? "card-recurring" : "card-onetime"}
+          serviceId={serviceId}
+          autoRenew={autoRenew}
+          amount={amount}
+          recurring={isRecurringService && autoRenew}
+          onError={setErrorMsg}
+        />
+      )}
+      {method === "transfer" && (
+        <TransferForm serviceId={serviceId} autoRenew={autoRenew} amount={amount} onError={setErrorMsg} />
+      )}
+      {method === "cash" && (
+        <button
+          type="button"
+          onClick={handleCashCheckout}
+          disabled={loading}
+          className="inline-flex h-12 w-full items-center justify-between bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
+        >
+          <span>{loading ? "Procesando..." : "Confirmar contratacion"}</span>
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
   );
 }

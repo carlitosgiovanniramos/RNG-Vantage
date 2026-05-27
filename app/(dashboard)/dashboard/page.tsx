@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import {
   ArrowUpRight,
@@ -10,32 +9,8 @@ import {
 } from "lucide-react";
 import { DataCard } from "@/components/data-card";
 import { DashboardCharts } from "@/components/dashboard-charts";
-
-type ServiceJoin = {
-  type: string;
-  price: number;
-};
-
-type ActiveSubscriptionRow = {
-  id: string;
-  auto_renew: boolean;
-  services: ServiceJoin | ServiceJoin[] | null;
-};
-
-type CompletedTransactionRow = {
-  amount: number | null;
-  created_at: string;
-};
-
-function normalizeService(
-  service: ServiceJoin | ServiceJoin[] | null,
-): ServiceJoin | null {
-  if (!service) {
-    return null;
-  }
-
-  return Array.isArray(service) ? (service[0] ?? null) : service;
-}
+import { RealtimeRefresher } from "@/components/realtime-refresher";
+import { getDashboardMetrics } from "./actions";
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("es-EC", {
@@ -44,136 +19,44 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-function formatMonthLabel(date: Date): string {
-  const label = date.toLocaleString("es-EC", { month: "short" });
-  return label.replace(".", "");
-}
-
-function getMonthKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-}
-
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-  const chartStart = new Date(monthStart);
-  chartStart.setMonth(chartStart.getMonth() - 5);
+  const { data: metrics, error, source } = await getDashboardMetrics();
 
-  const { data: subscriptionsData } = await supabase
-    .from("subscriptions")
-    .select("id, auto_renew, services(type, price)")
-    .eq("status", "active");
-
-  const { data: completedTransactions } = await supabase
-    .from("transactions")
-    .select("amount, created_at")
-    .eq("status", "completed")
-    .gte("created_at", chartStart.toISOString());
-
-  const { count: pendingReservations } = await supabase
-    .from("reservations")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "pending");
-
-  const activeSubscriptions = (subscriptionsData ??
-    []) as ActiveSubscriptionRow[];
-
-  const mrr = activeSubscriptions.reduce((total, subscription) => {
-    const service = normalizeService(subscription.services);
-
-    if (!service || service.type !== "manejo_redes") {
-      return total;
-    }
-
-    return total + Number(service.price ?? 0);
-  }, 0);
-
-  const recurringSubscriptions = activeSubscriptions.filter((subscription) => {
-    const service = normalizeService(subscription.services);
-    return service?.type === "manejo_redes";
-  }).length;
-
-  const oneTimeSubscriptions =
-    activeSubscriptions.length - recurringSubscriptions;
-  const monthlyIncome = ((completedTransactions ?? []) as CompletedTransactionRow[])
-    .filter((transaction) =>
-      new Date(transaction.created_at) >= monthStart,
-    )
-    .reduce(
-      (sum: number, transaction: CompletedTransactionRow) =>
-        sum + Number(transaction.amount ?? 0),
-      0,
+  if (error || !metrics) {
+    return (
+      <section className="mx-auto w-full max-w-7xl px-6 py-10">
+        <div className="border border-red-200 bg-red-50 p-8 text-center dark:border-red-900/40 dark:bg-red-950/30">
+          <p className="font-spaceGrotesk text-lg font-bold text-red-700 dark:text-red-300">
+            Error al cargar métricas
+          </p>
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+            {error ?? "No se pudieron obtener los datos del dashboard."}
+          </p>
+        </div>
+      </section>
     );
+  }
 
-  const lastSixMonths = Array.from({ length: 6 }, (_, index) => {
-    const date = new Date();
-    date.setDate(1);
-    date.setMonth(date.getMonth() - (5 - index));
-    return date;
-  });
-
-  const incomeByMonth = ((completedTransactions ?? []) as CompletedTransactionRow[]).reduce(
-    (acc, transaction) => {
-      const date = new Date(transaction.created_at);
-      const key = getMonthKey(date);
-      acc.set(key, (acc.get(key) ?? 0) + Number(transaction.amount ?? 0));
-      return acc;
-    },
-    new Map<string, number>(),
-  );
-
-  const monthlyIncomeSeries = lastSixMonths.map((date) => {
-    const key = getMonthKey(date);
-    return {
-      label: formatMonthLabel(date),
-      value: Number(incomeByMonth.get(key) ?? 0),
-    };
-  });
-
-  const serviceMixCounts = activeSubscriptions.reduce(
-    (acc, subscription) => {
-      const service = normalizeService(subscription.services);
-      if (!service) return acc;
-      acc.set(service.type, (acc.get(service.type) ?? 0) + 1);
-      return acc;
-    },
-    new Map<string, number>(),
-  );
-
-  const serviceMixSeries = Array.from(serviceMixCounts.entries()).map(
-    ([type, value]) => ({
-      name: type.replace(/_/g, " "),
-      value,
-    }),
-  );
   const operationsSummary = [
     {
       label: "Suscripciones activas",
-      value: activeSubscriptions.length,
+      value: metrics.active_subscriptions,
     },
     {
       label: "Recurrencia en manejo de redes",
-      value: recurringSubscriptions,
+      value: metrics.recurring_subscriptions,
     },
     {
       label: "Reservas por gestionar",
-      value: pendingReservations ?? 0,
+      value: metrics.pending_reservations,
     },
   ];
 
   return (
     <section className="mx-auto w-full max-w-7xl space-y-10 px-6 py-10 md:py-14">
-      <header className="relative overflow-hidden border border-border/60 bg-card/85 p-8 backdrop-blur-sm md:p-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-28 left-20 h-60 w-60 rounded-full bg-primary/10 blur-3xl"
-        />
+      <RealtimeRefresher tables={["subscriptions", "transactions", "reservations"]} />
+      <header className="relative overflow-hidden border border-border/70 bg-card/90 p-8 shadow-[12px_12px_0_var(--border)] backdrop-blur-xl md:p-10">
+        <div aria-hidden className="absolute inset-x-0 top-0 h-1 bg-primary" />
         <div className="relative space-y-6">
           <div className="space-y-2">
             <p className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.22em] text-primary">
@@ -187,6 +70,12 @@ export default async function DashboardPage() {
               ingresos, suscripciones y operaciones activas. El cálculo de MRR
               considera únicamente servicios de tipo manejo_redes.
             </p>
+            {source === "edge-function" && (
+              <span className="inline-flex items-center gap-1.5 rounded-none border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-spaceGrotesk text-[0.6rem] font-bold uppercase tracking-[0.16em] text-emerald-700 dark:border-emerald-800/40 dark:bg-emerald-950/30 dark:text-emerald-400">
+                <span className="size-1.5 rounded-full bg-emerald-500" />
+                Edge Function activa
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -232,23 +121,23 @@ export default async function DashboardPage() {
       <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <DataCard
           title="MRR (solo manejo_redes)"
-          value={formatCurrency(mrr)}
+          value={formatCurrency(metrics.mrr)}
           icon={<Repeat className="size-5" />}
           className="xl:col-span-2"
         />
         <DataCard
           title="Ingresos del mes"
-          value={formatCurrency(monthlyIncome)}
+          value={formatCurrency(metrics.monthly_income)}
           icon={<TrendingUp className="size-5" />}
         />
         <DataCard
           title="Suscripciones recurrentes"
-          value={recurringSubscriptions}
+          value={metrics.recurring_subscriptions}
           icon={<CreditCard className="size-5" />}
         />
         <DataCard
           title="Servicios únicos activos"
-          value={oneTimeSubscriptions}
+          value={metrics.one_time_subscriptions}
           icon={<CalendarClock className="size-5" />}
         />
       </div>
@@ -256,14 +145,11 @@ export default async function DashboardPage() {
       <div className="grid gap-5 lg:grid-cols-[minmax(0,380px)_1fr]">
         <DataCard
           title="Reservas pendientes"
-          value={pendingReservations ?? 0}
+          value={metrics.pending_reservations}
           icon={<CalendarClock className="size-5" />}
         />
-        <article className="relative overflow-hidden border border-border/60 bg-card/80 p-6 backdrop-blur-sm md:p-8">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-20 top-1/2 h-40 w-40 -translate-y-1/2 rounded-full bg-primary/10 blur-3xl"
-          />
+        <article className="relative overflow-hidden border border-border/70 bg-card/90 p-6 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl md:p-8">
+          <div aria-hidden className="absolute inset-x-0 top-0 h-1 bg-primary" />
           <div className="relative space-y-5">
             <h2 className="font-spaceGrotesk text-lg font-black uppercase tracking-[0.12em] text-foreground">
               Resumen Operativo
@@ -288,8 +174,8 @@ export default async function DashboardPage() {
       </div>
 
       <DashboardCharts
-        monthlyIncome={monthlyIncomeSeries}
-        serviceMix={serviceMixSeries}
+        monthlyIncome={metrics.monthly_income_series}
+        serviceMix={metrics.service_mix}
       />
     </section>
   );
