@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getKushkiConfig } from "@/lib/kushki/config";
 import { kushkiWebhookSchema } from "@/lib/validators/payment";
 import { mapKushkiStatus, isFinalTransactionStatus } from "@/lib/kushki/webhook";
+import { kushkiFetch } from "@/lib/kushki/client";
 import type { KushkiTransactionStatus } from "@/lib/kushki/types";
 import { sendEmail } from "@/lib/email/client";
 import {
@@ -185,6 +186,79 @@ async function handleRecurringCharge(
   return NextResponse.json({ received: true }, { status: 200 });
 }
 
+/**
+ * Procesa un contracargo / disputa de Kushki: revierte el cobro
+ * (transaccion -> refunded) y suspende la suscripcion vinculada para
+ * que la pasarela no siga cobrando.
+ */
+async function handleChargeback(
+  supabaseAdmin: ReturnType<typeof createAdminClient>,
+  event: { transactionId: string; status: KushkiTransactionStatus },
+): Promise<NextResponse> {
+  const { data: transaction } = await supabaseAdmin
+    .from("transactions")
+    .select("id, subscription_id")
+    .eq("gateway_transaction_id", event.transactionId)
+    .maybeSingle();
+
+  if (!transaction) {
+    console.warn(
+      `[kushki-webhook] Contracargo: transaccion no encontrada (${event.transactionId})`,
+    );
+    return NextResponse.json({ received: true }, { status: 200 });
+  }
+
+  const { error: txError } = await supabaseAdmin
+    .from("transactions")
+    .update({
+      status: "refunded",
+      gateway_status: `chargeback:${event.status}`,
+    })
+    .eq("id", transaction.id);
+
+  if (txError) {
+    console.error(
+      "[kushki-webhook] Error marcando el contracargo:",
+      txError.message,
+    );
+    return NextResponse.json({ error: "Update failed" }, { status: 500 });
+  }
+
+  // Suspender la suscripcion vinculada.
+  if (transaction.subscription_id) {
+    const { data: subscription } = await supabaseAdmin
+      .from("subscriptions")
+      .select("id, gateway_subscription_id")
+      .eq("id", transaction.subscription_id)
+      .maybeSingle();
+
+    // Si es recurrente, cancelar en Kushki para detener cobros futuros.
+    if (subscription?.gateway_subscription_id) {
+      try {
+        await kushkiFetch(
+          `/subscriptions/v1/card/${subscription.gateway_subscription_id}`,
+          { method: "DELETE", auth: "private" },
+        );
+      } catch (err) {
+        console.error(
+          "[kushki-webhook] Error cancelando suscripcion tras contracargo:",
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+
+    await supabaseAdmin
+      .from("subscriptions")
+      .update({ status: "cancelled", auto_renew: false })
+      .eq("id", transaction.subscription_id);
+  }
+
+  console.warn(
+    `[kushki-webhook] Contracargo procesado para transactionId=${event.transactionId}`,
+  );
+  return NextResponse.json({ received: true }, { status: 200 });
+}
+
 export async function POST(req: Request) {
   // 1. Verificar el secreto compartido
   const config = getKushkiConfig();
@@ -210,6 +284,16 @@ export async function POST(req: Request) {
 
   // 3. Buscar la transaccion por el id de Kushki
   const supabaseAdmin = createAdminClient();
+
+  // Contracargo / disputa: revierte el cobro y suspende la suscripcion.
+  // ATENCION: verificar contra la doc de Kushki como notifica los
+  // contracargos (nombre del campo y valor).
+  if (event.eventType && event.eventType.toLowerCase() === "chargeback") {
+    return handleChargeback(supabaseAdmin, {
+      transactionId: event.transactionId,
+      status: event.status,
+    });
+  }
 
   const { data: transaction, error: lookupError } = await supabaseAdmin
     .from("transactions")

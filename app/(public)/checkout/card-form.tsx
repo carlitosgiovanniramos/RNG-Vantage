@@ -3,104 +3,19 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { chargeWithCard, subscribeWithCard } from "./payment-actions";
 
-import { IKushki, init } from "@kushki/js-sdk";
-import { ICard, initCardToken } from "@kushki/js-sdk/Card";
+import { chargeWithCard, subscribeWithCard } from "./payment-actions";
+import {
+  initKushkiCardFields,
+  requestCardToken,
+  resetKushkiCardFields,
+} from "@/lib/kushki/card-fields";
 
 function formatUsd(value: number): string {
   return new Intl.NumberFormat("es-EC", {
     style: "currency",
     currency: "USD",
   }).format(value);
-}
-
-let kushkiInstance: IKushki | null = null;
-let cardInstance: ICard | null = null;
-
-/**
- * BLOQUE A — IMPLEMENTAR CON KUSHKIJS.
- * Carga el SDK e instala los campos de tarjeta (hosted fields en iframes)
- * dentro de los contenedores #kushki-card-number / -expiry / -cvv.
- */
-async function initKushkiCardFields(amount: number, isSubscription: boolean): Promise<void> {
-  const merchantId = process.env.NEXT_PUBLIC_KUSHKI_PUBLIC_MERCHANT_ID;
-  if (!merchantId) {
-    throw new Error("Missing NEXT_PUBLIC_KUSHKI_PUBLIC_MERCHANT_ID");
-  }
-
-  // 1. Inicializar la instancia base de Kushki
-  kushkiInstance = await init({
-    inTest: process.env.NEXT_PUBLIC_KUSHKI_ENV !== "production",
-    publicCredentialId: merchantId,
-  });
-
-  // 2. Inicializar los campos de la tarjeta (hosted fields)
-  cardInstance = await initCardToken(kushkiInstance, {
-    currency: "USD",
-    amount: {
-      subtotalIva: 0,
-      subtotalIva0: amount,
-      iva: 0,
-    },
-    // `true` cuando el servicio es recurrente y el cliente activo la
-    // auto-renovacion: Kushki genera un token de suscripcion en vez de
-    // uno de cargo unico.
-    isSubscription,
-    fields: {
-      cardholderName: {
-        selector: "kushki-card-name",
-        placeholder: "Ej: Juan Perez",
-      },
-      cardNumber: {
-        selector: "kushki-card-number",
-        placeholder: "0000 0000 0000 0000",
-      },
-      expirationDate: {
-        selector: "kushki-card-expiry",
-        placeholder: "MM/YY",
-      },
-      cvv: {
-        selector: "kushki-card-cvv",
-        placeholder: "123",
-      },
-    },
-    styles: {
-      container: {
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-      },
-      input: {
-        width: "100%",
-        border: "none",
-        outline: "none",
-        background: "transparent",
-        fontFamily: "inherit",
-        fontSize: "14px",
-        color: "inherit",
-      },
-    },
-  });
-}
-
-/**
- * BLOQUE B — IMPLEMENTAR CON KUSHKIJS.
- * Solicita el token de la tarjeta usando la instancia del BLOQUE A.
- * Contrato: devuelve un string `token` no vacio, o lanza un error
- * (lo captura el catch de handlePay).
- */
-async function requestCardToken(): Promise<string> {
-  if (!cardInstance) {
-    throw new Error("Card SDK no ha sido inicializado");
-  }
-
-  const response = await cardInstance.requestToken();
-  if (!response || !response.token) {
-    throw new Error("No se pudo obtener el token de la tarjeta");
-  }
-
-  return response.token;
 }
 
 /**
@@ -145,11 +60,7 @@ export function CardForm({
 
     return () => {
       cancelled = true;
-      // Liberar la instancia: si el componente se re-monta (cambio de
-      // pestana de pago o de modo recurrente) la proxima vez se
-      // inicializa contra los nuevos contenedores del DOM.
-      kushkiInstance = null;
-      cardInstance = null;
+      resetKushkiCardFields();
     };
     // `recurring` es constante por montaje (el padre re-monta via key).
   }, [amount, onError, recurring]);

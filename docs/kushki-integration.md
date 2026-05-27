@@ -48,8 +48,14 @@ Aplicar en orden:
 - `app/(public)/checkout/payment-actions.ts` — `chargeWithCard`, `initTransfer`, `subscribeWithCard`.
 - `app/(public)/checkout/` — `checkout-form.tsx`, `card-form.tsx`, `transfer-form.tsx`.
 - `app/api/webhooks/kushki/route.ts` — receptor de notificaciones de Kushki.
-- `app/(dashboard)/subscriptions/actions.ts` — `cancelSubscription`.
-- `app/(dashboard)/subscriptions/cancel-subscription-button.tsx` — UI de cancelación.
+- `app/(dashboard)/subscriptions/actions.ts` — `cancelSubscription` (admin).
+- `app/(dashboard)/subscriptions/cancel-subscription-button.tsx` — UI admin de cancelación.
+- `app/(public)/perfil/` — portal del cliente: `subscriptions-panel.tsx`,
+  `update-card-form.tsx`, `actions.ts` (`cancelMySubscription`, `updatePaymentMethod`).
+- `lib/kushki/card-fields.ts` — tokenización de tarjeta compartida (lado cliente).
+- `lib/email/` — envío de correos transaccionales.
+- `app/(dashboard)/pagos-fallidos/page.tsx` — vista de pagos fallidos y contracargos.
+- `app/api/admin/export-transactions/route.ts` — export CSV de transacciones (admin).
 - `supabase/functions/subscription-renewal/index.ts` — cron de renovación/expiración.
 
 ---
@@ -116,6 +122,9 @@ Comportamiento:
   `subscriptionId`, busca la suscripción por `gateway_subscription_id`,
   registra una transacción nueva y extiende `ends_at`. El índice único sobre
   `gateway_transaction_id` da idempotencia ante webhooks repetidos.
+- **Contracargo / disputa:** si el evento es de tipo `chargeback`, marca la
+  transacción como `refunded`, cancela la suscripción recurrente en Kushki y
+  la marca `cancelled`.
 - Siempre responde `200` ante eventos válidos para frenar reintentos; responde
   `500` solo ante errores transitorios de BD (para que Kushki reintente).
 
@@ -170,18 +179,34 @@ Cuando Kushki no logra cobrar un mes de una suscripción:
 
 ---
 
-## 8. Cancelación de suscripciones
+## 8. Cancelación de suscripciones y portal del cliente
 
-Desde el panel admin (`/subscriptions`), botón **Cancelar** en cada suscripción
-`active`/`pending`.
+### Cancelación
 
-`cancelSubscription` (admin-gated):
+Disponible para el **admin** (`/subscriptions`) y para el **cliente** en su
+perfil (`/perfil`). Ambas comparten la misma lógica:
 
-1. Si la suscripción tiene `gateway_subscription_id`, **cancela primero en
+1. Si la suscripción tiene `gateway_subscription_id`, **se cancela primero en
    Kushki** para detener los cobros automáticos.
-2. Solo si Kushki confirma, marca la suscripción local `cancelled` y
+2. Solo si Kushki confirma, se marca la suscripción local `cancelled` y
    `auto_renew = false`. Si Kushki falla, no cambia nada (evita quedar
    "cancelada" mientras Kushki sigue cobrando).
+
+`cancelSubscription` (admin) verifica rol admin; `cancelMySubscription`
+(cliente) verifica que la suscripción pertenezca al usuario.
+
+### Portal del cliente (`/perfil`)
+
+El cliente ve sus suscripciones (estado, fechas, auto-renovación), su
+**historial de pagos**, y puede **cancelar** y **actualizar la tarjeta** de
+sus suscripciones recurrentes.
+
+### Actualizar método de pago
+
+Para una suscripción recurrente, el cliente puede cambiar la tarjeta:
+`update-card-form` tokeniza la nueva tarjeta con KushkiJS y `updatePaymentMethod`
+la envía a Kushki. Cierra el círculo del dunning (sección 7): el correo de
+cobro rechazado dirige al cliente a actualizar su tarjeta aquí.
 
 ---
 
@@ -201,7 +226,35 @@ Desde el panel admin (`/subscriptions`), botón **Cancelar** en cada suscripció
 
 ---
 
-## 10. Pruebas en sandbox
+## 10. Monitoreo, contracargos y exportación contable
+
+### Pagos con incidencias
+
+La página admin `/pagos-fallidos` lista las transacciones `failed` y
+`refunded` (contracargos) con el cliente, monto, método y el detalle de la
+pasarela, para que el administrador les dé seguimiento.
+
+### Contracargos / disputas
+
+Cuando Kushki notifica un contracargo, el webhook marca la transacción como
+`refunded`, cancela la suscripción recurrente en Kushki (para detener cobros
+futuros) y la marca `cancelled`. El caso aparece automáticamente en
+`/pagos-fallidos`.
+
+### Exportación contable
+
+El endpoint admin `GET /api/admin/export-transactions` descarga todas las
+transacciones en CSV (con BOM UTF-8 para Excel): fecha, cliente, monto,
+estado, método, pasarela e IDs. Disponible desde el botón "Exportar CSV" en
+la página de transacciones.
+
+> La **conciliación** automática contra los reportes de liquidación de Kushki
+> (verificar que lo depositado coincide con lo registrado) no está
+> implementada — requiere la API de settlement de Kushki.
+
+---
+
+## 11. Pruebas en sandbox
 
 1. `NEXT_PUBLIC_KUSHKI_ENV=sandbox` y credenciales de sandbox en `.env.local`.
 2. Usar las tarjetas de prueba de la documentación de Kushki.
@@ -209,7 +262,7 @@ Desde el panel admin (`/subscriptions`), botón **Cancelar** en cada suscripció
 
 ---
 
-## 11. Checklist de puesta en producción
+## 12. Checklist de puesta en producción
 
 ### Negocio (Ruth)
 
@@ -238,7 +291,7 @@ Desde el panel admin (`/subscriptions`), botón **Cancelar** en cada suscripció
 
 ---
 
-## 12. Verificaciones pendientes contra la documentación de Kushki
+## 13. Verificaciones pendientes contra la documentación de Kushki
 
 Los tipos y endpoints de Kushki son un *scaffold*; **verificar contra la doc
 vigente** antes de producción:
@@ -248,6 +301,9 @@ vigente** antes de producción:
 - Endpoint y payload de suscripción (`POST /subscriptions/v1/card`).
 - Endpoint de cancelación de suscripción (se usa
   `DELETE /subscriptions/v1/card/{id}`).
+- Endpoint de actualización de tarjeta de una suscripción (se usa
+  `PUT /subscriptions/v1/card/{id}`). Si Kushki no lo soporta, la alternativa
+  es cancelar y volver a suscribir.
 - Que el webhook incluya `subscriptionId` en los eventos de cobro recurrente.
 - **Que Kushki envíe un webhook por cada cobro, incluido el primero** de una
   suscripción. Si no notifica el primer cobro, hay que crear esa primera
@@ -255,22 +311,22 @@ vigente** antes de producción:
 - Que `@kushki/js-sdk` genere bien el token de suscripción con
   `isSubscription: true`.
 - Que Kushki permita headers personalizados en los webhooks (`x-webhook-secret`).
+- Cómo notifica Kushki los **contracargos** (el webhook los detecta por
+  `eventType === "chargeback"`).
 
 ---
 
-## 13. Pendientes / mejoras futuras
+## 14. Pendientes / mejoras futuras
 
 - **Facturación electrónica (SRI):** obligatoria en Ecuador; el sistema
   registra transacciones pero no emite comprobante legal. No implementado.
 - **Desglose de IVA:** hoy el precio completo se envía como `subtotalIva0`.
-- **Actualizar método de pago:** si la tarjeta de una suscripción vence, no hay
-  flujo para que el cliente la cambie (la suscripción se pierde).
-- **Portal del cliente:** el cliente no puede ver ni autogestionar sus
-  suscripciones/pagos; la cancelación es solo admin.
-- **Reembolsos:** el estado `refunded` existe pero no hay flujo para emitirlos.
 - **Validación de monto en el webhook:** comparar `event.amount` con el
   esperado (defensa en profundidad).
 - **Reconciliación si falla un `update` tras un cargo aprobado:** hoy se
   registra en log; podría añadirse reintento/alerta.
+- **Conciliación contable:** cruzar las liquidaciones de Kushki contra las
+  transacciones registradas (requiere la API de settlement de Kushki).
+- **Monitoreo de errores:** integrar una herramienta tipo Sentry; hoy los
+  errores van a `console.error`.
 - **Estado `past_due`** explícito para suscripciones con cobro fallido.
-- **Eventos de contracargo/disputa** de Kushki: el webhook no los maneja.

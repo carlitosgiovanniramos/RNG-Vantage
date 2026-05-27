@@ -17,7 +17,7 @@ export class KushkiApiError extends Error {
 }
 
 type KushkiFetchOptions = {
-  method?: "GET" | "POST" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "DELETE";
   body?: unknown;
   /**
    * Header de autenticacion:

@@ -13,6 +13,16 @@ function formatUsd(value: number): string {
   }).format(value);
 }
 
+/** Escapa cadenas que vienen de la BD antes de inyectarlas como HTML. */
+function escape(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function layout(title: string, bodyHtml: string): string {
   return `<div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #1a1a1a;">
   <h2 style="text-transform: uppercase; letter-spacing: -0.5px; font-size: 20px;">${title}</h2>
@@ -28,7 +38,7 @@ export function paymentConfirmedEmail(p: {
   amount: number;
 }): EmailContent {
   const servicio = p.serviceName
-    ? ` del servicio <strong>${p.serviceName}</strong>`
+    ? ` del servicio <strong>${escape(p.serviceName)}</strong>`
     : "";
   return {
     subject: "Pago confirmado - RGL Estudio",
@@ -43,7 +53,7 @@ export function paymentConfirmedEmail(p: {
 /** Pago no completado / rechazado. */
 export function paymentFailedEmail(p: { serviceName?: string }): EmailContent {
   const servicio = p.serviceName
-    ? ` del servicio <strong>${p.serviceName}</strong>`
+    ? ` del servicio <strong>${escape(p.serviceName)}</strong>`
     : "";
   return {
     subject: "Tu pago no se completo - RGL Estudio",
@@ -64,7 +74,7 @@ export function subscriptionActivatedEmail(p: {
     subject: "Suscripcion activada - RGL Estudio",
     html: layout(
       "Suscripcion activada",
-      `<p>Tu suscripcion a <strong>${p.serviceName}</strong> esta activa.</p>
+      `<p>Tu suscripcion a <strong>${escape(p.serviceName)}</strong> esta activa.</p>
        <p>Se cobrara <strong>${formatUsd(p.amount)}</strong> a tu tarjeta cada mes de forma automatica. Te enviaremos un recibo en cada cobro.</p>`,
     ),
   };
@@ -75,7 +85,7 @@ export function recurringChargeReceiptEmail(p: {
   serviceName?: string;
   amount: number;
 }): EmailContent {
-  const servicio = p.serviceName ? ` de <strong>${p.serviceName}</strong>` : "";
+  const servicio = p.serviceName ? ` de <strong>${escape(p.serviceName)}</strong>` : "";
   return {
     subject: "Recibo de tu cobro mensual - RGL Estudio",
     html: layout(
@@ -90,7 +100,7 @@ export function recurringChargeReceiptEmail(p: {
 export function recurringChargeFailedEmail(p: {
   serviceName?: string;
 }): EmailContent {
-  const servicio = p.serviceName ? ` de <strong>${p.serviceName}</strong>` : "";
+  const servicio = p.serviceName ? ` de <strong>${escape(p.serviceName)}</strong>` : "";
   return {
     subject: "No pudimos cobrar tu suscripcion - RGL Estudio",
     html: layout(

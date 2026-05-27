@@ -68,6 +68,8 @@ export const kushkiWebhookSchema = z.object({
   amount: z.number().optional(),
   // Presente cuando el evento es el cobro de una suscripcion recurrente.
   subscriptionId: z.string().optional(),
+  // Tipo de evento; "chargeback" indica un contracargo / disputa.
+  eventType: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
