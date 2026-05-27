@@ -248,6 +248,20 @@ export default function TransaccionesAdminPage() {
             Limpiar Expiradas (24h)
           </Button>
 
+          <a
+            href="/api/admin/export-transactions"
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+          >
+            Exportar CSV
+          </a>
+
+          <Link
+            href="/pagos-fallidos"
+            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
+          >
+            Pagos fallidos
+          </Link>
+
           <Link
             href="/dashboard"
             className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"

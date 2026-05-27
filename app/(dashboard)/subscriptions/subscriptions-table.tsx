@@ -4,6 +4,7 @@ import { Zap } from "lucide-react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
+import { CancelSubscriptionButton } from "./cancel-subscription-button";
 
 export type SubscriptionTableRow = {
   id: string;
@@ -90,6 +91,13 @@ export function SubscriptionsTable({ rows }: { rows: SubscriptionTableRow[] }) {
           <Zap className="size-3" />
           {sub.auto_renew ? "Activa" : "Manual"}
         </span>
+      ),
+    },
+    {
+      key: "id",
+      header: "Acciones",
+      render: (sub) => (
+        <CancelSubscriptionButton subscriptionId={sub.id} status={sub.status} />
       ),
     },
   ];

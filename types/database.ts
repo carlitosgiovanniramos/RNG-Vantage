@@ -135,6 +135,7 @@ export type Database = {
           ends_at: string
           status: string
           auto_renew: boolean
+          gateway_subscription_id: string | null
           created_at: string
           updated_at: string
         }
@@ -146,6 +147,7 @@ export type Database = {
           ends_at: string
           status?: string
           auto_renew?: boolean
+          gateway_subscription_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -157,6 +159,7 @@ export type Database = {
           ends_at?: string
           status?: string
           auto_renew?: boolean
+          gateway_subscription_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -170,6 +173,10 @@ export type Database = {
           payment_method: string
           status: string
           notes: string | null
+          gateway: string
+          gateway_transaction_id: string | null
+          gateway_reference: string | null
+          gateway_status: string | null
           created_at: string
           updated_at: string
         }
@@ -181,6 +188,10 @@ export type Database = {
           payment_method?: string
           status?: string
           notes?: string | null
+          gateway?: string
+          gateway_transaction_id?: string | null
+          gateway_reference?: string | null
+          gateway_status?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -192,6 +203,10 @@ export type Database = {
           payment_method?: string
           status?: string
           notes?: string | null
+          gateway?: string
+          gateway_transaction_id?: string | null
+          gateway_reference?: string | null
+          gateway_status?: string | null
           created_at?: string
           updated_at?: string
         }

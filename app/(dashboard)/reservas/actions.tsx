@@ -4,14 +4,34 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { ReservationStatus } from "@/types/database";
 
-export async function getReservations() {
+/**
+ * Verifica que el llamante sea un admin activo.
+ * Defensa en profundidad sobre la RLS de la tabla reservations.
+ */
+async function ensureAdmin() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { supabase, error: "No autorizado" };
 
-  // 1. Verificación de Autenticación
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "No autorizado" };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  // 2. Consulta a Supabase
+  if (!profile || profile.role !== "admin" || profile.is_active === false) {
+    return { supabase, error: "No autorizado" };
+  }
+
+  return { supabase, error: null };
+}
+
+export async function getReservations() {
+  const { supabase, error: authError } = await ensureAdmin();
+  if (authError) return { error: authError };
+
   const { data, error } = await supabase
     .from("reservations")
     .select("*")
@@ -22,10 +42,8 @@ export async function getReservations() {
 }
 
 export async function updateReservationStatus(id: string, status: ReservationStatus) {
-  const supabase = await createClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "No autorizado" };
+  const { supabase, error: authError } = await ensureAdmin();
+  if (authError) return { error: authError };
 
   // 3. Actualización segura
   const { error } = await supabase

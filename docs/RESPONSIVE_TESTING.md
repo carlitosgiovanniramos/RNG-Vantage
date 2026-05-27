@@ -66,3 +66,30 @@ Se verificó el comportamiento de la interfaz en las siguientes resoluciones:
 | Reservas   | ✅ Funciona     | ✅ Botón grande  | ✅ `email`, `tel`   |
 | Checkout   | N/A (Server)   | ✅ Área checkbox | N/A                 |
 | Servicios  | ✅ Server      | ✅ Dialog scroll | ✅ `number`         |
+
+## 5. Páginas Nuevas Pendientes de Verificación
+
+Las siguientes páginas se crearon después del último reporte de pruebas responsivas y requieren verificación en los breakpoints 320-1280px:
+
+### `app/(public)/checkout/card-form.tsx` — Formulario de pago con tarjeta
+- **Componente:** `CardForm` — campos de tarjeta renderizados en iframes de Kushki (`@kushki/js-sdk`).
+- **Layout:** `space-y-3`, grid 2-col para Vencimiento/CVV (`grid grid-cols-2 gap-3`).
+- **Botón de pago:** `w-full h-12` con `justify-between` — correcto para móviles.
+- **⚠️ Posible issue en 320px:** los iframes de Kushki (`#kushki-card-number`, etc.) usan `h-11` con `border border-border bg-background px-3` pero no tienen `min-w-0` ni `overflow-hidden`, lo que podría causar que el contenido del iframe desborde en pantallas muy estrechas si el SDK renderiza inputs anchos.
+- **Estado:** Pendiente de verificación manual con el SDK cargado.
+
+### `app/(public)/perfil/update-card-form.tsx` — Actualización de tarjeta
+- **Componente:** `UpdateCardForm` — misma estructura de campos de tarjeta Kushki que `CardForm`.
+- **Layout:** `space-y-3`, grid 2-col para Vencimiento/CVV, contenedor con `border border-border bg-muted/20 p-4`.
+- **Botones:** `flex gap-2` con dos botones (`h-10`) — Guardar y Cerrar.
+- **⚠️ Posible issue en 320px:** los dos botones en `flex gap-2` podrían no caber en una sola fila a 320px si el texto es largo. Considerar `flex-wrap` o apilarlos verticalmente en móviles (`flex-col sm:flex-row`).
+- **Estado:** Pendiente de verificación manual.
+
+### `app/(dashboard)/pagos-fallidos/page.tsx` — Página admin de pagos con incidencias
+- **Componente:** `PagosFallidosPage` — lista de transacciones fallidas y contracargos.
+- **Layout header:** `flex flex-col gap-3 ... md:flex-row md:items-center md:justify-between` — ✅ responsive (stacked en mobile, row en desktop).
+- **Layout de cada fila:** `flex flex-col gap-2 ... md:flex-row md:items-center md:justify-between` — ✅ responsive.
+- **Contenedor:** `max-w-5xl px-6 py-8 md:py-10` — correcto.
+- **✅ Sin issues evidentes en 320px:** la página usa layout flex vertical en mobile y la tipografía no tiene tamaños excesivos. Los badges de estado usan `text-[0.62rem]` que es legible.
+- **Estado:** Sin problemas detectados en revisión estática de clases.
+

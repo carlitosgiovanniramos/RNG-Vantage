@@ -18,6 +18,7 @@ type RenewableSubscription = {
   user_id: string;
   ends_at: string;
   auto_renew: boolean;
+  gateway_subscription_id: string | null;
   services: ServiceInfo | ServiceInfo[] | null;
 };
 
@@ -51,7 +52,8 @@ Deno.serve(async (req) => {
     );
   }
 
-  // Verificar la cabecera Authorization para garantizar que es un admin
+  // Autenticacion: el cron se identifica con el service_role_key como
+  // secreto compartido; un admin tambien puede invocarla con su JWT.
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
     return new Response(
@@ -60,28 +62,29 @@ Deno.serve(async (req) => {
     );
   }
 
-  const token = authHeader.replace("Bearer ", "");
-  
-  // Cliente de Supabase usando el token del usuario actual para verificar sus permisos
-  const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
-    global: { headers: { Authorization: `Bearer ${token}` } }
-  });
+  const token = authHeader.replace("Bearer ", "").trim();
+  const isCron = token.length > 0 && token === serviceRoleKey;
 
-  const { data: { user }, error: userError } = await userClient.auth.getUser();
-  if (userError || !user) {
-    return new Response(
-      JSON.stringify({ error: "Unauthorized: Invalid JWT token" }),
-      { status: 401, headers: { "Content-Type": "application/json" } }
-    );
-  }
+  if (!isCron) {
+    // No es el cron: debe ser un admin con un JWT valido.
+    const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") || "", {
+      global: { headers: { Authorization: `Bearer ${token}` } }
+    });
 
-  // Verificamos rol a través de app_metadata (o consultando profiles)
-  const role = user.app_metadata?.role;
-  if (role !== "admin") {
-    return new Response(
-      JSON.stringify({ error: "Forbidden: Only admins can trigger subscription renewals" }),
-      { status: 403, headers: { "Content-Type": "application/json" } }
-    );
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid JWT token" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    if (user.app_metadata?.role !== "admin") {
+      return new Response(
+        JSON.stringify({ error: "Forbidden: Only admins can trigger subscription renewals" }),
+        { status: 403, headers: { "Content-Type": "application/json" } }
+      );
+    }
   }
 
   // Cliente con SERVICE_ROLE para poder bypassear RLS al actualizar registros globalmente
@@ -92,7 +95,7 @@ Deno.serve(async (req) => {
   const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("subscriptions")
-    .select("id, user_id, ends_at, auto_renew, services!inner(type, duration_months, price)")
+    .select("id, user_id, ends_at, auto_renew, gateway_subscription_id, services!inner(type, duration_months, price)")
     .eq("status", "active")
     .lte("ends_at", now);
 
@@ -109,7 +112,40 @@ Deno.serve(async (req) => {
   let skipped = 0;
   const failures: string[] = [];
 
+  // Periodo de gracia para suscripciones gestionadas por Kushki: si su
+  // ultimo cobro fallo no se expiran de inmediato (Kushki puede
+  // reintentar). Solo se expiran si llevan varios dias vencidas.
+  const KUSHKI_GRACE_MS = 5 * 24 * 60 * 60 * 1000;
+  const kushkiGraceThreshold = new Date(
+    Date.now() - KUSHKI_GRACE_MS,
+  ).toISOString();
+
   for (const subscription of subscriptions) {
+    // Suscripciones gestionadas por Kushki: la pasarela cobra y el
+    // webhook extiende ends_at en cada cobro exitoso. El cron NO las
+    // renueva ni les crea transacciones. Solo las expira si llevan
+    // varios dias vencidas -> el ultimo cobro fallo y Kushki ya no las
+    // renovo. El periodo de gracia evita expirarlas antes de tiempo.
+    if (subscription.gateway_subscription_id) {
+      if (subscription.ends_at < kushkiGraceThreshold) {
+        const { error: expireKushkiError } = await supabase
+          .from("subscriptions")
+          .update({ status: "expired", auto_renew: false })
+          .eq("id", subscription.id);
+
+        if (expireKushkiError) {
+          failures.push(
+            `expire-kushki:${subscription.id}:${expireKushkiError.message}`,
+          );
+          continue;
+        }
+        expired += 1;
+      } else {
+        skipped += 1;
+      }
+      continue;
+    }
+
     const service = normalizeService(subscription.services);
 
     if (!service) {

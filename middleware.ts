@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { createServerClient } from "@supabase/ssr";
 
-const ADMIN_ROUTES = ["/dashboard", "/reservas", "/servicios", "/clientes", "/transacciones", "/subscriptions"];
+const ADMIN_ROUTES = ["/dashboard", "/reservas", "/servicios", "/clientes", "/transacciones", "/subscriptions", "/pagos-fallidos"];
 
 export async function middleware(request: NextRequest) {
   // 1. Refresh session tokens
