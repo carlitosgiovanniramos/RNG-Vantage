@@ -75,3 +75,12 @@ Desktop.ini
 # Claude Agent
 .claude/
 
+# Archivos de contexto y reportes internos (Evitar fugas de información)
+contexto_proyecto_rgl_estudio.md
+context.md
+ANALISIS_ETAPAS_CARLOS_SPRINT2.md
+ENTREGABLES_CARLOS_SPRINT2.md
+VERIFICACION_SPRINT2_CARLOS.md
+prompt-stitch.md
+test-transaction.ts
+
