@@ -5,78 +5,127 @@ Este documento contiene las instrucciones necesarias para desplegar la base de d
 ## 1. Variables de Entorno Requeridas
 
 Para el frontend y backend en Next.js (ej. Vercel):
+
 ```env
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://<tu-proyecto>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
-SUPABASE_SERVICE_ROLE_KEY=ey...  # Solo requerido server-side
+SUPABASE_SERVICE_ROLE_KEY=ey...          # Solo server-side
+
+# URL pública del sitio (callbacks de pago)
+NEXT_PUBLIC_SITE_URL=https://<tu-dominio>
+
+# Kushki — pasarela de pagos
+NEXT_PUBLIC_KUSHKI_ENV=production         # "sandbox" o "production"
+NEXT_PUBLIC_KUSHKI_PUBLIC_MERCHANT_ID=... # tokenización en cliente
+KUSHKI_PRIVATE_MERCHANT_ID=...            # cargos / suscripciones (server)
+KUSHKI_WEBHOOK_SECRET=...                 # secreto del webhook
+
+# Resend — correos transaccionales
+RESEND_API_KEY=...
+EMAIL_FROM=RGL Estudio <noreply@tu-dominio.com>
 ```
 
-Para las Edge Functions en Supabase:
-Las variables `SUPABASE_URL` y `SUPABASE_ANON_KEY` se inyectan automáticamente en el entorno de Deno en la nube, pero si tu función depende de la clave de servicio, debes asegurarte de enviarla si no lo hace automáticamente.
+Las variables de Kushki y Resend son opcionales en desarrollo: si faltan, los pagos fallan de forma controlada y los correos se omiten, sin romper la app. En producción son obligatorias.
+
+Para las Edge Functions en Supabase, `SUPABASE_URL` y `SUPABASE_ANON_KEY` se inyectan automáticamente; `SUPABASE_SERVICE_ROLE_KEY` debe estar disponible para las funciones.
 
 ## 2. Migraciones de Base de Datos
 
-Las migraciones de la base de datos están almacenadas en `supabase/migrations/` y deben ejecutarse en orden. Las 6 migraciones actuales son:
-1. `20260325120000_init.sql` (Creación inicial de tablas, enums, triggers y RLS)
-2. `20260402000000_split_full_name.sql` (Separación de nombre completo en first_name/last_name)
-3. `20260403010000_fix_profiles_admin_policy.sql` (Corrección de políticas RLS para admin)
-4. `20260404000000_fix_security_and_business_logic.sql` (Índices de rendimiento y lógica de negocio)
-5. `20260520000000_create_views.sql` (5 vistas SQL optimizadas para el dashboard)
-6. `20260520100000_setup_cron_subscription_renewal.sql` (pg_cron + pg_net para renovación automática diaria)
+Las migraciones están en `supabase/migrations/` y deben ejecutarse en orden. Las 10 migraciones actuales:
 
-**Comando de Despliegue de DB:**
-Para empujar las migraciones a un proyecto remoto de Supabase (producción):
+1. `20260325120000_init.sql` — creación inicial de tablas, enums, triggers y RLS
+2. `20260402000000_split_full_name.sql` — separación de nombre en first_name/last_name
+3. `20260403010000_fix_profiles_admin_policy.sql` — corrección de políticas RLS de admin
+4. `20260404000000_fix_security_and_business_logic.sql` — hardening de seguridad, índices y reglas de negocio
+5. `20260520000000_create_views.sql` — vistas SQL optimizadas para el dashboard
+6. `20260520100000_setup_cron_subscription_renewal.sql` — pg_cron + pg_net para renovación diaria
+7. `20260521000000_add_profiles_is_active.sql` — campo `is_active` en `profiles`
+8. `20260522000000_kushki_gateway_columns.sql` — columnas de conciliación de pasarela en `transactions`
+9. `20260522120000_fix_subscription_renewal_cron.sql` — corrige la autenticación del cron (Vault)
+10. `20260522140000_kushki_subscription_id.sql` — `gateway_subscription_id` en `subscriptions`
+
+**Comando de despliegue de DB:**
 ```bash
 supabase db push
-```
-Alternativamente:
-```bash
+# o, alternativamente:
 supabase migration up
 ```
 
+Tras regenerar el esquema, conviene regenerar los tipos de TypeScript (`types/database.ts`) si se usa la CLI de Supabase.
+
 ## 3. Seed Data (Opcional - Solo Desarrollo)
 
-Para poblar el entorno de desarrollo local con servicios base, usuarios de prueba (un admin y un cliente), y transacciones falsas, ejecuta:
+Para poblar el entorno local con servicios base, usuarios de prueba y transacciones falsas:
 ```bash
 supabase db reset
 ```
-*Nota: Nunca ejecutes esto en un entorno de producción ya que borrará y regenerará todas las tablas.*
+*Nota: Nunca ejecutes esto en producción, borra y regenera todas las tablas.*
 
 ## 4. Deploy de Edge Functions
 
-Las Edge Functions deben ser desplegadas individualmente a la plataforma de Supabase.
-
 ```bash
-# Desplegar la función de métricas del dashboard
 supabase functions deploy dashboard-metrics
-
-# Desplegar la función de renovación de suscripciones
 supabase functions deploy subscription-renewal
-
-# (Opcional) Desplegar el webhook placeholder
-supabase functions deploy payment-webhook
 ```
 
-Si tus Edge Functions requieren secretos (ej. integraciones externas en el webhook), utiliza:
-```bash
-supabase secrets set STRIPE_WEBHOOK_SECRET=tu-secreto
+## 5. Configuración de la pasarela de pagos (Kushki)
+
+### Sandbox (desarrollo)
+1. Crear cuenta en https://console.kushkipagos.com
+2. Obtener **Public Merchant ID** y **Private Merchant ID** del ambiente sandbox.
+3. Configurar variables de entorno:
+   - `NEXT_PUBLIC_KUSHKI_ENV=sandbox`
+   - `NEXT_PUBLIC_KUSHKI_PUBLIC_MERCHANT_ID=<public-id>`
+   - `KUSHKI_PRIVATE_MERCHANT_ID=<private-id>`
+   - `KUSHKI_WEBHOOK_SECRET=<un-secreto-aleatorio>`
+4. Probar con tarjetas de prueba de la [documentación de Kushki](https://docs.kushki.com).
+
+### Producción
+1. **Cuenta Merchant aprobada** (RUC + cuenta bancaria ecuatoriana), con los métodos **tarjeta**, **transferencia** y el producto **suscripciones** habilitados.
+2. Solicitar activación de Transferencias y Suscripciones en la cuenta Kushki.
+3. Cambiar `NEXT_PUBLIC_KUSHKI_ENV=production`.
+4. Usar credenciales de producción (Public y Private Merchant IDs del ambiente de producción).
+5. **Registrar webhook** en la consola de Kushki:
+   - **URL:** `https://tu-dominio.com/api/webhooks/kushki`
+   - **Header personalizado:** `x-webhook-secret` con el valor de `KUSHKI_WEBHOOK_SECRET`
+
+Detalle completo en [`kushki-integration.md`](kushki-integration.md).
+
+## 6. Configuración del cron de renovación
+
+El cron diario necesita el `service_role_key` almacenado en Supabase Vault. Ejecutar una sola vez:
+```sql
+select vault.create_secret('<SERVICE_ROLE_KEY>', 'service_role_key');
 ```
 
-## 5. Deploy de Next.js (Vercel)
+## 7. Configuración de correos (Resend)
+
+1. Crear cuenta en https://resend.com
+2. Verificar dominio de envío (DNS: registros MX y TXT que Resend indica).
+3. Generar una API key desde el dashboard de Resend.
+4. Configurar variables de entorno:
+   - `RESEND_API_KEY=re_...`
+   - `EMAIL_FROM=RGL Estudio <noreply@tu-dominio.com>`
+
+> **Nota:** En desarrollo, si `RESEND_API_KEY` no está configurada los correos se omiten silenciosamente sin romper los flujos de pago.
+
+## 8. Deploy de Next.js (Vercel)
 
 1. Conecta el repositorio de GitHub al dashboard de Vercel.
 2. Asegúrate de que el Framework Preset detectado sea **Next.js**.
-3. En la sección "Environment Variables", añade `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`.
+3. En "Environment Variables", añade todas las variables de la sección 1.
 4. Haz clic en "Deploy".
 
-*Nota sobre Turbopack:* Si enfrentas problemas construyendo en Vercel por la coexistencia de configuraciones antiguas en Next.js 15, asegúrate de que Vercel ejecute el build estándar (`npx next build`).
+## 9. Post-Deploy Checklist
 
-## 6. Post-Deploy Checklist
-
-Después de un despliegue exitoso en producción, verifica los siguientes puntos críticos:
-
-- [ ] **Verificar RLS (Row Level Security)**: Confirma en el panel de Supabase (Authentication > Policies) que las políticas están habilitadas en las tablas `profiles`, `services`, `subscriptions`, `transactions` y `reservations`.
-- [ ] **Verificar Edge Functions**: Llama a la URL de `dashboard-metrics` con un JWT de administrador para asegurar que retorna HTTP 200 y no hay errores de variables de entorno.
-- [ ] **Crear usuario admin inicial**: Si es una base de datos fresca, regístrate a través de la UI y luego, directamente en Supabase SQL Editor, haz un `UPDATE public.profiles SET role = 'admin' WHERE id = (SELECT id FROM auth.users WHERE email = 'tu_email@ejemplo.com');`.
-- [ ] **Verificar Realtime**: En el dashboard de Supabase (Database > Replication o Realtime), asegúrate de que las tablas `reservations`, `transactions` y `subscriptions` tienen la replicación y realtime habilitados para que los sockets web envíen notificaciones al panel admin.
-- [ ] **Verificar CRON de renovación**: Ejecutar `SELECT * FROM cron.job WHERE jobname = 'daily-subscription-renewal';` para confirmar que el job está programado. Revisar `cron.job_run_details` al día siguiente para validar que se ejecutó correctamente.
+- [ ] **RLS**: confirmar en Supabase (Authentication > Policies) que las políticas están habilitadas en `profiles`, `services`, `subscriptions`, `transactions` y `reservations`.
+- [ ] **Edge Functions**: llamar a `dashboard-metrics` con un JWT de admin para confirmar HTTP 200.
+- [ ] **Usuario admin inicial**: en una BD fresca, registrarse por la UI y luego: `UPDATE public.profiles SET role = 'admin' WHERE id = (SELECT id FROM auth.users WHERE email = 'tu_email@ejemplo.com');`
+- [ ] **Realtime**: en Supabase (Database > Realtime), confirmar que `reservations`, `transactions` y `subscriptions` tienen realtime habilitado.
+- [ ] **CRON de renovación**: `SELECT * FROM cron.job WHERE jobname = 'daily-subscription-renewal';` y, al día siguiente, revisar `cron.job_run_details`. Confirmar que el secreto existe en Vault.
+- [ ] **Secreto en Vault**: `SELECT name FROM vault.decrypted_secrets WHERE name = 'service_role_key';`
+- [ ] **Webhook de Kushki**: registrado en la consola del merchant con el header `x-webhook-secret`. Verificar que llega un evento de prueba.
+- [ ] **Variables de entorno**: verificar que las variables `KUSHKI_*` y `RESEND_*` estén configuradas en el entorno de producción.
+- [ ] **Correos**: dominio verificado en Resend; hacer un pago de prueba y confirmar la llegada del correo.
+- [ ] **Pago de prueba**: en sandbox, completar un cargo con tarjeta, una transferencia y una suscripción recurrente de punta a punta.

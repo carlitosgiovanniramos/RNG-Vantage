@@ -2,6 +2,10 @@
 
 Este documento detalla las funciones serverless alojadas en Supabase (Edge Functions basadas en Deno), su propósito, mecanismos de autenticación y flujos esperados.
 
+> El **webhook de pagos de Kushki** NO es una Edge Function: está implementado
+> como Route Handler de Next.js en `app/api/webhooks/kushki/route.ts`. Su
+> documentación está en [`kushki-integration.md`](kushki-integration.md).
+
 ---
 
 ## 1. `dashboard-metrics` (ACTIVA)
@@ -18,21 +22,22 @@ Este documento detalla las funciones serverless alojadas en Supabase (Edge Funct
     "recurring_subscriptions": 8,
     "one_time_subscriptions": 7,
     "pending_reservations": 4,
-    "monthly_income_series": [{ "label": "Ene", "value": 1500 }, ...],
-    "service_mix": [{ "name": "Manejo Redes", "value": 8 }, ...]
+    "monthly_income_series": [{ "label": "Ene", "value": 1500 }],
+    "service_mix": [{ "name": "Manejo Redes", "value": 8 }]
   }
   ```
 
 ---
 
 ## 2. `subscription-renewal` (ACTIVA)
-**Propósito:** Procesar e intentar renovar las suscripciones que han expirado pero que tienen el flag `auto_renew=true`.
+**Propósito:** Procesar el ciclo de vida diario de las suscripciones que han llegado a su fecha de vencimiento.
 - **Endpoint:** `POST /functions/v1/subscription-renewal`
-- **Auth:** Requiere JWT válido en el header `Authorization` + Rol `admin` en el JWT. Idealmente, se invocaría diariamente vía pg_cron o un CRON externo seguro.
-- **Lógica:** 
-  - Solo los servicios de tipo `manejo_redes` son elegibles para renovación automática.
-  - Al renovar, extiende la fecha `ends_at` basándose en la duración del servicio.
-  - Crea automáticamente una nueva transacción en estado `pending` por el monto de la renovación.
+- **Auth:** Acepta **dos formas** de autenticación:
+  - El `service_role_key` como Bearer token (lo usa el CRON, como secreto compartido).
+  - Un JWT válido de un usuario con rol `admin` (invocación manual).
+- **Lógica:**
+  - **Suscripciones manuales** (efectivo / transferencia) de tipo `manejo_redes` con `auto_renew=true`: extiende `ends_at` según la duración del servicio y crea una transacción `pending` por el monto de la renovación. Las demás se marcan `expired`.
+  - **Suscripciones gestionadas por Kushki** (`gateway_subscription_id` presente): Kushki las cobra y renueva sola, y el webhook extiende `ends_at` en cada cobro exitoso. El cron NO las renueva ni les crea transacciones; solo las marca `expired` si llevan más de 5 días vencidas (período de gracia: el último cobro falló y Kushki ya no las renovó).
 - **Respuesta Esperada (200 OK / 207 Multi-Status):**
   ```json
   {
@@ -46,27 +51,34 @@ Este documento detalla las funciones serverless alojadas en Supabase (Edge Funct
 
 ### Invocación Automática (CRON)
 - **Programación:** Diaria a las 06:00 UTC (01:00 hora Ecuador) vía `pg_cron`.
-- **Mecanismo:** `pg_net` hace un HTTP POST a la Edge Function con el `service_role_key` como Bearer token.
-- **Job name:** `daily-subscription-renewal`
-- **Monitoreo:** Verificar la tabla `cron.job_run_details` para ver el historial de ejecuciones:
+- **Mecanismo:** una función wrapper en PostgreSQL (`public.trigger_subscription_renewal`) lee el `service_role_key` desde **Supabase Vault** y hace un HTTP POST a la Edge Function con `pg_net`.
+- **Requisito operativo:** el secreto debe existir en Vault:
   ```sql
-  SELECT * FROM cron.job_run_details 
+  select vault.create_secret('<SERVICE_ROLE_KEY>', 'service_role_key');
+  ```
+- **Job name:** `daily-subscription-renewal`
+- **Monitoreo:**
+  ```sql
+  SELECT * FROM cron.job_run_details
   WHERE jobid = (SELECT jobid FROM cron.job WHERE jobname = 'daily-subscription-renewal')
   ORDER BY start_time DESC LIMIT 10;
   ```
 
 ---
 
-## 3. `payment-webhook` (PLACEHOLDER)
-**Propósito:** Webhook diseñado para recibir notificaciones asíncronas de pasarelas de pago externas (ej. Stripe, MercadoPago, PayPal).
-- **Endpoint:** `POST /functions/v1/payment-webhook`
-- **Estado Actual:** Retorna HTTP `501 Not Implemented`.
-- **Flujo Esperado (Cuando se integre):**
-  1. Recibe el POST de la pasarela.
-  2. Valida la firma de seguridad (ej. `Stripe-Signature`).
-  3. Extrae el `transaction_id` de los metadatos.
-  4. Si el pago fue exitoso (`charge.succeeded`), actualiza la `transaction` a `completed` y la `subscription` vinculada a `active`.
-  5. Si el pago falla, marca la `transaction` como `failed`.
+## 3. `payment-webhook` (DEPRECADA)
+**Estado:** Deprecada — reemplazada por la API Route de Next.js `app/api/webhooks/kushki/route.ts`.
+
+> **Nota:** Esta Edge Function fue originalmente un placeholder que respondía `501 Not Implemented`.
+> Ya no se usa. La lógica de recepción de webhooks de Kushki está implementada directamente
+> como Route Handler de Next.js, lo que permite usar el runtime de Node.js (`crypto.timingSafeEqual`),
+> acceder al cliente admin de Supabase y enviar correos transaccionales con Resend en un solo
+> proceso sin cold-starts de Deno.
+
+No debe desplegarse ni invocarse. Si existe en el proyecto de Supabase, puede eliminarse con:
+```bash
+supabase functions delete payment-webhook
+```
 
 ---
 
@@ -82,10 +94,10 @@ curl -i --request GET 'https://<PROJECT_REF>.supabase.co/functions/v1/dashboard-
 ### Variables de Entorno Requeridas en las Functions
 - `SUPABASE_URL`: Inyectada automáticamente por Supabase.
 - `SUPABASE_ANON_KEY`: Inyectada automáticamente por Supabase.
-- `SUPABASE_SERVICE_ROLE_KEY`: Requerida explícitamente. Se usa internamente dentro de las Edge Functions para bypassear las políticas RLS (`Row Level Security`) y ejecutar lecturas/escrituras masivas (como en la renovación de suscripciones).
+- `SUPABASE_SERVICE_ROLE_KEY`: Requerida explícitamente. Se usa dentro de las Edge Functions para bypassear las políticas RLS y ejecutar lecturas/escrituras masivas.
 
 ### Códigos de Error Comunes
-- `401 Unauthorized`: El header Authorization falta o el JWT expiró.
+- `401 Unauthorized`: El header Authorization falta o el JWT/token es inválido.
 - `403 Forbidden`: El usuario está logueado pero no tiene el rol de `admin`.
-- `405 Method Not Allowed`: Método HTTP incorrecto (ej. hacer GET a `subscription-renewal`).
+- `405 Method Not Allowed`: Método HTTP incorrecto.
 - `500 Internal Server Error`: Faltan variables de entorno en el servidor de Deno o hubo un fallo crítico en la consulta a la BD.
