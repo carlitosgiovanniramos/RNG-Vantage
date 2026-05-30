@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { XCircle } from "lucide-react";
 
+import { useConfirm } from "@/components/use-confirm";
 import { cancelSubscription } from "./actions";
 
 /**
@@ -20,19 +21,22 @@ export function CancelSubscriptionButton({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { confirm, confirmDialog } = useConfirm();
 
   if (status !== "active" && status !== "pending") {
     return <span className="text-xs text-muted-foreground">—</span>;
   }
 
-  function handleCancel() {
-    if (
-      !window.confirm(
-        "¿Cancelar esta suscripcion? Se detendran los cobros automaticos en la pasarela.",
-      )
-    ) {
-      return;
-    }
+  async function handleCancel() {
+    const ok = await confirm({
+      title: "Cancelar suscripción",
+      message:
+        "¿Cancelar esta suscripción? Se detendrán los cobros automáticos en la pasarela.",
+      confirmLabel: "Cancelar suscripción",
+      cancelLabel: "Volver",
+      destructive: true,
+    });
+    if (!ok) return;
 
     setError(null);
     startTransition(async () => {
@@ -57,6 +61,7 @@ export function CancelSubscriptionButton({
         {pending ? "Cancelando..." : "Cancelar"}
       </button>
       {error && <p className="mt-1 text-[0.62rem] text-red-700 dark:text-red-400">{error}</p>}
+      {confirmDialog}
     </div>
   );
 }

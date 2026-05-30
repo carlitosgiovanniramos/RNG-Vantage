@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { formatCurrency } from "@/lib/utils";
 import { SubscriptionsPanel } from "./subscriptions-panel";
+import { ReceiptUpload } from "./receipt-upload";
 
 type ServiceJoin = {
   id: string;
@@ -27,6 +29,8 @@ type PaymentItem = {
   amount: number;
   status: string;
   payment_method: string;
+  gateway: string;
+  receipt_url: string | null;
   created_at: string;
 };
 
@@ -66,13 +70,6 @@ function normalizeService(
 ): ServiceJoin | null {
   if (!service) return null;
   return Array.isArray(service) ? (service[0] ?? null) : service;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-EC", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
 }
 
 function formatDate(value: string | null): string {
@@ -136,7 +133,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
 
   const { data: payments } = await supabase
     .from("transactions")
-    .select("id, amount, status, payment_method, created_at")
+    .select("id, amount, status, payment_method, gateway, receipt_url, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(10);
@@ -225,28 +222,43 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
           <div className="space-y-2">
             {paymentItems.map((payment) => {
               const status = payment.status ?? "pending";
+              const canUploadReceipt =
+                payment.gateway === "manual" &&
+                payment.payment_method === "transfer" &&
+                status === "pending" &&
+                !payment.receipt_url;
               return (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between border border-border/60 bg-card/80 px-4 py-3 text-sm"
+                  className="border border-border/60 bg-card/80 px-4 py-3 text-sm"
                 >
-                  <div>
-                    <p className="font-workSans text-foreground">
-                      {formatCurrency(payment.amount)}
-                    </p>
-                    <p className="font-workSans text-xs text-muted-foreground">
-                      {formatDate(payment.created_at)} ·{" "}
-                      {PAYMENT_METHOD_LABELS[payment.payment_method] ??
-                        payment.payment_method}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-workSans text-foreground">
+                        {formatCurrency(payment.amount)}
+                      </p>
+                      <p className="font-workSans text-xs text-muted-foreground">
+                        {formatDate(payment.created_at)} ·{" "}
+                        {PAYMENT_METHOD_LABELS[payment.payment_method] ??
+                          payment.payment_method}
+                        {payment.gateway === "manual" &&
+                          payment.payment_method === "transfer" &&
+                          payment.receipt_url && (
+                            <span className="ml-1 text-emerald-700 dark:text-emerald-400">
+                              · comprobante enviado
+                            </span>
+                          )}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2.5 py-0.5 font-spaceGrotesk text-[0.65rem] font-bold uppercase tracking-[0.12em] ${
+                        STATUS_STYLES[status] ?? STATUS_STYLES.pending
+                      }`}
+                    >
+                      {STATUS_LABELS[status] ?? status}
+                    </span>
                   </div>
-                  <span
-                    className={`px-2.5 py-0.5 font-spaceGrotesk text-[0.65rem] font-bold uppercase tracking-[0.12em] ${
-                      STATUS_STYLES[status] ?? STATUS_STYLES.pending
-                    }`}
-                  >
-                    {STATUS_LABELS[status] ?? status}
-                  </span>
+                  {canUploadReceipt && <ReceiptUpload transactionId={payment.id} />}
                 </div>
               );
             })}

@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { ArrowLeft, PencilLine, Power, UserCheck, UserRoundX, UsersRound } from "lucide-react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
+import { useConfirm } from "@/components/use-confirm";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +34,7 @@ function formatDate(value: string) {
 
 export default function ClientesAdminPage() {
   const queryClient = useQueryClient();
+  const { confirm, confirmDialog } = useConfirm();
   const [editingClient, setEditingClient] = useState<ClientRow | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [formError, setFormError] = useState<string | null>(null);
@@ -73,13 +76,20 @@ export default function ClientesAdminPage() {
   const handleToggle = async (client: ClientRow) => {
     const nextState = !client.is_active;
     const action = nextState ? "activar" : "desactivar";
-    if (!confirm(`¿Seguro que deseas ${action} a este cliente?`)) return;
+    const ok = await confirm({
+      title: nextState ? "Activar cliente" : "Desactivar cliente",
+      message: `¿Seguro que deseas ${action} a este cliente?`,
+      confirmLabel: nextState ? "Activar" : "Desactivar",
+      destructive: !nextState,
+    });
+    if (!ok) return;
 
     const result = await toggleClientActive(client.id, nextState);
     if (result.success) {
+      toast.success(`Cliente ${nextState ? "activado" : "desactivado"} correctamente`);
       await refreshClients();
     } else {
-      alert(result.error ?? "No se pudo actualizar el estado del cliente.");
+      toast.error(result.error ?? "No se pudo actualizar el estado del cliente.");
     }
   };
 
@@ -301,6 +311,7 @@ export default function ClientesAdminPage() {
           </form>
         </DialogContent>
       </Dialog>
+      {confirmDialog}
     </div>
   );
 }

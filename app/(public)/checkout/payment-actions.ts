@@ -1,9 +1,14 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createSubscriptionSchema } from "@/lib/validators/subscription";
-import { kushkiCardChargeSchema, kushkiTransferInitSchema } from "@/lib/validators/payment";
+import {
+  kushkiCardChargeSchema,
+  kushkiTransferInitSchema,
+  manualTransferInitSchema,
+} from "@/lib/validators/payment";
 import { kushkiFetch, KushkiApiError } from "@/lib/kushki/client";
 import { sendEmail } from "@/lib/email/client";
 import {
@@ -572,4 +577,213 @@ export async function subscribeWithCard(input: {
       price: service.price,
     },
   };
+}
+
+/** Bucket privado donde se guardan los comprobantes de transferencia. */
+const RECEIPTS_BUCKET = "comprobantes";
+
+/** Tipos de imagen aceptados y tamano maximo del comprobante (5 MB). */
+const ALLOWED_RECEIPT_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
+
+/**
+ * Inicia un pago por transferencia bancaria MANUAL (sin pasarela).
+ *
+ * Crea la suscripcion (pending) y la transaccion (pending, gateway
+ * 'manual', metodo 'transfer'). El cliente transfiere a la cuenta de RGL
+ * y sube el comprobante (ahora o luego). Ruth verifica el comprobante en
+ * el dashboard y aprueba (completed) o rechaza (failed) la transaccion.
+ *
+ * No contacta a Kushki: la conciliacion es manual.
+ */
+export async function initManualTransfer(input: {
+  service_id: string;
+  auto_renew: boolean;
+}) {
+  // 1. Validar entrada
+  const parsed = manualTransferInitSchema.safeParse(input);
+  if (!parsed.success) {
+    return { success: false, error: "Datos de transferencia invalidos." };
+  }
+  const { service_id, auto_renew } = parsed.data;
+
+  const supabase = await createClient();
+
+  // 2. Usuario autenticado
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: "Debes iniciar sesion para continuar." };
+  }
+
+  // 3. Servicio
+  const { data: service, error: serviceError } = await supabase
+    .from("services")
+    .select("*")
+    .eq("id", service_id)
+    .single();
+  if (serviceError || !service) {
+    return { success: false, error: "El servicio no existe o no pudo ser encontrado." };
+  }
+  if (!service.is_active) {
+    return { success: false, error: "El servicio seleccionado no esta activo." };
+  }
+
+  // 4. Logica de auto_renew (solo manejo_redes admite renovacion)
+  let autoRenew = auto_renew;
+  if (service.type !== "manejo_redes") {
+    autoRenew = false;
+  }
+
+  // 5. Fechas
+  const startsAt = new Date();
+  const endsAt = new Date(startsAt);
+  endsAt.setMonth(startsAt.getMonth() + (service.duration_months || 1));
+
+  // 6. Validar datos de suscripcion
+  const validation = createSubscriptionSchema.safeParse({
+    user_id: user.id,
+    service_id: service.id,
+    starts_at: startsAt.toISOString(),
+    ends_at: endsAt.toISOString(),
+    auto_renew: autoRenew,
+  });
+  if (!validation.success) {
+    return { success: false, error: "Datos de suscripcion invalidos." };
+  }
+
+  // 7. Crear suscripcion (pending)
+  const { data: createdSubscription, error: subscriptionError } = await supabase
+    .from("subscriptions")
+    .insert({ ...validation.data, status: "pending" })
+    .select("id")
+    .single();
+  if (subscriptionError || !createdSubscription) {
+    return { success: false, error: "Error al crear la suscripcion." };
+  }
+
+  // 8. Crear transaccion (pending, manual) con cliente admin (RLS).
+  const supabaseAdmin = createAdminClient();
+  const { data: createdTransaction, error: transactionError } = await supabaseAdmin
+    .from("transactions")
+    .insert({
+      user_id: user.id,
+      subscription_id: createdSubscription.id,
+      amount: service.price,
+      payment_method: "transfer",
+      status: "pending",
+      gateway: "manual",
+    })
+    .select("id")
+    .single();
+
+  if (transactionError || !createdTransaction) {
+    return {
+      success: false,
+      error: "Error al crear la transaccion vinculada.",
+      subscription_id: createdSubscription.id,
+    };
+  }
+
+  // 9. Resultado: el cliente ve la cuenta y sube el comprobante.
+  return {
+    success: true,
+    subscription_id: createdSubscription.id,
+    transaction_id: createdTransaction.id,
+    service: {
+      name: service.name,
+      price: service.price,
+    },
+  };
+}
+
+/**
+ * Sube el comprobante de una transferencia manual al bucket privado.
+ *
+ * Verifica que la transaccion pertenezca al usuario, este pendiente y sea
+ * de tipo transferencia manual. La subida y la actualizacion se hacen con
+ * el cliente admin (las politicas RLS impiden que el rol authenticated
+ * escriba en transactions). El archivo se guarda en
+ * `${user.id}/${transaction_id}-${timestamp}.<ext>`.
+ */
+export async function uploadTransferReceipt(formData: FormData) {
+  const transactionId = formData.get("transaction_id");
+  const file = formData.get("file");
+
+  if (typeof transactionId !== "string" || !transactionId) {
+    return { success: false, error: "Transaccion invalida." };
+  }
+  if (!(file instanceof File) || file.size === 0) {
+    return { success: false, error: "Selecciona una imagen del comprobante." };
+  }
+  if (!ALLOWED_RECEIPT_TYPES.includes(file.type)) {
+    return { success: false, error: "El comprobante debe ser una imagen (JPG, PNG o WEBP)." };
+  }
+  if (file.size > MAX_RECEIPT_BYTES) {
+    return { success: false, error: "La imagen no puede superar los 5 MB." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { success: false, error: "Debes iniciar sesion para continuar." };
+  }
+
+  // Verificar pertenencia y estado de la transaccion.
+  const { data: transaction } = await supabase
+    .from("transactions")
+    .select("id, user_id, status, payment_method, gateway")
+    .eq("id", transactionId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!transaction) {
+    return { success: false, error: "Transaccion no encontrada." };
+  }
+  if (transaction.gateway !== "manual" || transaction.payment_method !== "transfer") {
+    return { success: false, error: "Esta transaccion no admite comprobante de transferencia." };
+  }
+  if (transaction.status !== "pending") {
+    return { success: false, error: "Esta transaccion ya fue procesada." };
+  }
+
+  // Subir al bucket privado con el cliente admin.
+  const extByType: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  const ext = extByType[file.type] ?? "jpg";
+  const path = `${user.id}/${transactionId}-${Date.now()}.${ext}`;
+
+  const supabaseAdmin = createAdminClient();
+  const arrayBuffer = await file.arrayBuffer();
+
+  const { error: uploadError } = await supabaseAdmin.storage
+    .from(RECEIPTS_BUCKET)
+    .upload(path, arrayBuffer, {
+      contentType: file.type,
+      upsert: true,
+    });
+
+  if (uploadError) {
+    console.error("[uploadTransferReceipt] Error al subir:", uploadError.message);
+    return { success: false, error: "No se pudo subir el comprobante. Intenta nuevamente." };
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from("transactions")
+    .update({ receipt_url: path })
+    .eq("id", transactionId);
+
+  if (updateError) {
+    console.error("[uploadTransferReceipt] Error al guardar ruta:", updateError.message);
+    return { success: false, error: "El comprobante se subio pero no se pudo registrar. Avisa al soporte." };
+  }
+
+  revalidatePath("/perfil");
+  return { success: true };
 }

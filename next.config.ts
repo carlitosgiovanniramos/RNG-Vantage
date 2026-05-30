@@ -7,5 +7,11 @@ const withSerwist = withSerwistInit({
 });
 
 export default withSerwist({
-  // Next.js config options here
+  // Los Server Actions tienen un limite de body de 1 MB por defecto.
+  // Se sube a 6 MB para permitir la carga de comprobantes (hasta 5 MB).
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+  },
 });

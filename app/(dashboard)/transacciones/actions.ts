@@ -16,6 +16,8 @@ type TransactionRow = {
   amount: number;
   status: "pending" | "completed" | "failed" | "refunded";
   payment_method: "cash" | "transfer" | "card" | "pending";
+  gateway: string;
+  receipt_url: string | null;
   created_at: string;
   notes: string | null;
   client_name?: string;
@@ -176,7 +178,7 @@ export async function getTransactions() {
   // Obtener todas las transacciones ordenadas por fecha (más recientes primero)
   const { data, error } = await supabase
     .from("transactions")
-    .select("id, user_id, subscription_id, amount, status, payment_method, created_at, notes")
+    .select("id, user_id, subscription_id, amount, status, payment_method, gateway, receipt_url, created_at, notes")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -308,4 +310,57 @@ export async function cleanExpiredTransactions() {
   }
 
   return { success: true, count, message: `Se limpiaron ${count} transacciones expiradas.` };
+}
+
+/**
+ * Server Action: Genera una URL firmada temporal del comprobante de una
+ * transferencia para que Ruth pueda verlo desde el dashboard.
+ *
+ * El bucket 'comprobantes' es privado: la URL se genera con el cliente
+ * admin y expira en 5 minutos. Solo accesible para administradores.
+ */
+export async function getReceiptSignedUrl(transaction_id: string) {
+  if (!transaction_id || typeof transaction_id !== "string") {
+    return { success: false, error: "ID inválido." };
+  }
+
+  const supabase = await createClient();
+
+  const { data: user, error: userError } = await supabase.auth.getUser();
+  if (userError || !user?.user) {
+    return { success: false, error: "No estás autenticado." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_active")
+    .eq("id", user.user.id)
+    .single();
+
+  if (profile?.role !== "admin" || profile?.is_active === false) {
+    return { success: false, error: "No autorizado." };
+  }
+
+  // Obtener la ruta del comprobante con el cliente admin.
+  const admin = createAdminClient();
+  const { data: transaction } = await admin
+    .from("transactions")
+    .select("receipt_url")
+    .eq("id", transaction_id)
+    .single();
+
+  if (!transaction?.receipt_url) {
+    return { success: false, error: "Esta transacción no tiene comprobante." };
+  }
+
+  const { data: signed, error: signedError } = await admin.storage
+    .from("comprobantes")
+    .createSignedUrl(transaction.receipt_url, 300);
+
+  if (signedError || !signed?.signedUrl) {
+    console.error("[getReceiptSignedUrl] Error:", signedError?.message);
+    return { success: false, error: "No se pudo cargar el comprobante." };
+  }
+
+  return { success: true, url: signed.signedUrl };
 }

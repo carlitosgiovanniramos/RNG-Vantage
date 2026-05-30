@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { useConfirm } from "@/components/use-confirm";
+import { formatCurrency } from "@/lib/utils";
 import { cancelMySubscription } from "./actions";
 import { UpdateCardForm } from "./update-card-form";
 
@@ -33,13 +35,6 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: "bg-rose-100 text-rose-700",
 };
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-EC", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
-
 function formatDate(value: string | null): string {
   if (!value) return "—";
   return new Date(value).toLocaleDateString("es-EC", { dateStyle: "medium" });
@@ -58,6 +53,7 @@ export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }
   );
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const { confirm, confirmDialog } = useConfirm();
 
   if (items.length === 0) {
     return (
@@ -68,14 +64,16 @@ export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }
     );
   }
 
-  function handleCancel(id: string) {
-    if (
-      !window.confirm(
-        "¿Cancelar esta suscripcion? Se detendran los cobros automaticos.",
-      )
-    ) {
-      return;
-    }
+  async function handleCancel(id: string) {
+    const ok = await confirm({
+      title: "Cancelar suscripción",
+      message: "¿Cancelar esta suscripción? Se detendrán los cobros automáticos.",
+      confirmLabel: "Cancelar suscripción",
+      cancelLabel: "Volver",
+      destructive: true,
+    });
+    if (!ok) return;
+
     setActionError(null);
     setCancellingId(id);
     startTransition(async () => {
@@ -178,6 +176,7 @@ export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }
           </article>
         );
       })}
+      {confirmDialog}
     </div>
   );
 }

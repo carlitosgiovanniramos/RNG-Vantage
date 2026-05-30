@@ -9,9 +9,12 @@ import {
 } from "./actions";
 import type { Database, ReservationStatus } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
-import { StatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CalendarCheck2, Clock3, XCircle } from "lucide-react";
+import {
+  getReservationDisplayStatus,
+  RESERVATION_STATUS_META,
+} from "@/lib/reservations";
+import { ArrowLeft, AlarmClock, CalendarCheck2, Clock3, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 
@@ -21,7 +24,7 @@ export default function ReservasAdminPage() {
   const queryClient = useQueryClient();
   useAdminRealtime("reservations", "admin-reservations");
   const [statusFilter, setStatusFilter] = useState<
-    ReservationStatus | "all"
+    ReservationStatus | "all" | "overdue"
   >("all");
 
   const {
@@ -82,44 +85,59 @@ export default function ReservasAdminPage() {
       key: "status",
       header: "Estado",
       render: (res) => {
-        if (res.status === "confirmed") {
-          return <StatusBadge status="active" />;
-        }
-
-        if (res.status === "cancelled") {
-          return <StatusBadge status="cancelled" />;
-        }
-
-        return <StatusBadge status={res.status as "pending" | "completed"} />;
+        const display = getReservationDisplayStatus(res.status, res.preferred_date);
+        const meta = RESERVATION_STATUS_META[display];
+        return (
+          <span
+            className={`inline-flex items-center px-2.5 py-0.5 font-spaceGrotesk text-[0.65rem] font-bold uppercase tracking-[0.12em] ${meta.className}`}
+          >
+            {meta.label}
+          </span>
+        );
       },
     },
     {
       key: "actions",
       header: "Acciones",
-      render: (res) => (
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
-            onClick={() => handleStatusUpdate(res.id, "confirmed")}
-            disabled={res.status === "confirmed"}
-          >
-            Confirmar
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="destructive"
-            className="h-8 bg-destructive/15 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-destructive hover:bg-destructive/25"
-            onClick={() => handleStatusUpdate(res.id, "cancelled")}
-            disabled={res.status === "cancelled"}
-          >
-            Cancelar
-          </Button>
-        </div>
-      ),
+      render: (res) => {
+        const isFinal = res.status === "cancelled" || res.status === "completed";
+        return (
+          <div className="flex flex-wrap gap-2">
+            {res.status !== "confirmed" && !isFinal && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em]"
+                onClick={() => handleStatusUpdate(res.id, "confirmed")}
+              >
+                Confirmar
+              </Button>
+            )}
+            {res.status === "confirmed" && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-8 border-emerald-300 bg-emerald-50 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300"
+                onClick={() => handleStatusUpdate(res.id, "completed")}
+              >
+                Completar
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="h-8 bg-destructive/15 px-3 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-destructive hover:bg-destructive/25"
+              onClick={() => handleStatusUpdate(res.id, "cancelled")}
+              disabled={isFinal}
+            >
+              Cancelar
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -130,13 +148,22 @@ export default function ReservasAdminPage() {
   const cancelledCount = reservations.filter(
     (res) => res.status === "cancelled",
   ).length;
+  const overdueCount = reservations.filter(
+    (res) => getReservationDisplayStatus(res.status, res.preferred_date) === "overdue",
+  ).length;
   const filteredReservations =
     statusFilter === "all"
       ? reservations
-      : reservations.filter((res) => res.status === statusFilter);
+      : statusFilter === "overdue"
+        ? reservations.filter(
+            (res) =>
+              getReservationDisplayStatus(res.status, res.preferred_date) === "overdue",
+          )
+        : reservations.filter((res) => res.status === statusFilter);
   const statusTabs = [
     { label: "Todas", value: "all", count: reservations.length },
     { label: "Pendientes", value: "pending", count: pendingCount },
+    { label: "Atrasadas", value: "overdue", count: overdueCount },
     { label: "Confirmadas", value: "confirmed", count: confirmedCount },
     { label: "Canceladas", value: "cancelled", count: cancelledCount },
   ] as const;
@@ -178,7 +205,7 @@ export default function ReservasAdminPage() {
         </div>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
@@ -188,6 +215,18 @@ export default function ReservasAdminPage() {
           </div>
           <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
             {pendingCount}
+          </p>
+        </article>
+
+        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Atrasadas
+            </p>
+            <AlarmClock className="size-4 text-red-600" />
+          </div>
+          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
+            {overdueCount}
           </p>
         </article>
 

@@ -86,7 +86,8 @@ export function DataTable<T extends Record<string, unknown>>({
         </div>
       </div>
 
-      <div className="overflow-hidden border border-border/70 bg-card/90 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl">
+      {/* Vista de tabla (escritorio / tablet >= md) */}
+      <div className="hidden overflow-hidden border border-border/70 bg-card/90 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl md:block">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -108,7 +109,7 @@ export function DataTable<T extends Record<string, unknown>>({
               {paginated.length > 0 ? (
                 paginated.map((row, index) => (
                   <TableRow
-                    key={index}
+                    key={(row as { id?: string | number }).id ?? index}
                     className={cn(
                       "border-b border-border/50 transition-colors hover:bg-primary/[0.06]",
                       index % 2 === 0 ? "bg-background/40" : "bg-muted/25",
@@ -139,6 +140,38 @@ export function DataTable<T extends Record<string, unknown>>({
             </TableBody>
           </Table>
         </div>
+      </div>
+
+      {/* Vista de tarjetas (móvil < md): cada fila es una tarjeta apilada */}
+      <div className="space-y-3 md:hidden">
+        {paginated.length > 0 ? (
+          paginated.map((row, index) => (
+            <div
+              key={(row as { id?: string | number }).id ?? index}
+              className="space-y-2 border border-border/70 bg-card/90 p-4 shadow-[6px_6px_0_var(--border)]"
+            >
+              {columns.map((column) => (
+                <div
+                  key={`${index}-${String(column.key)}`}
+                  className="flex items-start justify-between gap-3 border-b border-border/40 pb-2 last:border-0 last:pb-0"
+                >
+                  <span className="font-spaceGrotesk text-[0.58rem] font-black uppercase tracking-[0.16em] text-muted-foreground">
+                    {column.header}
+                  </span>
+                  <span className="text-right font-workSans text-sm text-foreground/90">
+                    {column.render
+                      ? column.render(row)
+                      : String(row[column.key as keyof T] ?? "")}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ))
+        ) : (
+          <div className="border border-border/70 bg-card/90 p-6 text-center font-workSans text-muted-foreground">
+            Sin resultados
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between border border-border/70 bg-card/90 px-4 py-3 shadow-[6px_6px_0_var(--border)]">

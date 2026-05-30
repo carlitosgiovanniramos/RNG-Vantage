@@ -10,14 +10,8 @@ import {
 import { DataCard } from "@/components/data-card";
 import { DashboardCharts } from "@/components/dashboard-charts";
 import { RealtimeRefresher } from "@/components/realtime-refresher";
+import { formatCurrency } from "@/lib/utils";
 import { getDashboardMetrics } from "./actions";
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-EC", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
 
 export default async function DashboardPage() {
   const { data: metrics, error, source } = await getDashboardMetrics();

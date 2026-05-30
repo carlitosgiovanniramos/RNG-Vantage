@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Eye, Home } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAdminRealtime } from "@/hooks/use-admin-realtime";
@@ -18,7 +18,10 @@ import {
   markTransactionAsCompleted,
   markTransactionAsFailed,
   cleanExpiredTransactions,
+  getReceiptSignedUrl,
 } from "./actions";
+import { PAYMENT_METHOD_LABELS, TRANSACTION_STATUS_LABELS } from "@/lib/labels";
+import { formatCurrency } from "@/lib/utils";
 
 export type TransactionRow = {
   id: string;
@@ -27,29 +30,69 @@ export type TransactionRow = {
   amount: number;
   status: "pending" | "completed" | "failed" | "refunded";
   payment_method: "cash" | "transfer" | "card" | "pending";
+  gateway: string;
+  receipt_url: string | null;
   created_at: string;
   notes: string | null;
   client_name?: string;
 };
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("es-EC", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
-
 export default function TransaccionesAdminPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedTx, setSelectedTx] = useState<TransactionRow | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<string>("transfer");
   const [statusFilter, setStatusFilter] = useState<
     TransactionRow["status"] | "all"
   >("all");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
+  const [receiptLoading, setReceiptLoading] = useState(false);
+  const [receiptViewerOpen, setReceiptViewerOpen] = useState(false);
+  const [confirmState, setConfirmState] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void | Promise<void>;
+  } | null>(null);
+  const [confirmLoading, setConfirmLoading] = useState(false);
   const queryClient = useQueryClient();
   useAdminRealtime("transactions", "admin-transactions");
+
+  const runConfirm = async () => {
+    if (!confirmState) return;
+    setConfirmLoading(true);
+    try {
+      await confirmState.onConfirm();
+    } finally {
+      setConfirmLoading(false);
+      setConfirmState(null);
+    }
+  };
+
+  const handleViewReceipt = (tx: TransactionRow) => {
+    setSelectedTx(tx);
+    setReceiptViewerOpen(true);
+    void loadReceipt(tx.id);
+  };
+
+  const loadReceipt = async (txId: string) => {
+    setReceiptLoading(true);
+    setReceiptUrl(null);
+    try {
+      const res = await getReceiptSignedUrl(txId);
+      if (res.success && res.url) {
+        setReceiptUrl(res.url);
+      } else {
+        toast.error(res.error ?? "No se pudo cargar el comprobante");
+      }
+    } catch {
+      toast.error("No se pudo cargar el comprobante");
+    } finally {
+      setReceiptLoading(false);
+    }
+  };
 
   const {
     data: transactions = [],
@@ -69,9 +112,13 @@ export default function TransaccionesAdminPage() {
 
   const handleOpenDialog = (tx: TransactionRow) => {
     setSelectedTx(tx);
-    setPaymentMethod("cash");
+    setPaymentMethod(tx.payment_method === "pending" ? "transfer" : tx.payment_method);
     setNotes("");
+    setReceiptUrl(null);
     setOpenDialog(true);
+    if (tx.receipt_url) {
+      void loadReceipt(tx.id);
+    }
   };
 
   const handleSubmit = async () => {
@@ -100,9 +147,7 @@ export default function TransaccionesAdminPage() {
     }
   };
 
-  const handleMarkFailed = async (tx: TransactionRow) => {
-    if (!confirm("¿Estás seguro de que quieres marcar esta transacción como fallida/cancelada?")) return;
-    
+  const doMarkFailed = async (tx: TransactionRow) => {
     try {
       const result = await markTransactionAsFailed(tx.id);
       if (result.success) {
@@ -117,9 +162,18 @@ export default function TransaccionesAdminPage() {
     }
   };
 
-  const handleCleanExpired = async () => {
-    if (!confirm("¿Revisar y cancelar transacciones pendientes con más de 24 horas?")) return;
-    
+  const handleMarkFailed = (tx: TransactionRow) => {
+    setConfirmState({
+      open: true,
+      title: "Marcar como fallida",
+      message:
+        "¿Seguro que quieres marcar esta transacción como fallida/cancelada? La suscripción asociada se cancelará.",
+      confirmLabel: "Marcar fallida",
+      onConfirm: () => doMarkFailed(tx),
+    });
+  };
+
+  const doCleanExpired = async () => {
     try {
       const result = await cleanExpiredTransactions();
       if (result.success) {
@@ -132,6 +186,17 @@ export default function TransaccionesAdminPage() {
       console.error(err);
       toast.error("Error al limpiar transacciones expiradas");
     }
+  };
+
+  const handleCleanExpired = () => {
+    setConfirmState({
+      open: true,
+      title: "Limpiar expiradas",
+      message:
+        "¿Revisar y cancelar las transacciones pendientes con más de 24 horas? Esta acción cancelará sus suscripciones.",
+      confirmLabel: "Limpiar",
+      onConfirm: doCleanExpired,
+    });
   };
 
   const columns: DataTableColumn<TransactionRow>[] = [
@@ -153,7 +218,28 @@ export default function TransaccionesAdminPage() {
     {
       key: "payment_method",
       header: "Método",
-      render: (tx) => tx.payment_method,
+      render: (tx) => PAYMENT_METHOD_LABELS[tx.payment_method] ?? tx.payment_method,
+    },
+    {
+      key: "receipt_url",
+      header: "Comprobante",
+      render: (tx) =>
+        tx.receipt_url ? (
+          <button
+            type="button"
+            onClick={() => handleViewReceipt(tx)}
+            className="inline-flex items-center gap-1 bg-emerald-100 px-2.5 py-1 font-spaceGrotesk text-[0.6rem] font-bold uppercase tracking-[0.12em] text-emerald-800 transition-colors hover:bg-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60"
+          >
+            <Eye className="h-3 w-3" />
+            Ver
+          </button>
+        ) : tx.payment_method === "transfer" ? (
+          <span className="inline-flex items-center bg-amber-100 px-2.5 py-0.5 font-spaceGrotesk text-[0.6rem] font-bold uppercase tracking-[0.12em] text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+            Pendiente
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
     },
     {
       key: "status",
@@ -291,7 +377,11 @@ export default function TransaccionesAdminPage() {
             }
           >
             <SelectTrigger>
-              <SelectValue placeholder="Filtrar" />
+              <SelectValue placeholder="Filtrar">
+                {statusFilter === "all"
+                  ? "Todos"
+                  : TRANSACTION_STATUS_LABELS[statusFilter] ?? "Todos"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -337,11 +427,45 @@ export default function TransaccionesAdminPage() {
                 </p>
               </div>
 
+              {/* Comprobante de transferencia (si existe) */}
+              {selectedTx.receipt_url && (
+                <div className="space-y-2">
+                  <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                    Comprobante de transferencia
+                  </label>
+                  {receiptLoading ? (
+                    <div className="flex h-40 items-center justify-center border border-border/60 bg-muted/30 text-xs text-muted-foreground">
+                      Cargando comprobante...
+                    </div>
+                  ) : receiptUrl ? (
+                    <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={receiptUrl}
+                        alt="Comprobante de transferencia"
+                        className="max-h-72 w-full border border-border/60 bg-muted/30 object-contain"
+                      />
+                      <span className="mt-1 block text-center font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-wide text-primary hover:underline">
+                        Abrir en tamaño completo
+                      </span>
+                    </a>
+                  ) : (
+                    <div className="flex h-20 items-center justify-center border border-border/60 bg-muted/30 text-xs text-muted-foreground">
+                      No se pudo cargar el comprobante.
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">Método de Pago</label>
                 <Select value={paymentMethod} onValueChange={(v) => v && setPaymentMethod(v)}>
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue>
+                      {paymentMethod === "pending"
+                        ? "Otro"
+                        : PAYMENT_METHOD_LABELS[paymentMethod] ?? paymentMethod}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cash">Efectivo</SelectItem>
@@ -381,6 +505,85 @@ export default function TransaccionesAdminPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Visor de comprobante (abre desde la columna Comprobante) */}
+      <Dialog open={receiptViewerOpen} onOpenChange={setReceiptViewerOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-spaceGrotesk text-base font-black uppercase tracking-[0.12em]">
+              Comprobante de transferencia
+            </DialogTitle>
+          </DialogHeader>
+
+          {receiptLoading ? (
+            <div className="flex h-64 items-center justify-center border border-border/60 bg-muted/30 text-sm text-muted-foreground">
+              Cargando comprobante...
+            </div>
+          ) : receiptUrl ? (
+            <div className="space-y-3">
+              <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={receiptUrl}
+                  alt="Comprobante de transferencia"
+                  className="max-h-[60vh] w-full border border-border/60 bg-muted/30 object-contain"
+                />
+              </a>
+              <a
+                href={receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-center font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-wide text-primary hover:underline"
+              >
+                Abrir en tamaño completo
+              </a>
+            </div>
+          ) : (
+            <div className="flex h-24 items-center justify-center border border-border/60 bg-muted/30 text-sm text-muted-foreground">
+              No se pudo cargar el comprobante.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Diálogo de confirmación (reemplaza window.confirm) */}
+      <Dialog
+        open={confirmState?.open ?? false}
+        onOpenChange={(open) => {
+          if (!open && !confirmLoading) setConfirmState(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-spaceGrotesk text-base font-black uppercase tracking-[0.12em]">
+              {confirmState?.title}
+            </DialogTitle>
+          </DialogHeader>
+
+          <p className="font-workSans text-sm text-muted-foreground">
+            {confirmState?.message}
+          </p>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmState(null)}
+              disabled={confirmLoading}
+              className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={runConfirm}
+              disabled={confirmLoading}
+              className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
+            >
+              {confirmLoading ? "Procesando..." : confirmState?.confirmLabel}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
