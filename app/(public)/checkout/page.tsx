@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, Clock3, CreditCard, FileCheck2, ReceiptText, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { formatCurrency } from "@/lib/utils";
 import { CheckoutForm } from "./checkout-form";
 
 type CheckoutPageProps = {
@@ -18,13 +19,6 @@ const ERROR_MESSAGES: Record<string, string> = {
   "create-failed": "No se pudo crear la suscripcion. Intenta nuevamente.",
   "transaction-failed": "No se pudo registrar la transaccion. Intenta nuevamente.",
 };
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-EC", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
 
 function getDescriptionItems(description?: string | null): string[] {
   return (description ?? "Servicio disponible bajo consulta.")

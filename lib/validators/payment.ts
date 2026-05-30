@@ -55,6 +55,15 @@ export const kushkiTransferInitSchema = checkoutBaseSchema.extend({
 });
 
 /**
+ * Inicio de pago por transferencia bancaria MANUAL (sin pasarela).
+ * El cliente transfiere a la cuenta de RGL y luego sube el comprobante;
+ * Ruth verifica y aprueba. Solo se necesita el servicio y la renovacion.
+ */
+export const manualTransferInitSchema = checkoutBaseSchema;
+
+export type ManualTransferInitInput = z.infer<typeof manualTransferInitSchema>;
+
+/**
  * Payload entrante del webhook de Kushki.
  * Lenient: Kushki puede enviar campos extra; Zod los descarta
  * por defecto (no usar .strict()).

@@ -18,6 +18,7 @@ import { useSupabase } from "@/hooks/use-supabase";
 const navLinks = [
   { href: "/catalogo", label: "Servicios" },
   { href: "/capacitacion", label: "Capacitación" },
+  { href: "/sobre-nosotros", label: "Sobre Nosotros" },
   { href: "/reservar", label: "Reservar" },
 ];
 
@@ -30,7 +31,11 @@ export function Navbar() {
   const pathname = usePathname();
   const supabase = useSupabase();
   const isHome = pathname === "/";
-  const hasHero = isHome || pathname === "/catalogo" || pathname === "/capacitacion";
+  const hasHero =
+    isHome ||
+    pathname === "/catalogo" ||
+    pathname === "/capacitacion" ||
+    pathname === "/sobre-nosotros";
 
   useEffect(() => {
     if (!hasHero) return;

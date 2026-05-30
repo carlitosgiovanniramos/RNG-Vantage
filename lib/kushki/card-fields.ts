@@ -1,5 +1,10 @@
-import { IKushki, init } from "@kushki/js-sdk";
-import { ICard, initCardToken } from "@kushki/js-sdk/Card";
+import type { IKushki } from "@kushki/js-sdk";
+import type { ICard } from "@kushki/js-sdk/Card";
+
+// El SDK de Kushki toca `window` al evaluarse, por lo que NO puede
+// importarse en el nivel superior (rompe el SSR de los Client Components).
+// Se carga dinamicamente dentro de initKushkiCardFields, que solo corre
+// en el navegador.
 
 /**
  * Tokenizacion de tarjetas con KushkiJS (lado cliente).
@@ -32,6 +37,10 @@ export async function initKushkiCardFields(
   if (!merchantId) {
     throw new Error("Missing NEXT_PUBLIC_KUSHKI_PUBLIC_MERCHANT_ID");
   }
+
+  // Carga diferida del SDK (solo en el navegador).
+  const { init } = await import("@kushki/js-sdk");
+  const { initCardToken } = await import("@kushki/js-sdk/Card");
 
   kushkiInstance = await init({
     inTest: process.env.NEXT_PUBLIC_KUSHKI_ENV !== "production",

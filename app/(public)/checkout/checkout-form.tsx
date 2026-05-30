@@ -1,19 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight, CreditCard, Landmark, RefreshCw, Wallet } from "lucide-react";
-import { createSubscription } from "./actions";
+import { CreditCard, Building2, Landmark, RefreshCw } from "lucide-react";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { CardForm } from "./card-form";
+import { ManualTransferForm } from "./manual-transfer-form";
 import { TransferForm } from "./transfer-form";
 
-type PaymentMethod = "card" | "transfer" | "cash";
+type PaymentMethod = "transfer" | "card" | "transfer_kushki";
 
 const PAYMENT_METHODS = [
-  { id: "card", label: "Tarjeta", icon: CreditCard },
   { id: "transfer", label: "Transferencia", icon: Landmark },
-  { id: "cash", label: "Efectivo", icon: Wallet },
+  { id: "card", label: "Tarjeta", icon: CreditCard },
+  { id: "transfer_kushki", label: "Transf. Kushki", icon: Building2 },
 ] as const;
+
+const METHOD_TITLES: Record<PaymentMethod, string> = {
+  transfer: "Pago por transferencia",
+  card: "Pago con tarjeta",
+  transfer_kushki: "Transferencia con Kushki",
+};
 
 export function CheckoutForm({
   serviceId,
@@ -26,38 +38,9 @@ export function CheckoutForm({
   success: boolean;
   amount: number;
 }) {
-  const [method, setMethod] = useState<PaymentMethod>("card");
+  const [openMethod, setOpenMethod] = useState<PaymentMethod | null>(null);
   const [autoRenew, setAutoRenew] = useState(isRecurringService);
-  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const router = useRouter();
-
-  // Flujo manual de efectivo: Ruth confirma el pago manualmente.
-  async function handleCashCheckout() {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      const res = await createSubscription({
-        service_id: serviceId,
-        auto_renew: autoRenew,
-      });
-      if (!res.success) {
-        setErrorMsg(res.error || "Ocurrio un error inesperado.");
-        if (res.error === "Debes iniciar sesion para continuar.") {
-          setTimeout(() => {
-            const redirect = encodeURIComponent(`/checkout?service_id=${serviceId}`);
-            router.push(`/login?redirect=${redirect}`);
-          }, 2000);
-        }
-      } else {
-        router.push(`/checkout?service_id=${serviceId}&success=1`);
-      }
-    } catch {
-      setErrorMsg("Error de conexion. Intenta nuevamente.");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   if (success) {
     return (
@@ -71,33 +54,20 @@ export function CheckoutForm({
     );
   }
 
+  function handleOpen(method: PaymentMethod) {
+    setErrorMsg(null);
+    setOpenMethod(method);
+  }
+
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setOpenMethod(null);
+      setErrorMsg(null);
+    }
+  }
+
   return (
     <div className="mt-6 space-y-4">
-      {errorMsg && (
-        <div className="border border-red-200 bg-red-50 px-4 py-3 font-workSans text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
-          {errorMsg}
-        </div>
-      )}
-
-      {/* Selector de metodo de pago */}
-      <div className="grid grid-cols-3 gap-2">
-        {PAYMENT_METHODS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setMethod(id)}
-            className={`flex flex-col items-center justify-center gap-1.5 border px-2 py-3 font-spaceGrotesk text-[0.6rem] font-bold uppercase tracking-[0.1em] transition-colors ${
-              method === id
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-muted/30 text-muted-foreground hover:bg-muted/50"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-            {label}
-          </button>
-        ))}
-      </div>
-
       {/* Renovacion automatica (compartida por todos los metodos) */}
       <label className="flex cursor-pointer items-start gap-3 border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
         <input
@@ -120,31 +90,67 @@ export function CheckoutForm({
         </span>
       </label>
 
-      {/* Contenido segun el metodo elegido */}
-      {method === "card" && (
-        <CardForm
-          key={isRecurringService && autoRenew ? "card-recurring" : "card-onetime"}
-          serviceId={serviceId}
-          autoRenew={autoRenew}
-          amount={amount}
-          recurring={isRecurringService && autoRenew}
-          onError={setErrorMsg}
-        />
-      )}
-      {method === "transfer" && (
-        <TransferForm serviceId={serviceId} autoRenew={autoRenew} amount={amount} onError={setErrorMsg} />
-      )}
-      {method === "cash" && (
-        <button
-          type="button"
-          onClick={handleCashCheckout}
-          disabled={loading}
-          className="inline-flex h-12 w-full items-center justify-between bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
-        >
-          <span>{loading ? "Procesando..." : "Confirmar contratacion"}</span>
-          <ArrowRight className="h-4 w-4" />
-        </button>
-      )}
+      {/* Selector de metodo de pago: cada boton abre su modal */}
+      <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        Elige un método de pago
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {PAYMENT_METHODS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => handleOpen(id)}
+            className="flex flex-col items-center justify-center gap-1.5 border border-border bg-muted/30 px-2 py-4 font-spaceGrotesk text-[0.6rem] font-bold uppercase tracking-[0.1em] text-muted-foreground transition-colors hover:border-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Modal con el formulario del metodo elegido */}
+      <Dialog open={openMethod !== null} onOpenChange={handleOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-spaceGrotesk text-base font-black uppercase tracking-[0.12em]">
+              {openMethod ? METHOD_TITLES[openMethod] : ""}
+            </DialogTitle>
+          </DialogHeader>
+
+          {errorMsg && (
+            <div className="border border-red-200 bg-red-50 px-4 py-3 font-workSans text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+              {errorMsg}
+            </div>
+          )}
+
+          {openMethod === "transfer" && (
+            <ManualTransferForm
+              serviceId={serviceId}
+              autoRenew={autoRenew}
+              amount={amount}
+              onError={setErrorMsg}
+            />
+          )}
+          {openMethod === "card" && (
+            <CardForm
+              key={isRecurringService && autoRenew ? "card-recurring" : "card-onetime"}
+              serviceId={serviceId}
+              autoRenew={autoRenew}
+              amount={amount}
+              recurring={isRecurringService && autoRenew}
+              onError={setErrorMsg}
+            />
+          )}
+          {openMethod === "transfer_kushki" && (
+            <TransferForm
+              serviceId={serviceId}
+              autoRenew={autoRenew}
+              amount={amount}
+              onError={setErrorMsg}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

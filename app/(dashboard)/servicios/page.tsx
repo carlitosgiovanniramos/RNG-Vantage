@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   getServices,
   createService,
@@ -13,6 +14,8 @@ import { CreateServiceInput } from "@/lib/validators/service";
 import type { Database, ServiceType } from "@/types/database";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
+import { SERVICE_TYPE_LABELS } from "@/lib/labels";
+import { useConfirm } from "@/components/use-confirm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, PencilLine, Plus, Sparkles, Trash2 } from "lucide-react";
 import {
@@ -57,6 +60,7 @@ function normalizeServiceType(value: string): ServiceType | null {
 
 export default function ServiciosAdminPage() {
   const queryClient = useQueryClient();
+  const { confirm, confirmDialog } = useConfirm();
 
   // Form state
   const [formData, setFormData] = useState<CreateServiceInput>(EMPTY_SERVICE_FORM);
@@ -122,10 +126,10 @@ export default function ServiciosAdminPage() {
     const { success, error, details } = result;
 
     if (success) {
-      alert(
+      toast.success(
         editingServiceId
-          ? "Servicio actualizado exitosamente!"
-          : "Servicio creado exitosamente!",
+          ? "Servicio actualizado exitosamente"
+          : "Servicio creado exitosamente",
       );
       setFormData(EMPTY_SERVICE_FORM);
       setEditingServiceId(null);
@@ -140,14 +144,20 @@ export default function ServiciosAdminPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Seguro que deseas eliminar este servicio?")) return;
+    const ok = await confirm({
+      title: "Eliminar servicio",
+      message: "¿Seguro que deseas eliminar este servicio? Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
 
     const { success, error } = await deleteService(id);
     if (success) {
       await queryClient.invalidateQueries({ queryKey: ["admin-services"] });
       await refetch();
     } else {
-      alert("Error al eliminar: " + error);
+      toast.error("Error al eliminar: " + error);
     }
   };
 
@@ -199,8 +209,8 @@ export default function ServiciosAdminPage() {
       header: "Tipo / Precio",
       render: (service) => (
         <div>
-          <div className="capitalize text-foreground/80">
-            {service.type.replace("_", " ")}
+          <div className="text-foreground/80">
+            {SERVICE_TYPE_LABELS[service.type] ?? service.type}
           </div>
           <div className="font-spaceGrotesk text-base font-black text-foreground">
             ${service.price} / {service.duration_months}m
@@ -502,6 +512,7 @@ export default function ServiciosAdminPage() {
           </form>
         </DialogContent>
       </Dialog>
+      {confirmDialog}
     </div>
   );
 }

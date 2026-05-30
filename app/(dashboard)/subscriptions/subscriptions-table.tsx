@@ -4,6 +4,7 @@ import { Zap } from "lucide-react";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
+import { formatCurrency } from "@/lib/utils";
 import { CancelSubscriptionButton } from "./cancel-subscription-button";
 
 export type SubscriptionTableRow = {
@@ -17,13 +18,6 @@ export type SubscriptionTableRow = {
   serviceName: string;
   price: number;
 };
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-EC", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
 
 export function SubscriptionsTable({ rows }: { rows: SubscriptionTableRow[] }) {
   const columns: DataTableColumn<SubscriptionTableRow>[] = [

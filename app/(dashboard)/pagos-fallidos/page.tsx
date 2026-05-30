@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/server";
+import { formatCurrency } from "@/lib/utils";
 
 type FailedTransaction = {
   id: string;
@@ -18,13 +19,6 @@ const STATUS_LABELS: Record<string, string> = {
   failed: "Fallida",
   refunded: "Reembolsada / Contracargo",
 };
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("es-EC", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
 
 function formatDate(value: string): string {
   return new Date(value).toLocaleString("es-EC", {
