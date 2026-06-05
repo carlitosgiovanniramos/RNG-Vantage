@@ -17,12 +17,12 @@ export type BankAccount = {
 };
 
 export const RGL_BANK_ACCOUNT: BankAccount = {
-  bank: "REEMPLAZAR — Banco",
-  accountType: "REEMPLAZAR — Ahorros / Corriente",
-  accountNumber: "REEMPLAZAR — Número de cuenta",
-  holder: "REEMPLAZAR — Titular de la cuenta",
-  identification: "REEMPLAZAR — Cédula / RUC",
-  email: "REEMPLAZAR — correo para enviar comprobante (opcional)",
+  bank: "Banco Pichincha",
+  accountType: "Cuenta de Ahorros",
+  accountNumber: "2205311312",
+  holder: "Ruth Gómez Lescano",
+  identification: "1805082474",
+  email: "info@rglestudio.com",
 };
 
 /** Etiquetas legibles para renderizar la cuenta en la UI. */
@@ -31,5 +31,6 @@ export const BANK_ACCOUNT_FIELDS: { label: string; key: keyof BankAccount }[] = 
   { label: "Tipo de cuenta", key: "accountType" },
   { label: "Número de cuenta", key: "accountNumber" },
   { label: "Titular", key: "holder" },
-  { label: "Cédula / RUC", key: "identification" },
+  { label: "Cédula", key: "identification" },
+  { label: "Correo de contacto", key: "email" },
 ];

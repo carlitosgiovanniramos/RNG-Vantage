@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, Building2, Landmark, RefreshCw } from "lucide-react";
+import { CreditCard, Landmark, RefreshCw } from "lucide-react";
 
 import {
   Dialog,
@@ -11,20 +11,17 @@ import {
 } from "@/components/ui/dialog";
 import { CardForm } from "./card-form";
 import { ManualTransferForm } from "./manual-transfer-form";
-import { TransferForm } from "./transfer-form";
 
-type PaymentMethod = "transfer" | "card" | "transfer_kushki";
+type PaymentMethod = "transfer" | "card";
 
 const PAYMENT_METHODS = [
   { id: "transfer", label: "Transferencia", icon: Landmark },
   { id: "card", label: "Tarjeta", icon: CreditCard },
-  { id: "transfer_kushki", label: "Transf. Kushki", icon: Building2 },
 ] as const;
 
 const METHOD_TITLES: Record<PaymentMethod, string> = {
   transfer: "Pago por transferencia",
   card: "Pago con tarjeta",
-  transfer_kushki: "Transferencia con Kushki",
 };
 
 export function CheckoutForm({
@@ -90,11 +87,11 @@ export function CheckoutForm({
         </span>
       </label>
 
-      {/* Selector de metodo de pago: cada boton abre su modal */}
+      {/* Selector de metodo de pago */}
       <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
         Elige un método de pago
       </p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {PAYMENT_METHODS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -138,14 +135,6 @@ export function CheckoutForm({
               autoRenew={autoRenew}
               amount={amount}
               recurring={isRecurringService && autoRenew}
-              onError={setErrorMsg}
-            />
-          )}
-          {openMethod === "transfer_kushki" && (
-            <TransferForm
-              serviceId={serviceId}
-              autoRenew={autoRenew}
-              amount={amount}
               onError={setErrorMsg}
             />
           )}

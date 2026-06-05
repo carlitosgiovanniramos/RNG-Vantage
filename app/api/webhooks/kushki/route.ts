@@ -2,9 +2,23 @@ import { NextResponse } from "next/server";
 import { timingSafeEqual } from "node:crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { z } from "zod";
 import { getKushkiConfig } from "@/lib/kushki/config";
-import { kushkiWebhookSchema } from "@/lib/validators/payment";
 import { mapKushkiStatus, isFinalTransactionStatus } from "@/lib/kushki/webhook";
+
+// Schema movido aqui para no depender de lib/validators/payment (refactor Payphone).
+const kushkiStatuses = ["APPROVAL", "DECLINED", "INITIALIZED", "PENDING", "EXPIRED"] as const;
+const kushkiWebhookSchema = z.object({
+  transactionId: z.string().min(1),
+  transactionReference: z.string().optional(),
+  ticketNumber: z.string().optional(),
+  status: z.enum(kushkiStatuses),
+  paymentMethod: z.string().optional(),
+  amount: z.number().optional(),
+  subscriptionId: z.string().optional(),
+  eventType: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
 import { kushkiFetch } from "@/lib/kushki/client";
 import type { KushkiTransactionStatus } from "@/lib/kushki/types";
 import { sendEmail } from "@/lib/email/client";

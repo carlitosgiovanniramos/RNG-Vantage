@@ -1,15 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 
-import { chargeWithCard, subscribeWithCard } from "./payment-actions";
-import {
-  initKushkiCardFields,
-  requestCardToken,
-  resetKushkiCardFields,
-} from "@/lib/kushki/card-fields";
+import { initPayphonePayment } from "./payment-actions";
 
 function formatUsd(value: number): string {
   return new Intl.NumberFormat("es-EC", {
@@ -18,12 +12,6 @@ function formatUsd(value: number): string {
   }).format(value);
 }
 
-/**
- * Formulario de pago con tarjeta.
- * La tokenizacion ocurre en el navegador (KushkiJS, campos en iframes):
- * el numero de tarjeta nunca toca nuestro DOM (requisito PCI). El
- * servidor solo recibe el `token`.
- */
 export function CardForm({
   serviceId,
   autoRenew,
@@ -34,119 +22,67 @@ export function CardForm({
   serviceId: string;
   autoRenew: boolean;
   amount: number;
-  /**
-   * `true` => suscripcion recurrente (servicio manejo_redes + auto-renovar).
-   * El padre re-monta el componente con `key` cuando esto cambia, asi que
-   * `recurring` es constante durante toda la vida del componente.
-   */
   recurring: boolean;
   onError: (msg: string | null) => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [sdkReady, setSdkReady] = useState(false);
-  const router = useRouter();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    initKushkiCardFields(amount, recurring)
-      .then(() => {
-        if (!cancelled) setSdkReady(true);
-      })
-      .catch((error) => {
-        console.error("Error al inicializar Kushki:", error);
-        if (!cancelled) onError("No se pudo cargar la pasarela de pago.");
-      });
-
-    return () => {
-      cancelled = true;
-      resetKushkiCardFields();
-    };
-    // `recurring` es constante por montaje (el padre re-monta via key).
-  }, [amount, onError, recurring]);
 
   async function handlePay() {
     setLoading(true);
     onError(null);
     try {
-      const token = await requestCardToken();
-
-      const res = recurring
-        ? await subscribeWithCard({
-            service_id: serviceId,
-            auto_renew: true,
-            token,
-          })
-        : await chargeWithCard({
-            service_id: serviceId,
-            auto_renew: autoRenew,
-            token,
-          });
+      const res = await initPayphonePayment({
+        service_id: serviceId,
+        auto_renew: autoRenew,
+      });
 
       if (!res.success) {
-        onError(res.error || "No se pudo procesar el pago.");
-        if (res.error === "Debes iniciar sesion para continuar.") {
-          setTimeout(() => {
-            const redirect = encodeURIComponent(`/checkout?service_id=${serviceId}`);
-            router.push(`/login?redirect=${redirect}`);
-          }, 2000);
-        }
+        onError(res.error || "No se pudo iniciar el pago.");
         return;
       }
-      router.push(`/checkout?service_id=${serviceId}&success=1&method=card`);
+
+      // Redireccion completa al portal de pago de Payphone.
+      window.location.href = res.paymentUrl;
     } catch {
-      onError("Error al procesar el pago. Revisa los datos de la tarjeta.");
+      onError("Error al iniciar el pago. Intenta nuevamente.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-3">
-      <div>
-        <label className="mb-1 block font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          Titular de la tarjeta
-        </label>
-        <div id="kushki-card-name" className="h-11 border border-border bg-background px-3" />
-      </div>
-      <div>
-        <label className="mb-1 block font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-          Numero de tarjeta
-        </label>
-        <div id="kushki-card-number" className="h-11 border border-border bg-background px-3" />
-      </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            Vencimiento
-          </label>
-          <div id="kushki-card-expiry" className="h-11 border border-border bg-background px-3" />
-        </div>
-        <div>
-          <label className="mb-1 block font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.14em] text-muted-foreground">
-            CVV
-          </label>
-          <div id="kushki-card-cvv" className="h-11 border border-border bg-background px-3" />
-        </div>
+    <div className="space-y-4">
+      <div className="border border-border bg-muted/30 px-4 py-3">
+        <p className="font-workSans text-sm leading-relaxed text-muted-foreground">
+          Seras redirigido a <span className="font-semibold text-foreground">Payphone</span> para
+          ingresar los datos de tu tarjeta de forma segura. Una vez completado el
+          pago regresaras automaticamente a este sitio.
+        </p>
       </div>
 
       <button
         type="button"
         onClick={handlePay}
-        disabled={loading || !sdkReady}
+        disabled={loading}
         className="inline-flex h-12 w-full items-center justify-between bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50 active:scale-95"
       >
         <span>
           {loading
-            ? "Procesando..."
-            : !sdkReady
-              ? "Cargando..."
-              : recurring
-                ? `Suscribirme · ${formatUsd(amount)}/mes`
-                : `Pagar ${formatUsd(amount)}`}
+            ? "Iniciando pago..."
+            : recurring
+              ? `Suscribirme · ${formatUsd(amount)}/mes`
+              : `Pagar ${formatUsd(amount)} con Payphone`}
         </span>
         <ArrowRight className="h-4 w-4" />
       </button>
+
+      <div className="flex items-center gap-2 text-muted-foreground">
+        <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+        <p className="font-workSans text-xs">
+          Pago procesado de forma segura por Payphone. Tus datos bancarios nunca
+          tocan nuestros servidores.
+        </p>
+      </div>
     </div>
   );
 }
