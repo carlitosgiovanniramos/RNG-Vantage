@@ -20,7 +20,6 @@ type SubscriptionItem = {
   starts_at: string | null;
   ends_at: string | null;
   auto_renew: boolean | null;
-  gateway_subscription_id: string | null;
   services: ServiceJoin | ServiceJoin[] | null;
 };
 
@@ -109,7 +108,7 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
   const { data: subscriptions, count } = await supabase
     .from("subscriptions")
     .select(
-      "id, status, starts_at, ends_at, auto_renew, gateway_subscription_id, services(id, name, type, price)",
+      "id, status, starts_at, ends_at, auto_renew, services(id, name, type, price)",
       { count: "exact" },
     )
     .eq("user_id", user.id)
@@ -124,7 +123,6 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
       starts_at: item.starts_at,
       ends_at: item.ends_at,
       auto_renew: item.auto_renew,
-      isKushkiRecurring: Boolean(item.gateway_subscription_id),
       serviceName: service?.name ?? "Servicio",
       serviceType: service?.type ?? "—",
       price: service?.price ?? 0,

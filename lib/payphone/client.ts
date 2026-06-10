@@ -1,5 +1,7 @@
+import { request as httpsRequest } from "node:https";
+
 import { getPayphoneConfig } from "./config";
-import type { PayphoneChargeResponse, PayphoneConfirmResponse } from "./types";
+import type { PayphonePrepareResponse, PayphoneConfirmResponse } from "./types";
 
 const BASE_URL = "https://pay.payphonetodoesposible.com/api";
 
@@ -13,52 +15,85 @@ export class PayphoneApiError extends Error {
   }
 }
 
-async function payphoneFetch<T>(path: string, body: unknown): Promise<T> {
+/**
+ * POST a la API de Payphone usando el modulo `https` nativo de Node.
+ *
+ * IMPORTANTE: NO usar `fetch` (undici). El backend de Payphone (ASP.NET)
+ * responde HTTP 500 ("Runtime Error") ante las peticiones de undici
+ * (por el manejo de cabeceras en minuscula). El modulo `https` nativo
+ * preserva las cabeceras y funciona correctamente.
+ */
+function payphonePost(
+  path: string,
+  body: unknown,
+): Promise<{ status: number; text: string }> {
   const { token } = getPayphoneConfig();
+  const payload = JSON.stringify(body);
 
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
+  return new Promise((resolve, reject) => {
+    const req = httpsRequest(
+      `${BASE_URL}${path}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(payload),
+        },
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
+        res.on("end", () => {
+          resolve({ status: res.statusCode ?? 0, text: data });
+        });
+      },
+    );
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
   });
+}
 
-  if (!res.ok) {
-    // Loguear la respuesta completa para diagnosticar errores de Payphone.
-    let rawBody = "";
-    try {
-      rawBody = await res.text();
-    } catch {}
-    console.error(`[payphone] ${path} → HTTP ${res.status}:`, rawBody);
+async function payphoneFetch<T>(path: string, body: unknown): Promise<T> {
+  const { status, text } = await payphonePost(path, body);
 
-    let message = `Error Payphone ${res.status}`;
+  if (status < 200 || status >= 300) {
+    console.error(`[payphone] ${path} → HTTP ${status}:`, text.slice(0, 500));
+
+    let message = `Error Payphone ${status}`;
     try {
-      const parsed = JSON.parse(rawBody) as { message?: string; error?: string; title?: string };
+      const parsed = JSON.parse(text) as { message?: string; error?: string; title?: string };
       message = parsed.message ?? parsed.error ?? parsed.title ?? message;
     } catch {}
-    throw new PayphoneApiError(res.status, message);
+    throw new PayphoneApiError(status, message);
   }
 
-  return res.json() as Promise<T>;
+  return JSON.parse(text) as T;
 }
 
 /**
- * Crea una intención de pago en Payphone y devuelve la URL de pago.
+ * Crea (prepara) una intención de pago en Payphone y devuelve los
+ * enlaces de pago. El cliente debe redirigirse a `payWithCard` o
+ * `payWithPayPhone`.
  *
  * amount: monto en CENTAVOS USD (ej. $50.00 → 5000).
- * clientTransactionId: UUID de la transaccion en nuestra BD.
+ * clientTransactionId: identificador unico propio, MAXIMO 15 caracteres.
+ * Debe cumplirse: amount === amountWithoutTax + amountWithTax + tax + service + tip.
  */
-export async function createPayphonePayment(params: {
+export async function preparePayphonePayment(params: {
   amount: number;
   clientTransactionId: string;
   reference: string;
-  email: string;
+  email?: string;
   responseUrl: string;
   cancellationUrl: string;
-}): Promise<PayphoneChargeResponse> {
-  return payphoneFetch<PayphoneChargeResponse>("/button/Charge", {
+}): Promise<PayphonePrepareResponse> {
+  const { storeId } = getPayphoneConfig();
+
+  return payphoneFetch<PayphonePrepareResponse>("/button/Prepare", {
     amount: params.amount,
     amountWithoutTax: params.amount,
     amountWithTax: 0,
@@ -66,6 +101,7 @@ export async function createPayphonePayment(params: {
     service: 0,
     tip: 0,
     currency: "USD",
+    storeId,
     clientTransactionId: params.clientTransactionId,
     reference: params.reference,
     lang: "es",
@@ -78,13 +114,16 @@ export async function createPayphonePayment(params: {
 /**
  * Confirma el resultado final de un pago con Payphone.
  * Debe llamarse desde /pago-respuesta cuando el cliente regresa del portal.
+ *
+ * @param id ID numerico que Payphone envia en la URL de retorno (?id=).
+ * @param clientTxId Nuestro clientTransactionId (campo `clientTxId` en la API).
  */
 export async function confirmPayphonePayment(
   id: number,
-  clientTransactionId: string,
+  clientTxId: string,
 ): Promise<PayphoneConfirmResponse> {
-  return payphoneFetch<PayphoneConfirmResponse>("/button/Confirm", {
+  return payphoneFetch<PayphoneConfirmResponse>("/button/V2/Confirm", {
     id,
-    clientTransactionId,
+    clientTxId,
   });
 }

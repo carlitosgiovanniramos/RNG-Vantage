@@ -8,7 +8,7 @@ import {
   payphonePaymentSchema,
   manualTransferInitSchema,
 } from "@/lib/validators/payment";
-import { createPayphonePayment, PayphoneApiError } from "@/lib/payphone/client";
+import { preparePayphonePayment, PayphoneApiError } from "@/lib/payphone/client";
 import { getPayphoneConfig } from "@/lib/payphone/config";
 
 
@@ -104,15 +104,26 @@ export async function initPayphonePayment(input: {
 
   const { responseUrl, cancellationUrl } = getPayphoneConfig();
 
-  let payphoneRes: Awaited<ReturnType<typeof createPayphonePayment>>;
+  // clientTransactionId: identificador propio unico, MAXIMO 15 caracteres
+  // (requisito de Payphone). base36(timestamp) + 4 chars aleatorios.
+  // Se guarda en gateway_reference para reconciliar al volver del portal.
+  const clientTxId = (
+    Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+  ).slice(0, 15);
+
+  await supabaseAdmin
+    .from("transactions")
+    .update({ gateway_reference: clientTxId })
+    .eq("id", createdTransaction.id);
+
+  let prepared: Awaited<ReturnType<typeof preparePayphonePayment>>;
   try {
-    payphoneRes = await createPayphonePayment({
-      // Payphone recibe el monto en dolares enteros (USD): $50.00 → 50.
-      amount: Math.round(service.price),
-      // UUID sin guiones: evita errores de parsing en el servidor de Payphone.
-      clientTransactionId: createdTransaction.id.replace(/-/g, ""),
+    prepared = await preparePayphonePayment({
+      // Payphone recibe el monto en CENTAVOS USD: $50.00 → 5000.
+      amount: Math.round(service.price * 100),
+      clientTransactionId: clientTxId,
       reference: service.name,
-      email: user.email ?? "",
+      email: user.email ?? undefined,
       responseUrl,
       cancellationUrl: `${cancellationUrl}?service_id=${service_id}&payment_cancelled=1`,
     });
@@ -134,15 +145,10 @@ export async function initPayphonePayment(input: {
     };
   }
 
-  // Guardar el ID de Payphone para poder confirmar en /pago-respuesta.
-  await supabaseAdmin
-    .from("transactions")
-    .update({ gateway_transaction_id: String(payphoneRes.transactionId) })
-    .eq("id", createdTransaction.id);
-
   return {
     success: true as const,
-    paymentUrl: payphoneRes.paymentUrl,
+    // Redirige al checkout de tarjeta de Payphone.
+    paymentUrl: prepared.payWithCard,
     subscription_id: createdSubscription.id,
     transaction_id: createdTransaction.id,
   };

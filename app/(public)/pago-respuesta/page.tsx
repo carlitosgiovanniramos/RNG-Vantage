@@ -40,18 +40,19 @@ async function processPayphoneReturn(params: {
 
   // Validar que los parametros sean utilizables.
   const payphoneIdNum = parseInt(payphoneId, 10);
-  if (isNaN(payphoneIdNum) || payphoneIdNum <= 0) {
+  if (isNaN(payphoneIdNum) || payphoneIdNum <= 0 || !clientTransactionId) {
     return { outcome: "invalid" };
   }
 
   const supabaseAdmin = createAdminClient();
 
-  // Buscar la transaccion por el ID numerico que Payphone envia en ?id=
-  // (guardado como gateway_transaction_id al crear el pago).
+  // Buscar la transaccion por nuestro clientTransactionId (guardado en
+  // gateway_reference al iniciar el pago). El ?id= numerico de Payphone
+  // solo se conoce al volver del portal.
   const { data: transaction, error: txError } = await supabaseAdmin
     .from("transactions")
     .select("id, status, subscription_id, user_id, amount")
-    .eq("gateway_transaction_id", String(payphoneIdNum))
+    .eq("gateway_reference", clientTransactionId)
     .maybeSingle();
 
   if (txError || !transaction) {
@@ -99,7 +100,7 @@ async function processPayphoneReturn(params: {
   const newStatus = approved ? "completed" : "failed";
   const gatewayStatus = approved
     ? `approved:${confirmed.authorizationCode ?? ""}`
-    : `declined:${confirmed.statusMessage ?? ""}`;
+    : `declined:${confirmed.transactionStatus ?? confirmed.message ?? ""}`;
 
   // Si fue aprobado, activar la suscripcion ANTES de marcar la transaccion
   // como final: si esto falla y Payphone reintenta el callback, la
@@ -122,6 +123,7 @@ async function processPayphoneReturn(params: {
     .from("transactions")
     .update({
       status: newStatus,
+      gateway_transaction_id: String(payphoneIdNum),
       gateway_status: gatewayStatus,
     })
     .eq("id", transaction.id);
@@ -140,7 +142,10 @@ async function processPayphoneReturn(params: {
   }
 
   if (!approved) {
-    return { outcome: "failed", reason: confirmed.statusMessage ?? "Pago rechazado." };
+    return {
+      outcome: "failed",
+      reason: confirmed.message ?? confirmed.transactionStatus ?? "Pago rechazado.",
+    };
   }
 
   // Obtener nombre del servicio para la pantalla de exito.

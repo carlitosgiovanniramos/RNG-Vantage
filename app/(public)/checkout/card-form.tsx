@@ -58,6 +58,12 @@ export function CardForm({
           ingresar los datos de tu tarjeta de forma segura. Una vez completado el
           pago regresaras automaticamente a este sitio.
         </p>
+        {recurring && (
+          <p className="mt-2 font-workSans text-xs leading-relaxed text-muted-foreground">
+            Es un pago unico. Al vencer te avisaremos para renovar: con Payphone el
+            cobro no se realiza de forma automatica.
+          </p>
+        )}
       </div>
 
       <button
@@ -70,7 +76,7 @@ export function CardForm({
           {loading
             ? "Iniciando pago..."
             : recurring
-              ? `Suscribirme · ${formatUsd(amount)}/mes`
+              ? `Pagar primer mes · ${formatUsd(amount)}`
               : `Pagar ${formatUsd(amount)} con Payphone`}
         </span>
         <ArrowRight className="h-4 w-4" />
