@@ -1,10 +1,14 @@
 import Link from "next/link";
 import Image from "next/image";
 import { GraduationCap, Users, Award, CalendarCheck, ArrowRight, CheckCircle2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { Database } from "@/types/database";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
+
+// Pagina estatica con ISR: se sirve desde el CDN y se regenera como
+// maximo cada 5 minutos.
+export const revalidate = 300;
 
 function formatPrice(price: number): string {
   if (price === 0) return "Gratis";
@@ -33,7 +37,7 @@ const STEPS = [
 ];
 
 export default async function CapacitacionPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: services } = await supabase
     .from("services")

@@ -2,8 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Network, BarChart, GraduationCap, Settings2, TrendingUp, Calendar, Package, CheckCircle2, type LucideIcon } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { Database, ServiceType } from "@/types/database";
+
+// Pagina estatica con ISR: se sirve desde el CDN y se regenera como
+// maximo cada 5 minutos.
+export const revalidate = 300;
 
 type Service = Omit<Database["public"]["Tables"]["services"]["Row"], "type"> & {
   type: ServiceType;
@@ -57,7 +61,7 @@ function getDescriptionItems(description?: string | null): string[] {
 }
 
 export default async function LandingPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("services")
     .select("*")

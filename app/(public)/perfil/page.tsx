@@ -88,16 +88,6 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
     redirect(`/login?redirect=${encodeURIComponent("/perfil")}`);
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("first_name, last_name")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  const displayName = profile
-    ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
-    : user.email?.split("@")[0] ?? "Cliente";
-
   const resolvedSearchParams = await searchParams;
   const pageSize = 5;
   const rawPage = Number(resolvedSearchParams?.page ?? "1");
@@ -105,15 +95,35 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
   const rangeStart = (currentPage - 1) * pageSize;
   const rangeEnd = rangeStart + pageSize - 1;
 
-  const { data: subscriptions, count } = await supabase
-    .from("subscriptions")
-    .select(
-      "id, status, starts_at, ends_at, auto_renew, services(id, name, type, price)",
-      { count: "exact" },
-    )
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .range(rangeStart, rangeEnd);
+  // Las tres consultas son independientes: en paralelo se paga un solo
+  // round trip a la BD en vez de tres secuenciales.
+  const [{ data: profile }, { data: subscriptions, count }, { data: payments }] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("first_name, last_name")
+        .eq("id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("subscriptions")
+        .select(
+          "id, status, starts_at, ends_at, auto_renew, services(id, name, type, price)",
+          { count: "exact" },
+        )
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .range(rangeStart, rangeEnd),
+      supabase
+        .from("transactions")
+        .select("id, amount, status, payment_method, gateway, receipt_url, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10),
+    ]);
+
+  const displayName = profile
+    ? `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim()
+    : user.email?.split("@")[0] ?? "Cliente";
 
   const panelItems = ((subscriptions ?? []) as SubscriptionItem[]).map((item) => {
     const service = normalizeService(item.services);
@@ -128,13 +138,6 @@ export default async function PerfilPage({ searchParams }: PerfilPageProps) {
       price: service?.price ?? 0,
     };
   });
-
-  const { data: payments } = await supabase
-    .from("transactions")
-    .select("id, amount, status, payment_method, gateway, receipt_url, created_at")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(10);
 
   const paymentItems = (payments ?? []) as PaymentItem[];
 

@@ -1,3 +1,4 @@
+import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
 
 const withSerwist = withSerwistInit({
@@ -13,7 +14,7 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 const siteHost = siteUrl?.replace(/^https?:\/\//, "").replace(/\/$/, "");
 const externalOrigins = siteHost && !siteHost.startsWith("localhost") ? [siteHost] : [];
 
-export default withSerwist({
+const nextConfig: NextConfig = {
   // Permite peticiones cross-origin en desarrollo (assets/HMR) desde el tunel.
   allowedDevOrigins: externalOrigins,
   // Los Server Actions tienen un limite de body de 1 MB por defecto.
@@ -24,4 +25,11 @@ export default withSerwist({
       ...(externalOrigins.length ? { allowedOrigins: externalOrigins } : {}),
     },
   },
-});
+};
+
+// Serwist inyecta configuracion de webpack, lo que impide usar Turbopack
+// en desarrollo. Como el service worker esta deshabilitado en dev de todas
+// formas, el wrapper solo se aplica al build de produccion (`--webpack`).
+export default process.env.NODE_ENV === "development"
+  ? nextConfig
+  : withSerwist(nextConfig);

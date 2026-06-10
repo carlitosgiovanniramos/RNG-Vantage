@@ -1,9 +1,13 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { CatalogoGrid } from "./catalogo-grid";
 import { CatalogoHero } from "@/components/catalogo-hero";
 
+// Pagina estatica con ISR: se sirve desde el CDN y se regenera como
+// maximo cada 5 minutos (los cambios del catalogo tardan eso en verse).
+export const revalidate = 300;
+
 export default async function CatalogoPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: services, error } = await supabase
     .from("services")
