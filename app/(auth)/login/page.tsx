@@ -1,32 +1,19 @@
 "use client";
 
 import { useActionState, Suspense, useEffect, useRef, useState } from "react";
-import { login, resendSignupConfirmation } from "@/app/(auth)/actions";
-import Link from "next/link";
+import { login } from "@/app/(auth)/actions";
 import { useSearchParams } from "next/navigation";
-import {
-  Eye,
-  EyeOff,
-  LockKeyhole,
-  Mail,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
+import { AuthNotice, ConfirmationHelp, type Notice } from "./login-feedback";
+import { AuthSwitchLink } from "../auth-card";
 
 const initialState = {
   error: "",
-  values: {
-    email: "",
-  },
-};
-
-const initialResendState = {
-  error: "",
-  success: "",
   values: {
     email: "",
   },
@@ -42,31 +29,37 @@ function LoginForm() {
   const hint = searchParams.get("hint");
   const prefillEmail = searchParams.get("email") ?? "";
   const [state, formAction, isPending] = useActionState(login, initialState);
-  const [resendState, resendAction, isResending] = useActionState(
-    resendSignupConfirmation,
-    initialResendState,
-  );
-  const shouldShowResend =
-    hint === "confirm-or-login" ||
-    state?.error?.toLowerCase().includes("confirmar tu correo") ||
-    state?.error?.toLowerCase().includes("email not confirmed");
+  const notice: Notice | null = state?.error
+    ? { kind: "error", message: state.error }
+    : wasRegistered
+      ? {
+          kind: "success",
+          message: "Cuenta creada. Revisa tu correo para confirmarlo antes de iniciar sesión.",
+        }
+      : hint === "confirm-or-login"
+        ? {
+            kind: "info",
+            message: "Si ya te registraste, confirma tu correo y luego inicia sesión.",
+          }
+        : null;
 
   const {
     register,
     handleSubmit,
     reset,
+    getValues,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: state?.values?.email ?? prefillEmail,
+      email: state?.values?.email || prefillEmail,
       password: "",
     },
   });
 
   useEffect(() => {
     reset({
-      email: state?.values?.email ?? prefillEmail,
+      email: state?.values?.email || prefillEmail,
       password: "",
     });
   }, [prefillEmail, reset, state?.values?.email]);
@@ -85,14 +78,14 @@ function LoginForm() {
         return;
       }
 
-      const hasExternalEmailPrefill = Boolean(state?.values?.email ?? prefillEmail);
+      const hasExternalEmailPrefill = Boolean(state?.values?.email || prefillEmail);
       const emailLooksAutofilled =
         !hasExternalEmailPrefill && emailInput.value.trim().length > 0;
       const passwordLooksAutofilled = passwordInput.value.length > 0;
 
       if (emailLooksAutofilled || passwordLooksAutofilled) {
         reset({
-          email: state?.values?.email ?? prefillEmail,
+          email: state?.values?.email || prefillEmail,
           password: "",
         });
       }
@@ -104,26 +97,20 @@ function LoginForm() {
   }, [prefillEmail, reset, state?.values?.email]);
 
   return (
-    <div className="space-y-7">
-      <div className="space-y-3">
-        <div className="inline-block bg-primary px-3 py-1 font-spaceGrotesk text-xs font-bold uppercase tracking-widest text-white">
-          Acceso seguro
-        </div>
-
-        <div className="space-y-2">
-          <h1 className="font-spaceGrotesk text-4xl font-black uppercase tracking-tighter text-foreground sm:text-5xl">
+    <div className="space-y-12">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-spaceGrotesk text-[clamp(1.8rem,6vw,2.5rem)] font-semibold leading-[1.15] tracking-[-0.055em] text-foreground outline-none">
             Iniciar sesión
           </h1>
-          <p className="max-w-sm font-workSans text-sm leading-6 text-muted-foreground">
-            Ingresa para continuar.
-          </p>
         </div>
+        <ConfirmationHelp getEmail={() => getValues("email")} />
       </div>
 
       <form
         ref={formRef}
         action={formAction}
-        className="space-y-6"
+        className="space-y-4"
         noValidate
         onSubmit={(event) => {
           if (allowNativeSubmitRef.current) {
@@ -139,55 +126,26 @@ function LoginForm() {
           })(event);
         }}
       >
-        {wasRegistered && (
-          <div className="rounded-none border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
-            Cuenta creada. Revisa tu correo para confirmarlo antes de iniciar
-            sesión.
-          </div>
-        )}
-
-        {hint === "confirm-or-login" && (
-          <div className="rounded-none border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200">
-            Si ya te registraste, confirma tu correo y luego inicia sesión.
-          </div>
-        )}
-
-        {resendState?.success && (
-          <div className="rounded-none border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-200">
-            {resendState.success}
-          </div>
-        )}
-
-        {resendState?.error && (
-          <div className="rounded-none border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
-            {resendState.error}
-          </div>
-        )}
-
-        {state?.error && (
-          <div className="rounded-none border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
-            {state.error}
-          </div>
-        )}
+        <AuthNotice notice={notice} />
 
         <input type="hidden" name="redirect" value={redirectParams} />
 
         <div className="space-y-2">
           <Label
             htmlFor="email"
-            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
+            className="text-xs font-medium text-foreground/80"
           >
             Correo electrónico
           </Label>
           <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
             <Input
               id="email"
               type="email"
               required
               {...register("email")}
-              className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
-              placeholder="correo@ejemplo.com"
+              autoComplete="email"
+              className="h-11 rounded-none border-0 border-b-2 border-transparent bg-muted/70 px-3 text-sm shadow-none transition-colors hover:bg-muted focus-visible:border-primary focus-visible:bg-muted focus-visible:ring-0"
             />
           </div>
           {errors.email ? (
@@ -201,36 +159,32 @@ function LoginForm() {
           <div className="flex items-end justify-between gap-3">
             <Label
               htmlFor="password"
-              className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
+              className="text-xs font-medium text-foreground/80"
             >
               Contraseña
             </Label>
           </div>
           <div className="relative">
-            <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
               required
               {...register("password")}
-              className="h-12 rounded-none border-border/70 bg-background pl-10 pr-12 text-sm"
-              placeholder="••••••••"
+              autoComplete="current-password"
+              className="h-11 rounded-none border-0 border-b-2 border-transparent bg-muted/70 pl-3 pr-20 text-sm shadow-none transition-colors hover:bg-muted focus-visible:border-primary focus-visible:bg-muted focus-visible:ring-0"
             />
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="sm"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-none text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-1/2 h-8 -translate-y-1/2 rounded-none px-2 text-[11px] font-medium text-muted-foreground hover:bg-transparent hover:text-primary"
               aria-label={
                 showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
               }
             >
-              {showPassword ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
+              {showPassword ? "Ocultar" : "Mostrar"}
             </Button>
           </div>
           {errors.password ? (
@@ -243,48 +197,11 @@ function LoginForm() {
         <Button
           type="submit"
           disabled={isPending}
-          className="h-12 w-full rounded-none bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 active:scale-95"
+          className="mt-1 h-11 w-full rounded-none bg-primary px-5 text-sm font-semibold tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80"
         >
           {isPending ? "Iniciando sesión..." : "Ingresar"}
         </Button>
       </form>
-
-      {shouldShowResend && (
-        <form
-          action={resendAction}
-          className="space-y-3 rounded-none border border-dashed border-border/70 bg-muted/30 p-4"
-        >
-          <div className="space-y-1">
-            <p className="text-sm font-semibold text-foreground">
-              ¿No llegó el correo?
-            </p>
-            <p className="text-xs leading-5 text-muted-foreground">
-              Reenvía el enlace con tu mismo correo.
-            </p>
-          </div>
-          <Input
-            name="email"
-            type="email"
-            required
-            defaultValue={
-              state?.values?.email ??
-              prefillEmail ??
-              resendState?.values?.email ??
-              ""
-            }
-            className="h-12 rounded-none border-border/70 bg-background text-sm"
-            placeholder="correo@ejemplo.com"
-          />
-          <Button
-            type="submit"
-            disabled={isResending}
-            variant="outline"
-            className="h-12 w-full rounded-none border-border/70 bg-background font-spaceGrotesk text-sm font-bold uppercase tracking-[0.16em]"
-          >
-            {isResending ? "Reenviando..." : "Reenviar confirmación"}
-          </Button>
-        </form>
-      )}
     </div>
   );
 }
@@ -298,14 +215,11 @@ export default function LoginPage() {
         <LoginForm />
       </Suspense>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-xs leading-6 text-muted-foreground">
         ¿No tienes una cuenta?{" "}
-        <Link
-          href="/register"
-          className="font-semibold text-foreground underline underline-offset-4 hover:text-primary"
-        >
+        <AuthSwitchLink href="/register">
           Regístrate aquí
-        </Link>
+        </AuthSwitchLink>
       </p>
     </div>
   );

@@ -3,19 +3,14 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { signup } from "@/app/(auth)/actions";
 import Link from "next/link";
-import {
-  Eye,
-  EyeOff,
-  LockKeyhole,
-  Mail,
-  UserRound,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@/lib/validators/auth";
+import { AuthSwitchLink } from "../auth-card";
+import { AuthNotice } from "../login/login-feedback";
 
 const initialState = {
   error: "",
@@ -127,26 +122,15 @@ export default function RegisterPage() {
   ]);
 
   return (
-    <div className="space-y-7">
-      <div className="space-y-3">
-        <div className="inline-block bg-primary px-3 py-1 font-spaceGrotesk text-xs font-bold uppercase tracking-widest text-white">
-          Nuevo registro
-        </div>
-
-        <div className="space-y-2">
-          <h1 className="font-spaceGrotesk text-4xl font-black uppercase tracking-tighter text-foreground sm:text-5xl">
-            Crear una cuenta
-          </h1>
-          <p className="max-w-sm font-workSans text-sm leading-6 text-muted-foreground">
-            Crea tu cuenta y empieza.
-          </p>
-        </div>
-      </div>
+    <div className="space-y-5">
+      <h1 className="font-spaceGrotesk text-[clamp(1.8rem,6vw,2.5rem)] font-semibold leading-[1.15] tracking-[-0.055em] text-foreground outline-none">
+        Crear cuenta
+      </h1>
 
       <form
         ref={formRef}
         action={formAction}
-        className="space-y-6"
+        className="space-y-4"
         noValidate
         onSubmit={(event) => {
           if (allowNativeSubmitRef.current) {
@@ -162,29 +146,24 @@ export default function RegisterPage() {
           })(event);
         }}
       >
-        {state?.error && (
-          <div className="rounded-none border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
-            {state.error}
-          </div>
-        )}
+        <AuthNotice notice={state?.error ? { kind: "error", message: state.error } : null} />
 
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2 sm:col-span-1">
             <Label
               htmlFor="first_name"
-              className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
+              className="text-xs font-medium text-foreground"
             >
               Nombre
             </Label>
             <div className="relative">
-              <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="first_name"
+                autoComplete="given-name"
                 type="text"
                 required
                 {...register("first_name")}
-                className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
-                placeholder="Juan Pablo"
+                className="h-11 rounded-none border-0 border-b-2 border-transparent bg-muted/70 px-4 text-sm shadow-none hover:bg-muted focus-visible:border-primary focus-visible:ring-0"
               />
             </div>
             {errors.first_name ? (
@@ -197,19 +176,18 @@ export default function RegisterPage() {
           <div className="space-y-2 sm:col-span-1">
             <Label
               htmlFor="last_name"
-              className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
+              className="text-xs font-medium text-foreground"
             >
               Apellido
             </Label>
             <div className="relative">
-              <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 id="last_name"
+                autoComplete="family-name"
                 type="text"
                 required
                 {...register("last_name")}
-                className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
-                placeholder="López Ramos"
+                className="h-11 rounded-none border-0 border-b-2 border-transparent bg-muted/70 px-4 text-sm shadow-none hover:bg-muted focus-visible:border-primary focus-visible:ring-0"
               />
             </div>
             {errors.last_name ? (
@@ -223,19 +201,19 @@ export default function RegisterPage() {
         <div className="space-y-2">
           <Label
             htmlFor="email"
-            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
+            className="text-xs font-medium text-foreground"
           >
             Correo electrónico
           </Label>
           <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
             <Input
               id="email"
+              autoComplete="email"
               type="email"
               required
               {...register("email")}
-              className="h-12 rounded-none border-border/70 bg-background pl-10 text-sm"
-              placeholder="correo@ejemplo.com"
+              className="h-11 rounded-none border-0 border-b-2 border-transparent bg-muted/70 px-4 text-sm shadow-none hover:bg-muted focus-visible:border-primary focus-visible:ring-0"
             />
           </div>
           {errors.email ? (
@@ -245,41 +223,38 @@ export default function RegisterPage() {
           ) : null}
         </div>
 
-        <div className="space-y-2">
+        <div className="group space-y-2">
           <Label
             htmlFor="password"
-            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
+            className="text-xs font-medium text-foreground"
           >
             Contraseña
           </Label>
           <div className="relative">
-            <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
             <Input
               id="password"
+              autoComplete="new-password"
+              aria-describedby="password-guidance"
               type={showPassword ? "text" : "password"}
               required
               minLength={8}
               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$"
               title="Debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
               {...register("password")}
-              className="h-12 rounded-none border-border/70 bg-background pl-10 pr-12 text-sm"
-              placeholder="••••••••"
+              className="h-11 rounded-none border-0 border-b-2 border-transparent bg-muted/70 pl-4 pr-20 text-sm shadow-none hover:bg-muted focus-visible:border-primary focus-visible:ring-0"
             />
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="sm"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-none text-muted-foreground hover:text-foreground"
+              className="absolute right-1.5 top-1/2 h-8 -translate-y-1/2 rounded-none px-2 text-xs text-muted-foreground hover:text-foreground"
               aria-label={
                 showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
               }
             >
-              {showPassword ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
+              {showPassword ? "Ocultar" : "Mostrar"}
             </Button>
           </div>
           {errors.password ? (
@@ -287,45 +262,43 @@ export default function RegisterPage() {
               {errors.password.message}
             </p>
           ) : null}
-          <p className="text-xs leading-5 text-muted-foreground">
-            Mínimo 8 caracteres.
-          </p>
+          {!errors.password && (
+            <p id="password-guidance" className="hidden text-xs leading-5 text-muted-foreground group-focus-within:block">
+              8+ caracteres, mayúscula, minúscula, número y símbolo.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
           <Label
             htmlFor="confirm_password"
-            className="font-spaceGrotesk text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground"
+            className="text-xs font-medium text-foreground"
           >
             Confirmar contraseña
           </Label>
           <div className="relative">
-            <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
             <Input
               id="confirm_password"
+              autoComplete="new-password"
               type={showConfirmPassword ? "text" : "password"}
               required
               {...register("confirm_password")}
-              className="h-12 rounded-none border-border/70 bg-background pl-10 pr-12 text-sm"
-              placeholder="••••••••"
+              className="h-11 rounded-none border-0 border-b-2 border-transparent bg-muted/70 pl-4 pr-20 text-sm shadow-none hover:bg-muted focus-visible:border-primary focus-visible:ring-0"
             />
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="sm"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-none text-muted-foreground hover:text-foreground"
+              className="absolute right-1.5 top-1/2 h-8 -translate-y-1/2 rounded-none px-2 text-xs text-muted-foreground hover:text-foreground"
               aria-label={
                 showConfirmPassword
                   ? "Ocultar confirmación"
                   : "Mostrar confirmación"
               }
             >
-              {showConfirmPassword ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
+              {showConfirmPassword ? "Ocultar" : "Mostrar"}
             </Button>
           </div>
           {errors.confirm_password ? (
@@ -335,57 +308,41 @@ export default function RegisterPage() {
           ) : null}
         </div>
 
-        <div className="rounded-none border border-border/70 bg-muted/30 p-4">
-          <div className="flex items-start gap-3">
+        <div className="space-y-2">
+          <div className="flex items-start gap-2.5">
             <input
               type="checkbox"
               id="data_consent"
               required
               {...register("data_consent")}
-              className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary"
+              className="mt-0.5 size-4 shrink-0 accent-primary"
             />
-            <div className="space-y-1">
-              <Label
-                htmlFor="data_consent"
-                className="cursor-pointer font-workSans text-sm font-bold leading-6 text-foreground"
-              >
-                Acepto la política de datos (LOPDP)
-              </Label>
-              <p className="text-xs leading-5 text-muted-foreground">
-                Requerido para continuar.
-              </p>
-              <Link
-                href="/politica-privacidad"
-                className="text-xs font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
-              >
-                Leer política
-              </Link>
-            </div>
+            <Label htmlFor="data_consent" className="block cursor-pointer text-xs font-normal leading-5 text-muted-foreground">
+              Acepto la{" "}
+              <Link href="/politica-privacidad" target="_blank" rel="noopener noreferrer" className="text-foreground underline underline-offset-2 hover:text-primary">
+                política de privacidad
+              </Link>.
+            </Label>
           </div>
-          {errors.data_consent ? (
-            <p className="text-xs text-red-600 dark:text-red-400">
-              {errors.data_consent.message}
-            </p>
-          ) : null}
+          {errors.data_consent && (
+            <p className="text-xs text-red-600 dark:text-red-400">{errors.data_consent.message}</p>
+          )}
         </div>
 
         <Button
           type="submit"
           disabled={isPending}
-          className="h-12 w-full rounded-none bg-primary px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] text-primary-foreground transition-colors hover:bg-primary/90 active:scale-95"
+          className="h-11 w-full rounded-none bg-primary px-5 text-sm font-semibold tracking-wide text-primary-foreground transition-colors hover:bg-primary/90 active:bg-primary/80"
         >
           {isPending ? "Creando cuenta..." : "Registrarse"}
         </Button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-xs leading-6 text-muted-foreground">
         ¿Ya tienes una cuenta?{" "}
-        <Link
-          href="/login"
-          className="font-semibold text-foreground underline underline-offset-4 hover:text-primary"
-        >
+        <AuthSwitchLink href="/login">
           Inicia sesión
-        </Link>
+        </AuthSwitchLink>
       </p>
     </div>
   );
