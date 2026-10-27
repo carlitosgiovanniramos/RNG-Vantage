@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export default function PoliticaPrivacidadPage() {
   return (
     <div className="py-16 sm:py-24 px-4 sm:px-8">
