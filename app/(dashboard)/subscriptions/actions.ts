@@ -3,11 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { kushkiFetch, KushkiApiError } from "@/lib/kushki/client";
 
-/**
- * Verifica que el llamante sea un admin activo.
- */
 async function ensureAdmin() {
   const supabase = await createClient();
   const {
@@ -29,12 +25,11 @@ async function ensureAdmin() {
 }
 
 /**
- * Cancela una suscripcion.
+ * Cancela una suscripcion (admin).
  *
- * Si la suscripcion tiene un cobro recurrente activo en Kushki
- * (`gateway_subscription_id`), primero se cancela en la pasarela para
- * detener los cobros automaticos. Solo si Kushki confirma la
- * cancelacion se marca la suscripcion local como `cancelled`.
+ * Con Payphone no existe una API de cancelacion de suscripciones;
+ * cada cobro es independiente. La cancelacion solo actualiza el estado
+ * local y desactiva la renovacion automatica.
  */
 export async function cancelSubscription(subscriptionId: string) {
   if (!subscriptionId || typeof subscriptionId !== "string") {
@@ -46,42 +41,19 @@ export async function cancelSubscription(subscriptionId: string) {
 
   const supabaseAdmin = createAdminClient();
 
-  // Obtener la suscripcion.
   const { data: subscription, error: getError } = await supabaseAdmin
     .from("subscriptions")
-    .select("id, status, gateway_subscription_id")
+    .select("id, status")
     .eq("id", subscriptionId)
     .maybeSingle();
 
   if (getError || !subscription) {
     return { success: false, error: "Suscripcion no encontrada." };
   }
-
   if (subscription.status === "cancelled") {
     return { success: false, error: "La suscripcion ya esta cancelada." };
   }
 
-  // Si hay un cobro recurrente en Kushki, cancelarlo PRIMERO. Si esto
-  // falla no se cancela localmente: marcar la suscripcion como cancelada
-  // mientras Kushki sigue cobrando seria peor que no hacer nada.
-  if (subscription.gateway_subscription_id) {
-    try {
-      // ATENCION: verificar el endpoint exacto de cancelacion contra la
-      // documentacion vigente de Kushki.
-      await kushkiFetch(
-        `/subscriptions/v1/card/${subscription.gateway_subscription_id}`,
-        { method: "DELETE", auth: "private" },
-      );
-    } catch (err) {
-      const message =
-        err instanceof KushkiApiError
-          ? `No se pudo cancelar el cobro recurrente en Kushki: ${err.message}`
-          : "No se pudo contactar a la pasarela de pago. Intenta nuevamente.";
-      return { success: false, error: message };
-    }
-  }
-
-  // Cancelar la suscripcion local y desactivar la auto-renovacion.
   const { error: updateError } = await supabaseAdmin
     .from("subscriptions")
     .update({ status: "cancelled", auto_renew: false })
@@ -89,7 +61,7 @@ export async function cancelSubscription(subscriptionId: string) {
 
   if (updateError) {
     console.error(
-      `[cancelSubscription] Error al cancelar la suscripcion ${subscriptionId}:`,
+      `[cancelSubscription] Error al cancelar ${subscriptionId}:`,
       updateError.message,
     );
     return { success: false, error: "Error al cancelar la suscripcion." };

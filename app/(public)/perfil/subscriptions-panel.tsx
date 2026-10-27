@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useConfirm } from "@/components/use-confirm";
 import { formatCurrency } from "@/lib/utils";
 import { cancelMySubscription } from "./actions";
-import { UpdateCardForm } from "./update-card-form";
 
 export type SubscriptionPanelItem = {
   id: string;
@@ -14,8 +13,6 @@ export type SubscriptionPanelItem = {
   starts_at: string | null;
   ends_at: string | null;
   auto_renew: boolean | null;
-  /** `true` si es una suscripcion recurrente con tarjeta gestionada por Kushki. */
-  isKushkiRecurring: boolean;
   serviceName: string;
   serviceType: string;
   price: number;
@@ -41,12 +38,10 @@ function formatDate(value: string | null): string {
 }
 
 /**
- * Lista interactiva de suscripciones del cliente: permite cancelar y
- * actualizar el metodo de pago. Solo se permite UN formulario de
- * tarjeta abierto a la vez (el SDK de Kushki no admite varios).
+ * Lista interactiva de suscripciones del cliente: permite cancelar la
+ * suscripcion (desactiva la renovacion automatica).
  */
 export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }) {
-  const [openCardFormId, setOpenCardFormId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<{ id: string; message: string } | null>(
     null,
@@ -83,7 +78,6 @@ export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }
         setActionError({ id, message: res.error ?? "No se pudo cancelar." });
         return;
       }
-      setOpenCardFormId((cur) => (cur === id ? null : cur));
       router.refresh();
     });
   }
@@ -93,7 +87,6 @@ export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }
       {items.map((item) => {
         const status = item.status ?? "pending";
         const canCancel = status === "active" || status === "pending";
-        const canUpdateCard = status === "active" && item.isKushkiRecurring;
         const isCancelling = pending && cancellingId === item.id;
 
         return (
@@ -134,29 +127,16 @@ export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }
               </div>
             </div>
 
-            {(canCancel || canUpdateCard) && (
+            {canCancel && (
               <div className="flex flex-wrap items-center gap-2 border-t border-border/50 pt-3">
-                {canUpdateCard && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setOpenCardFormId((cur) => (cur === item.id ? null : item.id))
-                    }
-                    className="inline-flex h-9 items-center border border-border px-3 font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.12em] text-foreground transition-colors hover:bg-muted"
-                  >
-                    {openCardFormId === item.id ? "Cerrar" : "Actualizar tarjeta"}
-                  </button>
-                )}
-                {canCancel && (
-                  <button
-                    type="button"
-                    onClick={() => handleCancel(item.id)}
-                    disabled={isCancelling}
-                    className="inline-flex h-9 items-center border border-red-300 bg-red-50 px-3 font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.12em] text-red-800 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
-                  >
-                    {isCancelling ? "Cancelando..." : "Cancelar suscripcion"}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleCancel(item.id)}
+                  disabled={isCancelling}
+                  className="inline-flex h-9 items-center border border-red-300 bg-red-50 px-3 font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.12em] text-red-800 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
+                >
+                  {isCancelling ? "Cancelando..." : "Cancelar suscripcion"}
+                </button>
               </div>
             )}
 
@@ -164,14 +144,6 @@ export function SubscriptionsPanel({ items }: { items: SubscriptionPanelItem[] }
               <p className="font-workSans text-xs text-red-700 dark:text-red-400">
                 {actionError.message}
               </p>
-            )}
-
-            {openCardFormId === item.id && canUpdateCard && (
-              <UpdateCardForm
-                subscriptionId={item.id}
-                amount={item.price}
-                onClose={() => setOpenCardFormId(null)}
-              />
             )}
           </article>
         );
