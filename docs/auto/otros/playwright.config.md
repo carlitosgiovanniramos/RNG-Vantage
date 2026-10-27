@@ -1,174 +1,146 @@
 # Documentación técnica: playwright.config.ts
 
 Archivo: playwright.config.ts  
-Ruta: raíz del proyecto RNG Vantage
+Proyecto: RNG Vantage (automatización de pruebas end-to-end con Playwright)
 
-Fecha de última actualización: 12/5/2026
+Fecha de última actualización: 29/5/2026
 
 ---
 
 ## Descripción general
 
-Este archivo define la configuración de Playwright para las pruebas end-to-end (e2e) de RNG Vantage. Implementa un conjunto de opciones que controlan:
-
-- Dónde se ejecutan las pruebas y su paralelismo
-- Comportamiento en entornos de Continuous Integration (CI)
-- El formato y alcance de los reportes
-- Los entornos de ejecución (navegadores y dispositivos)
-- Un servidor web que arranca la aplicación durante las pruebas
-
-En conjunto, permite ejecutar pruebas automatizadas sobre la aplicación en dos entornos de navegador: un escritorio Chrome y un dispositivo móvil simulado (Pixel 5), asegurando consistencia entre desarrollo y CI.
+El archivo playwright.config.ts define la configuración de Playwright Test para el proyecto RNG Vantage. Especifica dónde se ubican las pruebas de extremo a extremo, cómo se ejecutan (paralelismo y CI), qué dispositivos se simulan, cómo se genera el informe y cómo se levanta el servidor de desarrollo para las pruebas. En resumen, centraliza la orquestación de las pruebas E2E, con un enfoque de pruebas en múltiples dispositivos (Desktop Chrome y Mobile Chrome) y un flujo de servidor web integrado.
 
 ---
 
 ## Responsabilidades
 
-- Configurar el directorio de pruebas: ubicar y ejecutar tests desde ./e2e.
-- Controlar el paralelismo y el comportamiento en CI:
-  - Ejecutar pruebas de forma completamente paralela.
-  - Forzar la prohibición de utilizar test.only en CI.
-  - Configurar reintentos y número de trabajadores según entorno (CI vs desarrollo).
-- Definir la salida de reportes: generar un reporte HTML.
-- Establecer un entorno de pruebas común:
-  - Base URL de la aplicación bajo prueba.
-  - Trazas de depuración durante reintentos.
-- Especificar proyectos de pruebas para diferentes navegadores/dispositivos.
-- Iniciar un servidor web para servir la aplicación durante las pruebas y reutilizarlo cuando corresponda.
+- Configurar el entorno de pruebas E2E con Playwright Test.
+- Definir el directorio de pruebas (testDir) y habilitar ejecución en paralelo.
+- Establecer reglas específicas para CI (forbidOnly, retries, número de workers).
+- Configurar un reporte HTML para las pruebas.
+- Definir contextos/entornos de prueba (proyectos) para reproducibilidad entre dispositivos.
+- Automatizar la inicialización del servidor de desarrollo (webServer) antes de ejecutar las pruebas y gestionar su reutilización.
 
 ---
 
-## Props / Parámetros
+## Parámetros (Propiedades principales)
 
-A continuación se describen las principales opciones de configuración utilizadas en este archivo. Aunque no son componentes React ni funciones tradicionales, estos son los parámetros de configuración de Playwright que determinan el comportamiento del runner.
+A continuación se documentan las claves principales de la configuración y su significado:
 
-- testDir: string
-  - Descripción: Ruta del directorio que contiene las pruebas e2e.
-  - Valor en el archivo: "./e2e"
+- testDir: "./e2e"
+  - Directorio donde se ubican las pruebas E2E.
 
-- fullyParallel: boolean
-  - Descripción: Permite que todas las pruebas se ejecuten en paralelo entre sí.
-  - Valor en el archivo: true
+- fullyParallel: true
+  - Ejecuta las pruebas de forma totalmente paralela entre archivos de prueba.
 
-- forbidOnly: boolean
-  - Descripción: Si está en true, evita que se ejecuten pruebas marcadas con .only (útil en CI para evitar ejecuciones accidentales).
-  - Valor en el archivo: !!process.env.CI (true si CI está definido, false en desarrollo)
+- forbidOnly: !!process.env.CI
+  - Si se está en CI (variable CI definida), prohíbe el uso de tests con .only para evitar ejecuciones incompletas.
 
-- retries: number
-  - Descripción: Número de reintentos por prueba en caso de fallo.
-  - Valor en el archivo: process.env.CI ? 2 : 0 (2 en CI, 0 en local)
+- retries: process.env.CI ? 2 : 0
+  - Número de reintentos por prueba. En CI se reintenta 2 veces; en desarrollo local no se reintenta.
 
-- workers: number | undefined
-  - Descripción: Número de workers concurrentes. Si no definido, Playwright gestiona un valor por defecto.
-  - Valor en el archivo: process.env.CI ? 1 : undefined (1 en CI, undefined en desarrollo)
+- workers: process.env.CI ? 1 : undefined
+  - Cantidad de workers (concurrentes). En CI se usa 1 worker; en local se deja que Playwright determine el valor por defecto.
 
-- reporter: string
-  - Descripción: Formato del reporte de pruebas.
-  - Valor en el archivo: "html"
+- reporter: "html"
+  - Tipo de reporte generado. En este caso, un informe HTML interactivo.
 
-- use: object
-  - Descripción: Configuración global para cada prueba.
-  - Subparámetros:
-    - baseURL: string
-      - Descripción: URL base para las páginas probadas.
-      - Valor en el archivo: "http://localhost:3000"
-    - trace: string
-      - Descripción: Configuración de trazas para depuración y diagnóstico.
-      - Valor en el archivo: "on-first-retry" (captura trazas en el primer reintento)
+- use: { baseURL, trace }
+  - use: contexto por defecto para las pruebas:
+    - baseURL: "http://localhost:3000" (URL base para las pruebas)
+    - trace: "on-first-retry" (recolecta trazas únicamente en el primer reintento)
 
-- projects: array
-  - Descripción: Conjunto de proyectos de prueba para cubrir diferentes navegadores/dispositivos.
-  - Estructura de cada proyecto:
-    - name: string
-      - Descripción: Nombre del proyecto (p. ej., "chromium", "mobile-chrome")
-      - Valores en el archivo: "chromium" y "mobile-chrome"
-    - use: object
-      - Descripción: Configuración de dispositivo o navegador para el proyecto.
-      - Valores en el archivo:
-        - chromium: {...devices["Desktop Chrome"]} (Desktop Chrome)
-        - mobile-chrome: {...devices["Pixel 5"]} (Pixel 5)
+- projects: [ ... ]
+  - Conjunto de proyectos de prueba para ejecutar en diferentes entornos/dispositivos.
+  - project 1:
+    - name: "chromium"
+    - use: { ...devices["Desktop Chrome"] } (configuración de dispositivo Desktop Chrome)
+  - project 2:
+    - name: "mobile-chrome"
+    - use: { ...devices["Pixel 5"] } (configuración de dispositivo móvil Pixel 5)
 
-- webServer: object
-  - Descripción: Configuración para arrancar un servidor web que sirva la aplicación durante las pruebas.
-  - Subparámetros:
-    - command: string
-      - Descripción: Comando para iniciar el servidor de desarrollo.
-      - Valor en el archivo: "npm run dev"
-    - url: string
-      - Descripción: URL a la que Playwright esperará que el servidor esté disponible.
-      - Valor en el archivo: "http://localhost:3000"
-    - reuseExistingServer: boolean
-      - Descripción: Si es verdadero, reutiliza un servidor ya existente en lugar de iniciar uno nuevo (útil en entornos no CI).
-      - Valor en el archivo: !process.env.CI (true cuando no está en CI)
-
-Observaciones:
-- Los dispositivos usados son presets de Playwright:
-  - Desktop Chrome (Desktop Chrome)
-  - Pixel 5 (emulación de dispositivo móvil)
-- La URL base coincide con el servidor de desarrollo configurado en webServer, y la ruta del servidor es http://localhost:3000.
+- webServer: { command, url, reuseExistingServer }
+  - Configuración para levantar un servidor de desarrollo durante las pruebas:
+    - command: "npm run dev" (comando para iniciar el servidor)
+    - url: "http://localhost:3000" (URL base donde el servidor sirve la app)
+    - reuseExistingServer: !process.env.CI (si no es CI, reutiliza un servidor existente si ya está en funcionamiento)
 
 ---
 
 ## Retorna
 
-Este archivo no exporta una función que retorne un valor. En su lugar, exporta por defecto una configuración de Playwright mediante defineConfig. Playwright lee y utiliza este objeto de configuración al ejecutar los tests. En consecuencia, no hay un valor de retorno en tiempo de ejecución; sí hay un objeto de configuración que Playwright consume para orquestar la ejecución de las pruebas.
+Este archivo exporta por defecto una configuración de Playwright Test mediante defineConfig. No es una función que retorne un valor dinámico; es una configuración estática (con algunas condiciones dinámicas basadas en process.env) que Playwright consume al ejecutar las pruebas.
+
+Formato devuelto:
+- Un objeto de configuración de Playwright Test que incluye testDir, paralelismo, comportamiento en CI, reportes, contextos de prueba (use), proyectos (chromium y mobile-chrome) y configuración de webServer.
 
 ---
 
 ## Dependencias
 
-- @playwright/test
-  - Proporciona la API de Playwright Test, utilería defineConfig y el manejo de dispositivos (devices).
-- Playwright Devices
-  - Todos los presets utilizados provienen de devices (Desktop Chrome, Pixel 5).
-- NPM/Yarn y Node.js
-  - Entorno de ejecución para ejecutar npm run dev y npx playwright test.
+- @playwright/test (Playwright Test)
+- dispositivos predefinidos de Playwright (devices)
+- npm/yarn para ejecutar:
+  - npm run dev (para levantar el servidor de desarrollo)
+  - npx playwright test (para ejecutar las pruebas)
+- El comportamiento de CI depende de la variable de entorno CI (presente en entornos de integración continua)
 
 Notas:
-- El comportamiento depende de la variable de entorno CI:
-  - CI definido: retrys=2, workers=1, forbidOnly=true
-  - no CI: retrys=0, workers undefinido (valor por defecto de Playwright)
+- El proyecto asume que existe un script npm dev para arrancar la app en http://localhost:3000.
+- Los dispositivos utilizados son Desktop Chrome y Pixel 5, importados desde devices de Playwright.
 
 ---
 
 ## Ejemplos de uso
 
-- Ejecutar pruebas E2E locales (con el servidor de desarrollo arrancando automáticamente):
+- Ejecutar todas las pruebas E2E (con la configuración por defecto del archivo):
   - npx playwright test
-  - Este comando utilizará el testDir "./e2e", ejecutará en paralelo, lanzará el servidor con "npm run dev" y capturará trazas en el primer reintento si falla.
-
-- Ejecutar pruebas en CI (con configuración específica para CI):
-  - CI=true npx playwright test
-  - Se emplearán 1 worker, 2 reintentos y forbidOnly estará activo.
-
-- Ejecutar pruebas para un proyecto específico:
+- Ejecutar pruebas solo con el proyecto Chromium:
   - npx playwright test --project=chromium
+- Ejecutar pruebas solo con el proyecto Mobile Chrome:
   - npx playwright test --project=mobile-chrome
+- Durante CI, Playwright iniciará un único worker, reintentará 2 veces y no permitirá test.only:
+  - CI=true npx playwright test
+- Ver informe HTML generado:
+  - Revisa la carpeta de reportes HTML generada por el runner (configurada por reporter: "html")
 
-- Ejecutar pruebas en modo desarrollo sin reusar servidor existente:
-  - Asegúrate de que CI no esté definido y no exista un servidor en ejecución, Playwright gestionará el ciclo de vida del servidor según webServer.reuseExistingServer.
-
-- Acceder a los reportes HTML generados:
-  - Después de la ejecución, abrir el reporte HTML generado (ruta típica según configuración de Playwright) para revisar resultados detallados y trazas.
+Notas:
+- Playwright gestionará automáticamente el webServer especificado para levantar el servidor de desarrollo antes de las pruebas y cerrarlo al finalizar, salvo que se configure reuseExistingServer para continuar con un servidor ya activo.
 
 ---
 
 ## Notas técnicas
 
-- Paralelismo y CI:
-  - El archivo está configurado para ser “ci-friendly”: en CI, se reduce el paralelismo a 1 worker y se habilitan reintentos, además de forbiddown de test.only para evitar ejecuciones incompletas o accidentales.
-- Entornos de ejecución:
-  - Se soportan dos entornos: Desktop Chrome y un dispositivo móvil emulado (Pixel 5). Esto ayuda a validar la experiencia tanto en escritorio como en móvil.
-- Trazas y depuración:
-  - trace: "on-first-retry" permite capturar trazas cuando un test falla y se ejecuta un reintento, facilitando la localización de problemas.
-- Servidor de la aplicación:
-  - webServer.start command: "npm run dev" se encarga de levantar la aplicación durante las pruebas.
-  - reuseExistingServer: true en entornos no CI para evitar arrancar múltiples instancias si ya hay una instancia en ejecución.
-  - URL de la app para las pruebas: http://localhost:3000. Es importante que la aplicación se inicie en este puerto antes de que Playwright intente ejecutar las pruebas.
-- Limitaciones y consideraciones:
-  - Si la aplicación no arranca en http://localhost:3000, las pruebas fallarán al intentar cargar la página base.
-  - El comportamiento de reintentos y trabajadores depende del entorno de CI; al migrar entre entornos, revisar estas variables de entorno puede ser necesario para ajustar rendimiento y fiabilidad.
-  - Este archivo asume que la configuración de Playwright (scripts, dependencias, y estructura de directorios) está alineada con la convención de la project RNG Vantage (especialmente la ubicación de las pruebas y el script dev).
+- Pruebas en paralelo
+  - El uso de fullyParallel permite ejecutar archivos de prueba de forma concurrente, lo que acelera la ejecución, pero requiere pruebas con aislamiento adecuado para evitar conflictos entre tests.
+
+- Comportamiento en CI
+  - forbidOnly evita que se suba código con uses de test.only a CI.
+  - retries es 2 para permitir capturar fallos intermitentes en CI.
+  - workers se limita a 1 para reducir la carga en entornos de CI y evitar condiciones de rendimiento.
+
+- Captura de trazas
+  - trace: "on-first-retry" ayuda a diagnosticar fallos tras el primer reintento sin generar trazas en ejecuciones exitosas, reduciendo costo de almacenamiento.
+
+- Reportes
+  - reporter: "html" genera un informe navegable para analizar resultados de pruebas de forma visual.
+
+- Soporte multi-dispositivo
+  - Los proyectos definen dos entornos: Desktop Chrome y Pixel 5, lo que facilita la verificación de la app en diferentes tamaños de pantalla y resoluciones sin duplicar configuración.
+
+- Inicio del servidor
+  - webServer con command "npm run dev" garantiza que la app esté sirviéndose en http://localhost:3000 durante las pruebas. reuseExistingServer: true en local evita iniciar un nuevo proceso si ya hay uno corriendo; en CI se fuerza a iniciar una nueva instancia para evitar colisiones.
+
+- Dependencias del entorno
+  - El comportamiento dinámico depende de process.env.CI para adaptar configuración entre local y CI.
 
 ---
 
-Si necesitas que adapte esta documentación a otro formato (por ejemplo, una guía de inicio rápido, una referencia de API detallada o un diagrama de flujo de ejecución), dime y lo preparo.
+## Última actualización
+
+29/5/2026
+
+---
+
+Si necesitas adaptar este config para un entorno específico (por ejemplo, añadir más dispositivos, cambiar el puerto, o ajustar el comportamiento en CI), dime qué cambios quieres y te entrego una versión actualizada de la documentación y del archivo.

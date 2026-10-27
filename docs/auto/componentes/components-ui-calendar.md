@@ -1,197 +1,190 @@
-# Documentación técnica: calendar.tsx (components/ui/calendar.tsx)
+# RNG Vantage - calendar.tsx (components/ui/calendar.tsx)
 
-Este archivo implementa un calendario reutilizable basado en react-day-picker, adaptado al estilo y componentes de la tienda RNG Vantage. Es un componente cliente (cliente de Next.js) que envuelve DayPicker para integrar con el sistema de UI propio (Botón, variantes, estilos y utilidades).
+Documento técnico para el archivo calendar.tsx del proyecto RNG Vantage.
 
-- Archivo: components/ui/calendar.tsx
-- Nombre exportado: Calendar, CalendarDayButton
-- Total de líneas: 222
+Fecha de última actualización: 29/5/2026
 
 ---
 
 ## Descripción general
 
-Calendar es un wrapper de DayPicker que aporta:
-- Estilos consistentes con el diseño del proyecto (utilizando la utilidad de classNames cn y getDefaultClassNames de react-day-picker).
-- Integración con el componente Button propio del proyecto para renderizado de cada día (CalendarDayButton).
-- Soporte para locale y formateadores personalizados.
-- Personalización de la estructura interna mediante la propiedad components de DayPicker (Root, Chevron, DayButton, WeekNumber, etc.).
-- Opciones de configuración para mostrar días fuera del mes, layout del caption y variantes de botones.
+Este archivo define dos componentes React:
 
-En resumen, es un calendario estilizado y fácilmente integrable con la UI existente, manteniendo compatibilidad con las props de DayPicker.
+- Calendar: un calendario interactivo basado en react-day-picker, con extensas personalizaciones visuales y de comportamiento. Integra el sistema de estilos propio de la aplicación (cn, Button) y soporta opciones de localización, formateo y componentes sustituidos para adaptar la apariencia.
+- CalendarDayButton: un Button personalizado que renderiza cada día dentro del DayPicker, añadiendo datos y estilos específicos para gestionar estados como selección simple, rangos y foco.
+
+El objetivo es proporcionar un selector de fechas rico en funcionalidades (incluido soporte para rangos y selección única) con una apariencia coherente con el resto de la UI, comportamiento accesible y compatibilidad con distintos locales.
 
 ---
 
 ## Responsabilidades
 
-- Proveer una implementación de calendario basada en DayPicker con estilos y comportamiento predefinidos para el proyecto RNG Vantage.
-- Expone una interfaz extensible a través de:
-  - Props de DayPicker (extendidas).
-  - Props propias de estilo y comportamiento (showOutsideDays, captionLayout, buttonVariant, locale, formatters, components).
-- Implementar un botón de día (CalendarDayButton) que utiliza el componente Button del proyecto para mayor consistencia visual.
-- Gestionar foco en el día seleccionado mediante modifiers.focussed.
-- Soportar RTL (derecha a izquierda) mediante clases específicas para las flechas de navegación.
+- Proveer un calendario reutilizable para selección de fechas dentro de la app.
+- Integrar DayPicker de react-day-picker con estilos y comportamientos propios:
+  - Soporte para mostrar días fuera del mes.
+  - Cabeceras, navegación y dropdowns de mes.
+  - Personalización de componentes (Root, Chevron, DayButton, WeekNumber).
+- Gestionar la renderización de cada día a través de CalendarDayButton, que a su vez utiliza el Button del sistema de UI y añade estados visuales para rangos y selección.
+- Soportar localización y formato de meses/días a través de locale y formatters personalizados.
+- Mantener compatibilidad con RTL (derecha a izquierda) mediante clases específicas.
+- Exponer el componente para uso en otras partes de la app (export { Calendar, CalendarDayButton }).
 
 ---
 
 ## Props / Parámetros
 
-El componente Calendar extiende las props de DayPicker y añade una prop adicional para el estilo del botón.
+Nota: Este componente es React y está tipado con TypeScript. Las props combinan las de DayPicker con algunas props propias añadidas.
 
-- CalendarProps (combinación de React.ComponentProps<typeof DayPicker> y props propias):
-  - className?: string
-    - Clases CSS adicionales para el contenedor principal de DayPicker.
-  - classNames?: Partial<Record<string, string>>
-    - Mapeo para personalizar clases de las distintas partes de DayPicker (root, months, month, nav, button_previous, button_next, month_caption, dropdowns, dropdown_root, dropdown, caption_label, table, weekdays, weekday, week, week_number_header, week_number, day, range_start, range_middle, range_end, today, outside, disabled, hidden, etc.). Se extiende con defaultClassNames y con los valores de defaultClassNames obtenidos de DayPicker.
-  - showOutsideDays?: boolean (default: true)
-    - Indica si se deben mostrar los días fuera del mes actual.
-  - captionLayout?: string (default: "label")
-    - Layout del caption de DayPicker (valor utilizado por DayPicker; por defecto "label").
-  - locale?: Locale
-    - Objeto de configuración regional utilizado para formateos y textos.
-  - formatters?: Record<string, (date: Date) => string> | undefined
-    - Funciones de formateo para diferentes partes del calendario. Se añade un formatter por defecto para formatMonthDropdown que usa date.toLocaleString con locale.code.
-  - components?: Partial<React.ComponentProps<typeof DayPicker>["components"]> | undefined
-    - Permite sobreescribir componentes internos de DayPicker (Root, Chevron, DayButton, WeekNumber, etc.).
-  - buttonVariant?: React.ComponentProps<typeof Button>["variant"] (opcional)
-    - Variante del botón del DayButton (utilizado dentro de CalendarDayButton). Valor por defecto: "ghost".
-  - ...props (rest: React.ComponentProps<typeof DayPicker>)
-    - Propiedades adicionales de DayPicker que no hayan sido enumeradas explícitamente.
+### Calendar (exportado)
 
-Notas:
-- El componente está construido para que el DayPicker pueda ser configurado de forma rica, manteniendo un diseño coherente con el resto de la UI del proyecto.
-- La prop buttonVariant controla visualmente los botones de navegación y de día, integrándose con el color y estilo del botón del proyecto.
+Propiedades derivadas de DayPicker, más:
+
+- className: string | undefined
+  - Clase adicional para el contenedor del DayPicker.
+- classNames: Partial<React.ComponentProps<typeof DayPicker>["classNames"]> | undefined
+  - Mapa de clases para personalizar estilos específicos de DayPicker.
+- showOutsideDays: boolean (default: true)
+  - Muestra los días que están fuera del mes actual.
+- captionLayout: "label" | "dropdown" (default: "label")
+  - Disposición de las cabeceras de mes (etiqueta o dropdown).
+- buttonVariant: Button["variant"] (default: "ghost")
+  - Variante del Button utilizado para los días. Se propaga al botón de navegación (anterior/siguiente) a través de la construcción de classNames.
+- locale: Locale | undefined
+  - Objeto de locale para formateos y textos.
+- formatters: Record<string, (date: Date) => string> | undefined
+  - Objeto de formateadores. Se extienden con:
+    - formatMonthDropdown: (date) => date.toLocaleString(locale?.code, { month: "short" })
+- components: Partial<DayPickerProps["components"]> | undefined
+  - Permite anular los componentes de DayPicker (Root, Chevron, DayButton, WeekNumber, etc.)
+- …props: React.ComponentProps<typeof DayPicker>
+  - Todas las demás props de DayPicker, que se envían sin modificaciones.
+
+Ejemplo de uso típico:
+- <Calendar locale={locale} showOutsideDays={true} captionLayout="dropdown" />
+
+### CalendarDayButton (internal, no exportado por defecto)
+
+Propiedades:
+
+- className: string | undefined
+  - Clases adicionales para el botón del día.
+- day: DayButton["day"]
+  - Objeto con información de la fecha representada por este botón.
+- modifiers: DayButton["modifiers"]
+  - Modificadores que indican estados (selected, range_start, range_end, range_middle, focused, etc.).
+- locale: Partial<Locale> | undefined
+  - Locale para formateos.
+- props: React.ComponentProps<typeof DayButton>
+  - Propiedades pasadas al DayButton original de react-day-picker.
+
+Comportamiento clave:
+- Gestiona el enfoque automático cuando modifiers.focused cambia.
+- Renderiza un Button (del UI propio) con múltiples data-attributes para estados (day, range_start, range_end, range_middle, selected-single).
+- Aplica clases que fusionan estilos por defecto de DayPicker con las clases propias definidas para la app.
 
 ---
 
 ## Retorna
 
-- Retorna un elemento React (JSX.Element) que representa el DayPicker configurado con:
-  - Estilo y estructura personalizados (classNames, Root, Chevron, DayButton, WeekNumber, etc.).
-  - Formateadores personalizados (con soporte para locale).
-  - Composición de componentes interna para total flexibilidad.
-  - Propagación de cualquier prop de DayPicker recibido.
+- Calendar: JSX.Element que representa un DayPicker completamente configurado y estilizado, con:
+  - Cabeceras, navegación y cuadrícula de días.
+  - Personalización de componentes (Root, Chevron, DayButton, WeekNumber) para adaptarse al diseño de la app.
+  - Formateo de mes y texto en el header según locale.
+  - Soporte para rangos y selección única mediante DayButton personalizado.
+- CalendarDayButton: JSX.Element (Button) utilizado para cada día dentro del DayPicker, con estilos y data-attributes para estados de selección y rango.
 
-En concreto, el componente devuelve:
-
-- Un DayPicker configurado con:
-  - showOutsideDays, captionLayout, locale, formatters, classNames.
-  - Components personalizados (Root, Chevron, DayButton, WeekNumber) y otros componentes sobreescritos.
-  - Propagación de {...props} al DayPicker final.
+La salida es renderizada en el árbol de UI de la aplicación donde se importe.
 
 ---
 
 ## Dependencias
 
-Este archivo depende de varias piezas del ecosistema y del proyecto:
-
-- React (cliente; usa hooks y JSX)
 - react-day-picker
-  - Provee DayPicker, getDefaultClassNames, y tipos DayButton y Locale.
+  - Proporciona DayPicker, getDefaultClassNames, DayButton, Locale, y el mecanismo de componentes personalizados (Root, Chevron, DayButton, WeekNumber, etc.).
 - lucide-react
-  - Provee ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon.
-- cn (utility de concatenación de clases)
-  - importado desde "@/lib/utils".
-- Button y buttonVariants
-  - importados desde "@/components/ui/button".
-- Biblioteca de utilidades del proyecto
-  - Uso de variables de CSS como --cell-size, --cell-radius, --radius-md, etc. a través de classNames.
-- Locale y formatters
-  - Soporta locales y formateos para Month dropdown.
+  - Iconos utilizados para las flechas de navegación (ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon).
+- cn (utilidad de clases)
+  - Combina múltiples strings de clase de forma segura.
+- Button (componentes/ui/button)
+  - Botón reutilizable de la UI de la app. Se usa dentro de CalendarDayButton para renderizar cada día.
+- Otros: Tipos y utilidades de la app (p. ej. tokens CSS y clases como --cell-size, --cell-radius) usados a través de classNames y cn.
+
+Notas:
+- La implementación utiliza getDefaultClassNames() para heredar las clases por defecto de DayPicker y luego extiende/overrides para adaptar al diseño de la app.
+- Se definen estilos complejos con clases de utilidad (parecidas a Tailwind) y tokens CSS variables para tamaño, radio y colores.
 
 ---
 
 ## Ejemplos de uso
 
-Ejemplo 1: Uso básico con locale
+- Importación y uso básico:
 
-```tsx
-import { Calendar } from "@/components/ui/calendar"
-import { es } from "date-fns/locale"
+  - import { Calendar } from "@/components/ui/calendar";
 
-function EjemploCalendario() {
-  // Suponiendo que ya tienes un locale preparado similar a la estructura de react-day-picker
-  const locale = { code: "es-ES", ...es }
+  - const locale = { code: "es" }; // ejemplo de locale
+  - <Calendar locale={locale} showOutsideDays={true} captionLayout="dropdown" />
 
-  return (
-    <div>
-      <Calendar locale={locale} showOutsideDays />
-    </div>
-  )
-}
-```
+- Uso con formato personalizado y variantes:
 
-Ejemplo 2: Personalización del botón y override de componentes
+  - <Calendar
+      locale={locale}
+      formatters={{
+        formatMonthDropdown: (date) => date.toLocaleString(locale?.code, { month: "long" }),
+      }}
+      buttonVariant="ghost"
+    />
 
-```tsx
-import { Calendar } from "@/components/ui/calendar"
+- Reemplazo de componentes (avanzado):
 
-function CalendarioPersonalizado() {
-  return (
-    <Calendar
-      buttonVariant="outline" // Variante para los DayButtons
-      locale={{ code: "en-US" }}
+  - <Calendar
+      locale={locale}
       components={{
-        // Sobre-escribir, por ejemplo, WeekendDays o WeekNumber si se desea
+        DayButton: (props) => <CalendarDayButton locale={locale} {...props} />,
       }}
     />
-  )
-}
-```
-
-Ejemplo 3: Uso con formatters personalizados
-
-```tsx
-<Calendar
-  locale={{ code: "en-US" }}
-  formatters={{
-    formatMonthDropdown: (date) => date.toLocaleString('en-US', { month: 'short' }),
-  }}
-/>
-```
-
-Notas sobre los ejemplos:
-- Los ejemplos asumen que la configuración de locale sigue el formato soportado por react-day-picker.
-- Se puede extender o sobreescribir casi cualquier parte del DayPicker mediante la prop components y classNames.
 
 ---
 
 ## Notas técnicas
 
-- Cliente y rendimiento:
-  - Este archivo está marcado como "use client", lo que lo habilita para ejecución en el cliente en Next.js. Esto facilita el manejo de foco y la interacción de usuario ( DayButton con foco ).
-  - CalendarDayButton utiliza un ref para gestionar el foco cuando modifiers.focused cambia. Esto mejora la accesibilidad y la experiencia de navegación con teclado.
+- Integración y personalización de DayPicker:
+  - Se utiliza getDefaultClassNames para obtener las clases base de DayPicker y se las extiende mediante classNames para adaptar la UI.
+  - Los nombres de clases se componen con la utilidad cn y se apoyan en tokens CSS (p. ej., --cell-size, --cell-radius) para mantener consistencia visual.
+  - RTL: se insertan reglas específicas para RTL usando expresiones String.raw para aplicar rotaciones a flechas cuando la dirección es RTL.
 
-- Estilos y theming:
-  - Se aprovecha getDefaultClassNames de react-day-picker para obtener las clases base del calendario y fusionarlas con estilos propios mediante la utilidad cn.
-  - Los estilos usan variables CSS (p. ej. --cell-size, --cell-radius) para una mayor consistencia y adaptabilidad a temas.
-  - Soporte RTL: se aplican transformaciones específicas cuando la dirección es RTL, asegurando que las flechas de navegación se roten adecuadamente.
+- Componentes sustituidos:
+  - Root: envuelto en un div con data-slot="calendar" para mantener compatibilidad con slots de DayPicker.
+  - Chevron: renderiza los iconos de navegación (izquierda, derecha y abajo) mediante lucide-react.
+  - DayButton: reimplementado como CalendarDayButton para aplicar estilos y atributos de datos personalizables.
+  - WeekNumber: renderizado en una celda con estructura específica para alinear números de semana.
 
-- Composición y extensibilidad:
-  - El componente expone la propiedad components para reemplazar o extender componentes internos de DayPicker (Root, Chevron, DayButton, WeekNumber, etc.).
-  - DayButton se reemplaza por CalendarDayButton, que a su vez utiliza el Button del proyecto para mantener consistencia visual y comportamental.
-  - WeekNumber se renderiza con una celda personalizada para alinear el contenido.
+- Gestión de foco:
+  - CalendarDayButton utiliza un useEffect para enfocar el botón si modifiers.focused es true. Esto mejora la accesibilidad y la navegación con teclado.
 
-- Accesibilidad:
-  - Día seleccionado y rangos se comunican a través de data-attributes, lo que facilita estilos y posibles pruebas.
-  - CalendarDayButton maneja foco para accesibilidad y usabilidad.
+- Accesibilidad y atributos de datos:
+  - Los DayButton renderizados exponen data-attributes como data-day, data-selected-single, data-range-start, data-range-end, data-range-middle para facilitar estilos y pruebas.
+  - Se utilizan roles y propiedades de DayPicker para mantener compatibilidad con lectores de pantalla.
 
-- Mantenibilidad y compatibilidad:
-  - El componente actúa como puente entre DayPicker y el estilo global de RNG Vantage, de modo que cambios en el UI pueden centralizarse en este wrapper.
-  - Mantiene compatibilidad con todas las props de DayPicker, permitiendo a usuarios avanzados ajustar comportamientos sin perder integridad visual.
+- Formateo de meses:
+  - formatMonthDropdown se define para devolver un mes abreviado según locale.code, mejorando la legibilidad en el dropdown de mes.
+
+- Compatibilidad con rangos:
+  - Los modificadores (range_start, range_end, range_middle) se utilizan para aplicar estilos distintos a los días conforme a la selección de rango.
+
+- Rendimiento y mantenibilidad:
+  - No se observa memoización explícita de los componentes; cada renderizado depende de los props de DayPicker.
+  - La personalización está centralizada en el archivo, facilitando cambios de estilo futuros sin necesidad de tocar lógica de negocio.
 
 - Limitaciones:
-  - La prop classNames y className requieren conocimiento de la estructura de DayPicker para un override efectivo; se recomienda utilizar las claves provistas (root, months, month, nav, etc.) para cambios de estilo.
-  - El formulario de locale depende de la configuración que DayPicker espera; si se utilizan locales no soportados, puede haber comportamientos inesperados.
-
-- Última mención de compatibilidad:
-  - Dado que se depende de react-day-picker para la lógica del calendario, cualquier cambio mayor en esa librería podría requerir ajustes en este wrapper.
+  - La documentación refleja exactamente lo que el código implementa. No se asume soporte de funcionalidades no presentes en el archivo.
+  - Si se requiere una lógica de selección fuera de lo soportado por DayPicker (nuevas modalidades de selección), habría que extender props y/o componentes.
 
 ---
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
 ---
 
-Si necesitas ampliación en alguna sección (por ejemplo, un diagrama de flujo de props, o un checklist de pruebas), puedo añadirlo.
+Si necesitas ejemplos adicionales o una guía de migración para cambiar la versión de react-day-picker, puedo prepararte una sección adicional con pasos detallados.

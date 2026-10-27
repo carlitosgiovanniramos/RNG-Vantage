@@ -1,84 +1,91 @@
 ## Descripción general
 
-El archivo components/status-badge.tsx define el componente StatusBadge, un componente de presentación que renderiza un distintivo de estado (badge) para representar el estado de pedidos, reservas u otros procesos dentro de RNG Vantage. El badge utiliza un mapeo estático statusMap para traducir un valor de estado a una etiqueta legible en español y a estilos visuales consistentes (colores y fondo) adaptados a temas claro/oscuro. Si se pasa un valor de estado no reconocido, el componente cae de forma segura a Pendiente.
-
-El componente se apoya en:
-- Badge: componente de UI para mostrar el distintivo.
-- cn: utilidad de combinación de clases CSS.
-
-Este enfoque facilita la consistencia visual y simplifica la adición de nuevos estados en el futuro mediante la extensión de statusMap.
+StatusBadge es un componente de React escrito en TypeScript que renderiza un badge (etiqueta) estilizado para representar el estado de una entidad (orden, reserva, etc.) dentro de RNG Vantage. El componente toma un estado (status) y lo mapea a una etiqueta legible en español, junto con estilos de Tailwind que varían según el estado y soportan modo oscuro. Este componente se utiliza para garantizar una representación visual consistente de estados en la UI.
 
 ## Responsabilidades
 
-- Interpretar un valor de estado (status) y seleccionar la etiqueta y estilos correspondientes.
-- Proporcionar un valor por defecto (pendiente) cuando el estado no es válido o no está en el mapa.
-- Permitir extensibilidad mediante la prop className adicional y el uso de estilos adaptables al tema (dark mode).
-- Exponer el tipo StatusValue para que otros módulos puedan reutilizar la enumeración de estados permitidos.
+- Convertir un valor de estado en un label legible (en español) y en un conjunto de estilos visuales.
+- Proporcionar un fallback seguro (pendiente) si el estado no es reconocible.
+- Permitir extensión mediante la modificación o ampliación del mapa de estados.
+- Integrarse con el componente de UI Badge y con utilidades de clase para construir la clase final del elemento.
 
 ## Props / Parámetros
 
-A continuación se detallan las propiedades públicas del componente StatusBadge.
+- status: StatusValue | string | null (opcional)
+  - Tipo: StatusValue | string | null
+  - Descripción: estado que se quiere mostrar. Si el valor no está en el mapa de estados, se usa pendente por defecto.
+- className: string (opcional)
+  - Descripción: clases CSS adicionales para personalizar el badge, fusionadas con las clases por defecto y las del estado.
 
-| Prop | Tipo | Requerido | Descripción |
-|---|---|---|---|
-| status | StatusValue | opcional | Valor del estado a mostrar. Puede ser uno de los valores de StatusValue o cualquier cadena. Si el valor no coincide con statusMap, se renderiza como Pendiente por defecto. |
-| className | string | opcional | Clases CSS adicionales para extender o sobrescribir el estilo del badge. |
-
-Notas:
-- StatusValue es un tipo exportado desde este módulo que define los estados permitidos: "pending", "active", "expired", "completed", "cancelled", "failed" y "refunded".
+Tipo StatusValue (permitido):
+- "pending"
+- "active"
+- "inactive"
+- "expired"
+- "completed"
+- "cancelled"
+- "failed"
+- "refunded"
 
 ## Retorna
 
-- Un elemento React (ReactElement) que representa un Badge con variante "outline".
-- El texto mostrado (config.label) y la combinación de clases (config.className) se obtienen a partir de statusMap según el valor de status.
-- Si status no es válido, se utiliza "pending" como clave por defecto.
+- Un elemento Badge (componente UI) con:
+  - variant="outline"
+  - className: combinación de clases base, las específicas del estado y cualquier className adicional pasado por props
+  - contenido: label en español correspondiente al estado
 
-Formato de retorno: un componente Badge que envuelve el texto label correspondiente.
+Formato devuelto:
+- <Badge variant="outline" className="...">Label</Badge>
+
+La etiqueta mostrada para cada estado se gestiona mediante el mapa statusMap, y si el estado no es reconocido se utiliza "Pendiente".
 
 ## Dependencias
 
-- "@/components/ui/badge" (Badge): componente de UI utilizado para renderizar el distintivo.
-- "@/lib/utils" (cn): utilidad para concatenar clases CSS de forma segura.
-- Tailwind CSS (implícito): clases como bg-*, text-*, dark:* y otras utilidades para estilos rápidos.
-- TypeScript: tipado de StatusValue y StatusBadgeProps.
+- "@/components/ui/badge" (componente Badge)
+- "@/lib/utils" (función cn para combinar clases)
+- Tipos y estructuras: StatusValue y statusMap en este archivo
+
+Notas:
+- Los estilos por estado están definidos explícitamente en statusMap y aprovechan Tailwind CSS con variantes para modo claro/oscuro.
+- El mapeo de estados a labels está en español para consistencia de la interfaz de usuario.
 
 ## Ejemplos de uso
 
-Ejemplos prácticos de uso del componente:
+Ejemplo mínimo:
+- Mostrar un badge para un estado activo
+  - <StatusBadge status="active" />
 
-- Uso básico con estado activo
-```tsx
-import { StatusBadge } from "@/components/status-badge";
+Ejemplos con estilo adicional:
+- Agregar margen adicional y mantener el estilo del estado
+  - <StatusBadge status="expired" className="mt-2" />
 
-<StatusBadge status="active" />
-```
+Ejemplo con valor no reconocido:
+- Se mostrará Pendiente por defecto
+  - <StatusBadge status="unknown" />
 
-- Uso con estado cancelado y clases personalizadas
-```tsx
-import { StatusBadge } from "@/components/status-badge";
-
-<StatusBadge status="cancelled" className="mt-2" />
-```
-
-- Uso con un valor no reconocido (se renderizará como Pendiente)
-```tsx
-import { StatusBadge } from "@/components/status-badge";
-
-<StatusBadge status="unknown-status" />
-```
+Ejemplo sin props (default):
+- Se mostrará Pendiente por defecto
+  - <StatusBadge />
 
 ## Notas técnicas
 
-- Mapeo estático: statusMap es un objeto de mapeo estático que asocia cada StatusValue con una etiqueta en español y un conjunto de className para estilos visuales. Este enfoque facilita la consistencia y la extensión futura.
-- Seguridad de estado: el código determina la clave a usar mediante la verificación: status && status in statusMap ? (status as StatusValue) : "pending". Esto garantiza que, si se pasa un valor no contemplado, NO se produce fallo y se muestra Pendiente.
-- Personalización de estilos: además de los estilos del statusMap, se admite className adicional para sobrescribir o añadir estilos. El orden de concatenación en cn es baseStyles, config.className y luego className del usuario.
-- Accesibilidad y consistencia: se utiliza el badge con variante "outline" para mantener una apariencia consistente entre estados y facilitar la lectura en diferentes fondos.
-- Extensibilidad: para añadir nuevos estados, basta ampliar statusMap con una nueva clave de StatusValue y su correspondiente label y className; no se requieren cambios en la lógica de renderizado.
+- Lógica de selección de estado:
+  - Se verifica si status es una clave válida dentro de statusMap. Si es válido, se usa ese valor; de lo contrario, se optiona "pending".
+  - Implementación: const key = status && status in statusMap ? (status as StatusValue) : "pending";
+- Tipado:
+  - StatusValue es un union estricto de valores conocidos. El prop status admite string o null para permitir casos donde no hay estado definido.
+- Rendimiento:
+  - El componente realiza un acceso directo a un mapa (O(1)) para obtener label y clases; no hay renderizaciones adicionales ni efectos secundarios.
+- Estilo:
+  - Usa clases de Tailwind para estilos de fondo, texto y borde, con variantes específicas para cada estado y soporte de modo oscuro.
+  - El badge base incluye formato tipográfico consistente (font-spaceGrotesk, tamaño, mayúsculas, tracking).
+- Extensibilidad:
+  - Para soportar nuevos estados, basta con extender statusMap con la nueva clave de StatusValue y sus label/clases correspondientes.
+- Dependencias de diseño:
+  - Requiere el componente Badge y la utilidad de concatenación de clases (cn). Asegúrate de que estén disponibles y correctamente importados en el proyecto.
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
-Notas finales:
-- El componente es de tipo puro (sin efectos secundarios) y depende únicamente de props para su renderizado.
-- No hay dependencias de estado ni efectos asincrónicos; es adecuado para su uso en listas, tablas y componentes de resumen donde se requieren indicadores de estado visuales.
+Si necesitas adaptar el comportamiento para otros tipos de entidades o añadir más estados, dime qué valores quieres soportar y los estilos correspondientes, y puedo ayudarte a actualizar la documentación o el código.

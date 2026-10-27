@@ -1,158 +1,125 @@
-# Documentación técnica – DataCard (components/data-card.tsx)
+# DataCard (components/data-card.tsx)
 
-Fecha de última actualización: 12/5/2026
-
-Este archivo define el componente DataCard, una tarjeta de datos reutilizable para mostrar métricas en el dashboard. Es un componente presentacional que integra el sistema de tarjetas (Card) ya existente en el proyecto, con soporte opcional para un icono y una tendencia (up/down/neutral).
-
-## Descripción general
-
-DataCard es un componente React/TypeScript que renderiza una tarjeta con:
-
-- un título
-- un valor principal
-- un icono opcional
-- una sección de tendencia opcional que puede indicar incremento, decremento o neutralidad, con un valor de tendencia y una etiqueta opcional
-
-El diseño está implementado con el sistema de tarjetas del proyecto (Card, CardHeader, CardContent, CardTitle) y estilos Tailwind para consistencia visual y respuestas a temas claro/oscuro.
+Descripción general
+- DataCard es un componente React que presenta información clave en una tarjeta estilizada. Muestra un título, un valor destacado, un icono opcional y una tendencia opcional (con iconos de tendencia, coloración y etiqueta). Está construido con los componentes de UI propios del proyecto y está diseñado para ser reutilizable en paneles de métricas y KPIs dentro de RNG Vantage.
 
 ## Responsabilidades
-
-- Mostrar un conjunto estético y coherente de datos numéricos (valor) dentro de una tarjeta.
-- Soportar un icono opcional que acompaña al título.
-- Soportar una sección de tendencia que:
-  - Indica la dirección con íconos de TrendingUp/TrendingDown cuando corresponda.
-  - Cambia color según la dirección (up: verde, down: rojo, neutral: neutro).
-  - Muestra el valor de la tendencia y una etiqueta adicional si está proporcionada.
-- Mantener una interfaz limpia y extensible para uso en dashboards.
+- Renderizar una tarjeta (Card) con encabezado y contenido.
+- Mostrar un título y un valor principal con estilo tipográfico definido.
+- Opcionalmente renderizar un icono a la derecha del encabezado.
+- Opcionalmente renderizar una tendencia con:
+  - dirección (up, down, neutral)
+  - icono de tendencia correspondiente
+  - valor de tendencia (string)
+  - etiqueta opcional
+- Aplicar estilos consistentes con el tema (modo claro/oscuro) y efectos de hover.
+- Permitir extensión mediante className adicional para personalizar estilos desde el consumidor.
 
 ## Props / Parámetros
 
-A continuación se detalla la interfaz del componente y de sus tipos relacionados.
+Tabla de props del componente DataCard
 
-- DataCardProps (propiedades del componente DataCard)
-  - title: string (requerido)
-    - Título mostrado en la cabecera de la tarjeta.
-  - value: string | number (requerido)
-    - Valor principal mostrado en la tarjeta.
-  - icon?: ReactNode (opcional)
-    - Icono o elemento React para mostrar junto al título.
-  - trend?: DataCardTrend (opcional)
-    - Objeto con información de la tendencia.
-  - className?: string (opcional)
-    - Clases adicionales para personalizar el estilo de la tarjeta.
+| Nombre | Tipo | Requerido | Descripción |
+|-------|------|-----------|-------------|
+| title | string | Sí | Título de la tarjeta mostrado en el encabezado. |
+| value | string | Sí | Valor principal a mostrar (puede ser string o number). |
+| icon | ReactNode | No | Icono opcional que se muestra en el encabezado, dentro de un contenedor estilizado a la derecha. |
+| trend | DataCardTrend | No | Objeto que define la tendencia a mostrar. Si se proporciona, se renderiza la fila de tendencia. |
+| className | string | No | Clase CSS adicional para personalizar el estilo de la tarjeta. |
 
+Definiciones auxiliares de tipos (internos al archivo)
+- DataCardTrendDirection | "up" | "down" | "neutral"
 - DataCardTrend
-  - value: string (requerido)
-    - Valor de la tendencia (p. ej. "+12%", "-3%").
-  - direction?: DataCardTrendDirection (opcional)
-    - Dirección de la tendencia: "up", "down" o "neutral".
-    - Si no se especifica, se asume "neutral".
-  - label?: string (opcional)
-    - Etiqueta adicional para contextualizar la tendencia.
+  - value: string
+  - direction?: DataCardTrendDirection
+  - label?: string
 
-- DataCardDirection (DataCardTrendDirection)
-  - "up" | "down" | "neutral"
-
-Notas sobre el comportamiento:
-- direction se obtiene como trend?.direction ?? "neutral".
-- El color de la tendencia es:
-  - "up"  => text-emerald-600 (con modo oscuro: text-emerald-400)
-  - "down"=> text-red-600 (con modo oscuro: text-red-400)
-  - "neutral" => text-muted-foreground
-- Si trend está presente, se renderiza una fila con el icono correspondiente (TrendingUp si direction === "up", TrendingDown si direction === "down"), seguido del value de la tendencia y, si existe, la label.
+Notas sobre valores por defecto
+- Si trend no se proporciona, no se renderiza la sección de tendencia.
+- direction por defecto cuando trend está presente es "neutral".
 
 ## Retorna
-
-DataCard devuelve un JSX.Element que representa una tarjeta (Card) con:
-- CardHeader que contiene el título y, opcionalmente, el icono.
-- CardContent que muestra el valor principal y, si existe, la sección de tendencia.
-- Un div decorativo en la parte superior (barra con gradiente) para acentos visuales.
-
-Formato de retorno: JSX.Element (renderizado en el árbol de componentes de la página donde se use).
+- Retorna un elemento React (JSX) que representa una Card con:
+  - Encabezado: título y, opcionalmente, un icono.
+  - Contenido: el valor principal y, si aplica, la sección de tendencia.
+- Estructura interna:
+  - Card (wrapper) con estilos de borde, fondo y sombras.
+  - Div decorativo superior (barra del color primario) para acentos visuales.
+  - CardHeader con título y, si existe, icono.
+  - CardContent con el valor y opcionalmente la sección de tendencia (icono de subida/bajada, valor de tendencia y etiqueta).
 
 ## Dependencias
+- React: ReactNode para tipar el icono.
+- lucide-react: TrendingUp y TrendingDown para indicar la dirección de la tendencia.
+- "@/components/ui/card": Card, CardContent, CardHeader, CardTitle (componente de UI reutilizable del proyecto).
+- "@/lib/utils": cn (utilidad de concatenación de clases).
+- Tipado TypeScript incluido en el propio archivo.
 
-- React (tipos: ReactNode) y TypeScript.
-- lucide-react: para los íconos TrendingUp y TrendingDown.
-- "@/components/ui/card": Card, CardContent, CardHeader, CardTitle (componente de tarjetas del proyecto).
-- "@/lib/utils": cn (utilidad para combinar clases CSS de Tailwind).
-- Tailwind CSS (estilos y utilidades de clase).
-- Estilos específicos de la aplicación (clases como bg-card/85, text-muted-foreground, etc.).
+Notas sobre estilo y comportamiento
+- La clase de Card utiliza Tailwind CSS (o un sistema similar) y combina estilos dinámicos con la utilidad cn para aceptar className externa.
+- La tonalidad de la tendencia depende de la dirección:
+  - up: text-emerald-600 (claro) / text-emerald-400 (oscuro)
+  - down: text-red-600 (claro) / text-red-400 (oscuro)
+  - neutral: text-muted-foreground
+- Si trend.direction === "up" o "down", se renderiza el icono de TrendingUp/TrendingDown correspondiente.
+- Si trend.label se proporciona, se muestra como un texto adicional al lado de la tendencia.
 
 ## Ejemplos de uso
 
-Ejemplo básico (sin icono y sin tendencia):
+Ejemplo 1: Tarjeta de ventas con tendencia al alza
+- Este ejemplo muestra una tarjeta con título "Ventas Totales", valor numérico, un icono y una tendencia positiva.
 
 ```tsx
 import { DataCard } from "@/components/data-card";
+import { DollarSign } from "lucide-react";
 
-export default function DashboardRow() {
+function Ejemplo() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <DataCard
-        title="Ventas totales"
-        value={12345}
-      />
-    </div>
+    <DataCard
+      title="Ventas Totales"
+      value={ "$124.500" }
+      icon={<DollarSign />} 
+      trend={{ value: "+12%", direction: "up", label: "Este Mes" }}
+    />
   );
 }
 ```
 
-Ejemplo con icono y tendencia positiva:
-
+Ejemplo 2: Tarjeta de usuarios activos sin tendencia
 ```tsx
 import { DataCard } from "@/components/data-card";
-import { TrendingUp } from "lucide-react";
 
-export default function DashboardRow() {
+function Ejemplo() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <DataCard
-        title="Ventas mensuales"
-        value={54321}
-        icon={<span className="h-5 w-5" aria-label="ventas" style={{ display: "inline-block" }}>💹</span>}
-        trend={{ value: "+8%", direction: "up", label: " vs mes anterior" }}
-      />
-      <DataCard
-        title="Reservas"
-        value="1,234"
-        icon={<TrendingUp className="h-4 w-4" />}
-        trend={{ value: "-2%", direction: "down" }}
-      />
-      <DataCard
-        title="Promedio de venta"
-        value="$89.99"
-      />
-    </div>
+    <DataCard
+      title="Usuarios Activos"
+      value={42}
+      icon={null}
+    />
   );
 }
 ```
 
-Notas sobre el ejemplo:
-- En el primer DataCard, se utiliza un icono simple (emoji) para ilustrar el prop icon.
-- En el segundo DataCard, se muestra un icono de TrendingUp como parte del icono de la tarjeta y se especifica una tendencia decreciente.
-- El tercer DataCard no utiliza icono ni tendencia.
+Notas sobre estilo de uso
+- El componente está diseñado para funcionar bien dentro de dashboards y paneles de métricas, pudiendo reutilizarse con diferentes iconos y valores sin necesidad de lógica adicional.
 
 ## Notas técnicas
 
-- Arquitectura y estilo:
-  - DataCard es un componente presentacional que depende del sistema de tarjetas del proyecto (Card, CardHeader, CardContent, CardTitle) para mantener consistencia visual.
-  - El color de la tendencia se gestiona mediante una lógica de selección de clases (trendColor) en función de direction. Esto facilita el soporte de dark mode a través de las utilidades de Tailwind.
-  - El encabezado incluye un título estilizado con fuente específica (font-spaceGrotesk) y un tamaño reducido para el título, respetando el diseño de tarjetas.
-  - El icono (si se proporciona) se muestra en un contenedor con fondo suave y color primario para resaltar sin perder legibilidad.
-  - Se añade una barra decorativa superior (aria-hidden) para un acento visual sin impacto en accesibilidad.
-- Accesibilidad:
-  - El div decorativo tiene aria-hidden para no interferir con lectura de lectores de pantalla.
-  - Si se utiliza el icono, este es proporcionado como ReactNode, permitiendo flexibilidad en el tipo de ícono y su accesibilidad (p. ej., roles o etiquetas si se decide).
-- Rendimiento:
-  - La lógica de renderizado es simple y dependiente de props; no hay estados internos ni efectos. Esto favorece la previsibilidad y facilita pruebas unitarias.
-- Extensibilidad:
-  - El componente está diseñado para ser utilizado en varios contextos dentro de dashboards. El prop className permite añadir estilos adicionales sin cambiar la implementación interna.
+- Rendimiento y rendimiento visual
+  - El componente es declarativo y no realiza lógica de negocio; depende del estado externo para los valores y tendencias.
+  - Usa clases utilitarias para hover y transición para una experiencia de usuario suave.
+- Accesibilidad
+  - El div decorativo superior tiene aria-hidden para evitar lectura por lectores de pantalla.
+  - El contenido del encabezado utiliza CardHeader/CardTitle semánticos proporcionados por el diseño de UI del proyecto.
+- Estilización
+  - Se apoya en Tailwind (o un sistema equivalente) para estilos de tipografía, colores y efectos de hover.
+  - Los colores para la tendencia se ajustan automáticamente según la dirección (up/down/neutral).
+- Extensibilidad
+  - El prop className permite aplicar estilos adicionales desde el consumidor sin alterar la lógica interna.
+  - El icono es opcional; si se proporciona, se renderiza en un contenedor estilizado al lado del título.
 
 ## Última actualización
+29/5/2026
 
-12/5/2026
-
-Observaciones finales:
-- Este resumen describe con precisión el comportamiento y las entidades expuestas por el archivo data-card.tsx.
-- Si se agregan nuevas variantes de tendencia o estilos, se recomienda extender DataCardTrendDirection y la lógica de trendColor de forma controlada para evitar romper la compatibilidad del componente.
+Notas finales
+- Este archivo está implementado como un componente reutilizable y componenente dentro de la colección de UI del proyecto RNG Vantage. No introduce dependencias o comportamientos fuera de lo que ya está definido en el diseño de tarjetas y métricas del sistema. Si se requiere adaptar el comportamiento de la tendencia o el aspecto visual, se deben ajustar las clases de estilo o la lógica de color en este archivo o en las utilidades relacionadas.

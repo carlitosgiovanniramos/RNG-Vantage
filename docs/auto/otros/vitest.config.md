@@ -1,111 +1,141 @@
+# RNG Vantage - vitest.config.ts
+
+Archivo de configuración de Vitest para el proyecto RNG Vantage. Define el entorno de pruebas, la integración con React a través de Vite, las reglas de descubrimiento de tests y las alias de resolución de módulos. Especifica un entorno de pruebas que emula el navegador (jsdom), carga un script de configuración previa y establece el comportamiento de verificación de tipos para archivos de prueba.
+
 ## Descripción general
 
-El archivo vitest.config.ts define y exporta la configuración de Vitest para el proyecto RNG Vantage. Utiliza defineConfig de Vitest para estructurar la configuración y se integra con Vite mediante el plugin de React. Especifica el entorno de pruebas, archivos de setup, el patrón de inclusión de tests y un alias de rutas para simplificar imports en el proyecto.
+Este archivo exporta la configuración de Vitest mediante la función helper `defineConfig`. Sus principales roles son:
 
----
+- Integrar Vitest con el plugin de React de Vite para pruebas en un proyecto React.
+- Configurar el entorno de pruebas a jsdom para simular un entorno de navegador.
+- Especificar un script de configuración previa que se ejecuta antes de cada suite de pruebas (`vitest.setup.ts`).
+- Definir qué archivos deben ser detectados como tests (`**/*.test.{ts,tsx}`).
+- Habilitar la verificación de tipos para las pruebas TypeScript.
+- Establecer un alias de resolución de módulos para simplificar imports, apuntando `@` al directorio raíz del proyecto.
 
 ## Responsabilidades
 
-- Proporcionar la configuración de Vitest para ejecutar pruebas en un entorno simulado de navegador (jsdom).
-- Integrar React con el entorno de pruebas a través del plugin @vitejs/plugin-react.
-- Indicar el archivo de setup que Vitest debe cargar antes de las pruebas (vitest.setup.ts).
-- Definir el patrón de archivos de prueba a incluir (archivos .test.ts y .test.tsx en cualquier subdirectorio).
-- Configurar un alias de ruta (@"") que apunta a la raíz del proyecto para simplificar imports.
+- Proveer un entorno de pruebas consistente para todas las pruebas unitarias y de integración.
+- Integrar el plugin de React para que Vitest trabaje correctamente con archivos JSX/TSX.
+- Asegurar que las pruebas se descubran automáticamente mediante patrones de archivos.
+- Garantizar la verificación estática de tipos para las pruebas.
+- Facilitar importaciones limpias mediante alias de ruta.
 
----
+## Props / Parámetros
 
-## Parámetros / Props
-
-A continuación se detallan los parámetros de configuración relevantes y sus tipos. No corresponde a un componente React; se trata de la estructura de la configuración exportada por defineConfig.
+A continuación se describen las principales configuraciones (propiedades) dentro del objeto de configuración de Vitest:
 
 - plugins
-  - Tipo: Array
-  - Descripción: Lista de plugins para usar con Vitest/Vite. En este caso se incluye el plugin de React.
-  - Valor relevante: [react()]
+  - Tipo: array
+  - Descripción: lista de plugins usados por Vitest. En este caso, se usa el plugin de React para Vite.
+  - Valor: `[react()]`
 
 - test
-  - Tipo: Objeto
-  - Descripción: Subconjunto de configuración específico para las pruebas.
-  - Campos dentro:
+  - Tipo: objeto
+  - Descripción: configuración específica para las pruebas.
+  - Claves:
     - environment
       - Tipo: string
-      - Descripción: Entorno de ejecución de las pruebas. En este archivo se utiliza "jsdom" para simular un entorno de navegador.
-      - Valor: "jsdom"
+      - Descripción: entorno de ejecución de las pruebas.
+      - Valor: `"jsdom"` (entorno de navegador simulado)
     - setupFiles
-      - Tipo: string[]
-      - Descripción: Archivos que se ejecutan antes de las pruebas para configurar el entorno (por ejemplo, mocks globales, configuraciones).
-      - Valor: ["./vitest.setup.ts"]
+      - Tipo: array de string
+      - Descripción: archivos que se ejecutan antes de las pruebas para preparar entorno/globales.
+      - Valor: `["./vitest.setup.ts"]`
     - include
-      - Tipo: string[]
-      - Descripción: Patrones glob para incluir archivos de prueba. Aquí se incluyen archivos que coincidan con "*.test.ts" y "*.test.tsx" en cualquier ruta.
-      - Valor: ["**/*.test.{ts,tsx}"]
+      - Tipo: array de string
+      - Descripción: patrones glob para localizar archivos de prueba.
+      - Valor: `["**/*.test.{ts,tsx}"]`
+    - typecheck
+      - Tipo: objeto
+      - Descripción: configuración de verificación de tipos para las pruebas.
+      - Claves:
+        - enabled
+          - Tipo: boolean
+          - Descripción: activa/desactiva la verificación de tipos.
+          - Valor: `true`
+        - include
+          - Tipo: array de string
+          - Descripción: patrones para qué archivos deben ser typechecked.
+          - Valor: `["**/*.test.{ts,tsx}"]`
 
 - resolve
-  - Tipo: Objeto
-  - Descripción: Configuración de resolución de módulos para Vitest (y de forma general para Vite).
-  - Campos dentro:
+  - Tipo: objeto
+  - Descripción: configuración de resolución de módulos.
+  - Claves:
     - alias
-      - Tipo: Objeto
-      - Descripción: Mapeos de alias para importar módulos de forma más conveniente.
-      - Valor relevante:
-        - "@": path.resolve(__dirname, ".")
-      - Efecto: Permite importar módulos usando "@/ruta" para referirse a la raíz del proyecto.
+      - Tipo: objeto
+      - Descripción: mapeos de alias para importación.
+      - Valor: `{ "@": path.resolve(__dirname, ".") }`
+      - Nota: Esto permite usar importaciones como `import Something from "@/path/...";` para referirse al directorio raíz del proyecto.
 
----
+- El código fuente de este archivo utiliza:
+  - `defineConfig` de `vitest/config` para una configuración tipada.
+  - `@vitejs/plugin-react` para compatibilidad con React.
+  - `path` de Node para resolver rutas de alias.
 
 ## Retorna
 
-- Tipo de retorno: Objeto de configuración de Vitest.
-- Descripción: La llamada a defineConfig devuelve un objeto que Vitest consume para configurar su comportamiento de pruebas. Este objeto se exporta por defecto desde el archivo para que Vitest lo lea al ejecutar las pruebas.
-
----
+La función exportada devuelve un objeto de configuración de Vitest (configuración de usuario) que es consumido por Vitest para ejecutar las pruebas. En concreto, se exporta un objeto a través de `export default defineConfig({...})`. No hay una función con un retorno dinámico; es una exportación de configuración estática.
 
 ## Dependencias
 
+Este archivo depende de las siguientes librerías y módulos externos:
+
 - vitest/config
-  - Funcionalidad: Proporciona defineConfig para estructurar la configuración de Vitest.
+  - Proporciona `defineConfig` para crear configuraciones tipadas y seguras.
 - @vitejs/plugin-react
-  - Funcionalidad: Plugin de React para Vite, necesario cuando se prueban componentes React con Vite.
-- path (nativo de Node.js)
-  - Funcionalidad: Proporciona path.resolve para resolver rutas de forma consistente.
-- vitest setup (archivo vitest.setup.ts)
-  - Funcionalidad: Archivo de configuración/initialización ejecutado antes de las pruebas (punto de entrada para mocks/global setup).
-
-Notas:
-- El alias "@": path.resolve(__dirname, ".") crea un atajo para importar desde la raíz del proyecto, facilitando imports como "@/components/..." en lugar de rutas relativas largas.
-
----
+  - Plugin de Vite para habilitar React con soporte a JSX/TSX en el entorno de pruebas.
+- path (núcleo de Node)
+  - Utilizado para resolver rutas de alias en el proyecto.
+- vitest (implícito por el uso de la configuración)
+  - El motor de pruebas utilizado por el proyecto (unit/integration tests).
+- vitest.setup.ts (archivo de setup)
+  - Archivo de configuración previa que se ejecuta antes de las pruebas para establecer mocks globales o configuraciones necesarias.
 
 ## Ejemplos de uso
 
-- Ejecutar todas las pruebas con la configuración predeterminada:
-  - npx vitest
-- Ejecutar pruebas con un archivo de configuración específico (si fuese necesario):
-  - npx vitest --config vitest.config.ts
-- Ejecutarlo en modo observación (watch) para mantener pruebas actualizadas con cambios en el código:
-  - npx vitest -w
+- Ejecutar las pruebas de Vitest
+  - Si el proyecto tiene un script típico de pruebas, se puede ejecutar desde la raíz del proyecto con:
+    - npm: npm test
+    - yarn: yarn test
+    - pnpm: pnpm test
+  - Alternativamente, invocar directamente Vitest:
+    - npx vitest
+  - Nota: El comportamiento exacto depende de los scripts definidos en package.json; este archivo garantiza que las pruebas descubiertas sigan el patrón "**/*.test.{ts,tsx}" y se ejecuten en un entorno jsdom con la configuración de alias correspondiente.
 
-Notas: En muchos proyectos, las pruebas se lanzan mediante un script npm o pnpm, por ejemplo:
-- npm run test
-- pnpm test
-
-Asegúrate de que el script correspondiente esté definido en package.json si pretendes usar un comando específico.
-
----
+- Estructura de pruebas esperada
+  - Archivos de prueba deben terminar en .test.ts o .test.tsx.
+  - Las pruebas pueden depender de importaciones relativas o de alias `@` para importar desde el root del proyecto.
+  - Antes de cada suite de pruebas se ejecuta `vitest.setup.ts`.
 
 ## Notas técnicas
 
-- Entorno de pruebas: environment configurado a "jsdom" para simular un entorno de navegador, lo que facilita probar componentes React y funciones dependientes del DOM.
-- Integración de React: Se usa el plugin "@vitejs/plugin-react" para habilitar soporte adecuado de JSX/React durante las pruebas.
-- Archivos de setup: setupFiles apunta a "./vitest.setup.ts", permitiendo inicializar mocks, extendensiones globales o configuraciones necesarias antes de cada prueba.
-- Búsqueda de tests: el patrón "**/*.test.{ts,tsx}" cubre archivos de pruebas en cualquier subdirectorio con extensión .ts o .tsx que terminen en .test.
-- Resolución de módulos: el alias "@" mapea a la raíz del proyecto, simplificando imports y reduciendo dependencias de rutas relativas.
-- Rendimiento y mantenimiento: mantener este archivo ligero ayuda a evitar configuraciones innecesarias; cualquier nuevo plugin o ajuste debe añadirse de forma explícita y documentarse.
+- Entorno de pruebas (jsdom)
+  - Al usar `environment: "jsdom"`, Vitest simula un entorno de navegador. Es adecuado para pruebas de componentes React y código que interactúa con el DOM.
+  - Limitaciones: ciertas APIs de Node o características de bajo nivel pueden no comportarse exactamente como en un entorno real de navegador o Node puro.
 
----
+- Setup de pruebas
+  - `setupFiles: ["./vitest.setup.ts"]` indica que antes de ejecutar las pruebas se correrá ese archivo para configurar globals, mocks, o inicializaciones necesarias. Es común para mocks de APIs, configuraciones de fetch, etc.
+
+- Descubrimiento de tests
+  - `include: ["**/*.test.{ts,tsx}"]` restringe la búsqueda a archivos que terminan con `.test.ts` o `.test.tsx`, en cualquier subdirectorio.
+  - Esto mantiene una convención de nombres clara para las pruebas.
+
+- Verificación de tipos
+  - `typecheck.enabled: true` habilita la verificación de tipos para los archivos de prueba que coinciden con el patrón de inclusión.
+  - Beneficio: atrapa errores de tipos en tests temprano, a costa de un ligero overhead de compilación.
+
+- Aliases de importación
+  - `resolve.alias: { "@": path.resolve(__dirname, ".") }` facilita imports con el alias `@`, por ejemplo: `import lib from "@/src/lib";`
+  - `__dirname` se refiere al directorio donde se encuentra vitest.config.ts; por lo tanto, el alias apunta al directorio raíz del proyecto.
+
+- Compatibilidad y mantenimiento
+  - El uso de `defineConfig` aporta tipado estático y autocompletado en IDEs.
+  - El archivo es relativamente pequeño y directo, lo que facilita su mantenimiento. Si se añaden nuevas necesidades de pruebas (p. ej., E2E, hooks globales adicionales), el objeto de configuración puede expandirse en las secciones correspondientes.
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
----
+Si necesitas que añada ejemplos más específicos de configuración (por ejemplo, diferentes entornos para pruebas de componentes aislados, o ajustes para desempeño), dime y lo incorporo.

@@ -1,138 +1,182 @@
-# Documentación técnica: components/ui/badge.tsx
+# Documentación técnica – RNG Vantage
 
-Archivo: components/ui/badge.tsx
-Resumen: Definición de un componente Badge reutilizable y de la configuración de variantes de estilo (badgeVariants) para etiquetas pequeñas en la interfaz. El componente está construido con React, TypeScript y utilidades propias del proyecto (mergeProps, useRender, cn) y utiliza class-variance-authority (cva) para gestionar variantes de estilo.
+Archivo: components/ui/badge.tsx  
+Nombre: badge.tsx  
+Líneas: 53
+
+Este archivo define el componente Badge y su variante de estilos mediante class-variance-authority (cva). Se trata de un badge compacto, diseñado para ser utilizado en la interfaz de usuario de RNG Vantage, con soporte para variantes visuales y renderizado flexible a través del hook de renderizado personalizado.
+
+---
 
 ## Descripción general
-Este archivo define dos exportaciones clave del UI de la aplicación RNG Vantage:
 
-- Badge: Un componente React reutilizable que renderiza un span con estilo de badge. Soporta variantes de diseño (default, secondary, destructive, outline, ghost, link) y permite extender props nativos de span (children, id, aria-*, etc.). Implementa un sistema de renderizado mediante el hook useRender, lo que facilita la personalización del renderizado a través de la prop render.
-- badgeVariants: Una función de variaciones de clase creada con class-variance-authority (cva) que centraliza el conjunto de estilos y variantes disponibles para el Badge.
+El archivo implementa un componente Badge que:
 
-El diseño está orientado a consistencia visual y facilidad de uso en diferentes contextos dentro de la aplicación (notificaciones, etiquetas de estado, acciones rápidas, etc.).
+- es un span estilizado para mostrarse como una insignia/etiqueta en la interfaz.
+- utiliza una variante de estilos gestionada por cva para soportar distintos temas visuales (default, secondary, destructive, outline, ghost, link).
+- integra un hook de renderizado personalizado (useRender) para permitir personalizar el renderizado sin cambiar la lógica interna.
+- expone badgeVariants para que otros componentes puedan reutilizar las mismas clases de estilo de variante.
+
+La implementación está basada en Tailwind CSS (clases en el string de estilo) y está preparada para condiciones de accesibilidad (focus ring, aria-invalid) y para adaptar el contenido cuando haya iconos incrustados dentro del badge.
+
+---
 
 ## Responsabilidades
-- Proporcionar un badge estilizado y accesible para la interfaz.
-- Centralizar y exponer las variantes de estilo del badge mediante badgeVariants.
-- Permitir la personalización de estilos a través de className y props de span.
-- Soportar renderizado personalizado vía la prop render usando useRender.
-- Integrar con utilidades de merging de props y construcción de clases (mergeProps, cn).
+
+- Proporcionar un badge breve y reutilizable con un conjunto de variantes de estilo.
+- Centralizar la lógica de renderizado y la composición de props a través de useRender y mergeProps.
+- Exportar las variantes de estilo (badgeVariants) para uso consistente en otros componentes.
+- Aceptar props extendidos de un elemento span y props propios del sistema de renderizado.
+
+---
 
 ## Props / Parámetros
 
-A continuación se describen las props relevantes para el componente Badge y para badgeVariants.
+Propósito y tipo:
 
-### Badge (React component)
-Propiedades (propiedades de la interfaz de React):
-- className?: string
-  - Descripción: Clase CSS adicional a aplicar al badge.
-  - Opcional.
-- variant?: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link"
-  - Descripción: Variante de estilo a aplicar. Determina el conjunto de clases de Tailwind combinadas por badgeVariants.
-  - Opcional (valor por defecto: "default").
-- render?: useRender.RenderProp
-  - Descripción: Prop opcional utilizada por useRender para personalizar el renderizado del componente. Permite pasar una función o componente para controlar la salida renderizada.
-  - Opcional.
-- ...props: React props de un span
-  - Descripción: Propiedades estándar de un elemento span (children, id, title, aria-*, etc.). Se extienden y se fusionan mediante mergeProps.
-  - Opcional.
+- variante principal: variant
+  - Tipo: "default" | "secondary" | "destructive" | "outline" | "ghost" | "link"
+  - Valor por defecto: "default"
+  - Descripción: determina la combinación de clases de Tailwind aplicadas al badge, afectando color, fondo, borde y efectos al pasar el cursor.
 
-Tipo de Props (parcial, para referencia técnica):
-- useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>
+- className
+  - Tipo: string | undefined
+  - Descripción: clases CSS adicionales que se deben aplicar al badge.
 
-Notas:
-- VariantProps<typeof badgeVariants> añade el tipo para la prop variant basada en la definición de badgeVariants.
-- La clase base y las variantes se gestionan a través de badgeVariants({ variant }), que se integra con className mediante cn.
+- render
+  - Tipo: depende de useRender.ComponentProps<"span">. Representa una función de renderizado o prop de renderizado del hook useRender. Permite personalizar cómo se renderiza el componente.
 
-### badgeVariants (variants para estilos)
-Propiedades:
-- variant: { default; secondary; destructive; outline; ghost; link }
-  - Descripción: Conjunto de variantes de estilo disponibles. Cada clave corresponde a una plantilla de clases de Tailwind que modifica fondo, color, borde, estado hover, y otros aspectos del badge.
-  - Valor por defecto: "default".
-  
-Ejemplos de variantes (indicadas por el código):
-- default: fondo primario y texto de foreground primario, con efecto hover.
-- secondary: fondo secundario y color de foreground correspondiente, con efecto hover.
-- destructive: estilo con indicaciones de destrucción/alerta (con y sin modo oscuro).
-- outline: borde visible con texto correspondiente y efectos hover.
-- ghost: fondo suave y cambio de color al pasar cursor.
-- link: apariencia tipo enlace con subrayado al pasar el mouse.
+- ...props (propiedades del span)
+  - Tipo: React.HTMLAttributes<HTMLSpanElement> u otros props estándar de span que proporciona useRender/mergeProps.
+  - Descripción: cualquier atributo adicional del elemento span (como id, aria-label, etc.).
+
+Notas sobre el tipo de prop compuesto:
+
+- El tipo de props del Badge es:
+  useRender.ComponentProps<"span"> & VariantProps<typeof badgeVariants>
+  Esto significa que combina las props propias del utilitario de renderizado con las variantes definidas por badgeVariants.
+
+Estructura de destructuring en la firma del componente:
+- { className, variant = "default", render, ...props }
+
+---
 
 ## Retorna
 
-- Badge: Un elemento React generado a partir de useRender, típicamente un span (por defecto) con las clases combinadas por badgeVariants y cualquier className adicional proporcionada. Soporta children y otros props de span. La renderización puede ser personalizada vía la prop render. El tipo de retorno es React.ReactElement (o similar, según la implementación de useRender).
+- La función/componente Badge devuelve el resultado del hook useRender. Específicamente, se invoca useRender con:
+  - defaultTagName: "span"
+  - props: mergeProps<"span">({ className: cn(badgeVariants({ variant }), className) }, props)
+  - render: el prop render recibido
+  - state: { slot: "badge", variant }
 
-- badgeVariants: No es una función de render, sino una utilidad de variante que devuelve la clase final para el componente Badge cuando se llama badgeVariants({ variant }).
+Qué entrega exactamente:
+- Un elemento renderizable (por defecto un span) cuyo contenido y etiqueta pueden ser controlados por el hook useRender a través del prop render, manteniendo la clase calculada por badgeVariants({ variant }) y cualquier clase adicional pasada por className.
+- La semántica de slot y variant en state sugiere que el hook puede exponer información de renderizado para escenarios de composición, aunque el comportamiento exacto depende de la implementación de useRender.
+
+---
 
 ## Dependencias
 
-Este archivo depende de varias librerías y utilidades presentes en el proyecto:
+Este archivo depende de varias librerías y utilidades:
 
-- React (jsx/tsx) y TypeScript
 - @base-ui/react/merge-props
-  - Función utilitaria para fusionar props de forma segura, preservando propiedades relevantes y evitando sobre-escrituras accidentales.
+  - Función para combinar props de manera segura, preservando las propiedades existentes.
 - @base-ui/react/use-render
-  - Hook/utility para renderizado dinámico y slots. Permite especificar defaultTagName, render, y estado interno (state) para el componente.
-- class-variance-authority (cva, VariantProps)
-  - Herramienta para gestionar variantes de estilos y construir clases CSS de forma declarativa.
-- cn (utility de concatenación de clases)
-  - Helper para combinar clases condicionales.
-- "@/lib/utils"
-  - Proporciona cn y posibles utilidades relacionadas (en este caso, cn).
+  - Hook de renderizado que facilita la renderización basada en props y estado, y permite un renderizado personalizado mediante el prop render.
+- class-variance-authority (cva, type VariantProps)
+  - Utilidad para definir variantes de clase y gestionarlas de forma tipada.
+  - badgeVariants se define con cva(...)
+- cn (utils)
+  - Función utilitaria para concatenar clases condicionales (similar a classNames).
+- TypeScript
+  - Tipado estático fuerte para las props, variantes y el uso de useRender.
 
-Notas:
-- Las clases base del badge están escritas para Tailwind CSS y contemplan estados de acceso y usabilidad (focus-visible, aria-invalid), así como soporte para íconos embebidos (con data attributes meta) y compatibilidad con modo oscuro.
+Notas sobre las clases de estilo:
+- El string base contiene un conjunto extenso de clases de Tailwind para el estilo del badge (tamaño, espaciado, bordes, tipografías, etc.) y varias condiciones para estados interactivos y modo oscuro.
+- Se usan variantes para aplicar combinaciones de clases según el valor de variant.
+- Incluye utilidades de accesibilidad y comportamiento de interacción (focus-visible, aria-invalid, etc.).
+- Soporta estilos específicos para presencia de iconos (data attributes) y tatuaje de estilos a elementos SVG hijos.
+
+---
 
 ## Ejemplos de uso
 
-1) Uso básico con texto:
+1) Uso básico con texto dentro del badge:
 
-- Código:
-  <Badge>Nuevo</Badge>
+```tsx
+import { Badge } from "@/components/ui/badge"
 
-- Descripción:
-  Renderiza un badge con la variante por defecto ("default") y el contenido "Nuevo".
+function Example() {
+  return (
+    <div>
+      <Badge>Nuevo</Badge>
+    </div>
+  )
+}
+```
 
-2) Uso con variante secundaria:
+2) Uso con variante visual diferente:
 
-- Código:
-  <Badge variant="secondary">Secundario</Badge>
+```tsx
+import { Badge } from "@/components/ui/badge"
 
-- Descripción:
-  Renderiza un badge con fondo y colores propios de la variante "secondary".
+function Example() {
+  return (
+    <div>
+      <Badge variant="secondary">Beta</Badge>
+      <Badge variant="ghost" className="ml-2">En curso</Badge>
+    </div>
+  )
+}
+```
 
-3) Uso con className adicional y render personalizado (opcional):
+3) Uso avanzado con render personalizado (usando el hook de renderizado):
 
-- Código (con render opcional):
-  <Badge variant="outline" className="my-custom-class" render={(props) => <span {...props} />} >
-    Editar
-  </Badge>
+```tsx
+import { Badge } from "@/components/ui/badge"
 
-- Descripción:
-  Añade una clase extra y demuestra cómo se podría personalizar el render mediante la prop render. En la práctica, render suele usarse para ajustar el marcado o la envoltura, manteniendo la semántica y las props del badge.
+function CustomBadge() {
+  return (
+    <Badge
+      variant="outline"
+      render={(props) => <button {...props} type="button" aria-label="Custom badge" />}
+    >
+      Acción
+    </Badge>
+  )
+}
+```
 
-Observación:
-- El render prop y useRender están diseñados para permitir casos donde se necesite un control más fino sobre la estructura del DOM. En la mayoría de los usos, <Badge>Contenido</Badge> es suficiente.
+Notas:
+- El prop render permite adaptar el tipo de elemento en el que se renderiza el badge, aprovechando la API de useRender.
+- El contenido entre las etiquetas Badge (“children”) se mostrará dentro del span por defecto, a menos que se use render para cambiar el contenedor.
+
+---
 
 ## Notas técnicas
 
-- Estilización centralizada:
-  - badgeVariants usa class-variance-authority (cva) para definir un conjunto de clases base y variantes. Esto facilita la consistencia visual y la extensión futura de variantes sin duplicar código.
-- Construcción de clases:
-  - Las clases base incluyen: grupos de utilidades para tamaño, alineación, bordes, padding, tipografía, espaciado, transición y estados de foco. También contempla estilos para interacciones con enlaces y estados aria-invalid.
-  - La combinación final de clases se realiza con badgeVariants({ variant }) y se fusiona con cualquier className adicional a través de cn y mergeProps.
-- Manejo de props:
-  - Se emplea mergeProps para combinar las props pasadas con las props calculadas (como className). Esto garantiza que la semántica de los props nativos de span no se pierda.
-  - useRender se usa para abstraer el renderizado. El componente especifica defaultTagName: "span" y pasa un estado de slots (slot: "badge", variant) para habilitar renderizados dinámicos.
-- Tipado:
-  - Se usa VariantProps<typeof badgeVariants> para tipar la prop variant de Badge.
-  - useRender.ComponentProps<"span"> aporta tipado para las props típicas de un span y la prop render.
-- Extensibilidad:
-  - Para añadir nuevas variantes, basta con extender badgeVariants en el archivo, añadiendo nuevas claves en variants.variant y sus correspondientes clases.
-  - Para cambiar el comportamiento de renderizado, se puede aprovechar la prop render y la API de useRender sin alterar la semántica de la API pública de Badge.
+- Diseño de variantes
+  - badgeVariants se define con una base de clases muy específica para el diseño deseado (tamaños, bordes, colores, espaciados).
+  - Se soportan variantes: default, secondary, destructive, outline, ghost, link.
+  - Valor por defecto: default.
+- Accesibilidad y estados
+  - Clases para focus visible y ring, así como manejo de aria-invalid para estados de invalidez.
+  - Estilos especiales para presencia de iconos dentro del badge mediante data attributes.
+- Rendimiento y coherencia
+  - Se centraliza la generación de clases mediante badgeVariants, lo que facilita cambios globales de estilo de las variantes.
+  - El uso de mergeProps y cn ayuda a evitar conflictos de props y garantiza que las clases sean combinadas correctamente.
+- Tipado
+  - Se aprovecha VariantProps<typeof badgeVariants> para forzar que el prop variant acepte solo los valores definidos.
+  - useRender.ComponentProps<"span"> aporta tipado para el renderizado y props del span.
+- Reutilización
+  - badgeVariants se exporta para que otros componentes puedan reutilizar el conjunto de clases de estilo de las variantes sin recrearlas.
+
+---
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
-Si necesitas que amplíe la documentación con ejemplos de pruebas, benchmarks de rendimiento o guías de migración entre versiones de variantes, dímelo y lo añado.
+---
+
+Si necesitas que añada ejemplos de integración con otros componentes de RNG Vantage o más escenarios de renderizado, dime y los incluyo.

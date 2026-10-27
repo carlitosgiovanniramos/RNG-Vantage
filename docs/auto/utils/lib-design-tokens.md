@@ -1,75 +1,94 @@
-# Documentación técnica – design-tokens.ts
+# Documentación técnica – design-tokens.ts (lib/design-tokens.ts)
 
-Archivo: lib/design-tokens.ts  
-Nombre: design-tokens.ts  
-Total de líneas: 46
+Este archivo concentra las design tokens del proyecto RNG Vantage. Proporciona constantes semánticas para brand, breakpoints, spacing y colores de gráficos, utilizadas a lo largo del frontend para mantener consistencia de diseño.
 
-Descripción general
-- Este archivo define un conjunto centralizado de tokens de diseño utilizados por el frontend del proyecto RNG Vantage.
-- Proporciona valores semánticos para branding, puntos de quiebre (breakpoints), espaciado y colores para gráficos.
-- Los colores para gráficos se basan en variables CSS definidas globalmente (en app/globals.css con el tema ShadCN) en conjunto con valores hexadecimales explícitos para ciertos casos.
-- El objetivo es mantener una fuente de verdad única para estilos y facilitar la coherencia visual en toda la aplicación.
+## Descripción general
 
-Responsabilidades
-- Exportar constantes de diseño inmutables que pueden ser importadas por componentes y páginas.
-- Definir estructuras tipadas y estables con as const para favorecer inferencia de tipos en TypeScript.
-- Proporcionar mapeos semánticos para:
-  - BRAND: información de marca (nombre y tagline).
-  - BREAKPOINTS: puntos de quiebre para diseño responsive.
-  - SPACING: estándares de espaciado y offsets utilizados en layout.
-  - CHART_COLORS: colores usados en gráficos, con integración a CSS variables cuando corresponde.
+RGL Estudio Design Tokens es una colección centralizada de constantes de diseño para el equipo de frontend. Los valores de colores en CSS se definen principalmente como variables (en app/globals.css, dentro del tema de ShadCN). Este archivo documenta la intención de uso y los valores semánticos de cada token, sin duplicar estilos en el código.
 
-Propósitos y estructura de las exportaciones
-- BRAND
-  - Tipo: { name: string; tagline: string } const
-  - Uso: proveer nombre de la marca y lema para uso en UI y documentación.
-- BREAKPOINTS
-  - Tipo: { sm: number; md: number; lg: number; xl: number } const
-  - Uso: definir tamaños de viewport para diseño responsive (mobile-first).
-- SPACING
-  - Tipo: { pageMobile: string; pageDesktop: string; sectionGap: string } const
-  - Uso: estandarizar paddings y gaps entre secciones a través de la app.
-- CHART_COLORS
-  - Tipo: { income: string; expense: string; subscriptions: string; reservations: string; growth: string } const
-  - Uso: definir paletas de colores para gráficos. Integra CSS variables cuando corresponde (var(--primary), var(--destructive)) y colores hexadecimales fijos para otros casos.
+Los tokens exportados son constantes inmutables (as const) para garantizar tipos literales y evitar modificaciones accidentales.
 
-Dependencias
-- Variables CSS definidas en app/globals.css (ShadCN theme) para CHART_COLORS:
-  - income usa "var(--primary)"
-  - expense usa "var(--destructive)"
-- No depende de bibliotecas externas dentro de este archivo; es un conjunto de constantes TypeScript.
-- Uso de as const para garantizar literales inmutables y mejoras de tipado en tiempo de compilación.
+## Responsabilidades
 
-Ejemplos de uso
-- Importar y usar tokens en componentes:
-  - Importación típica:
-    - import { CHART_COLORS, SPACING, BREAKPOINTS } from 'lib/design-tokens';
-  - Uso en un gráfico:
-    - const colorIngreso = CHART_COLORS.income;
-    - const colorGastos = CHART_COLORS.expense;
-  - Uso de espaciado en un contenedor:
-    - style={{ padding: SPACING.pageMobile }}
-  - Uso de breakpoint en código CSS-in-JS o clases:
-    - @media (min-width: BREAKPOINTS.md) { ... }
+- Proporcionar un conjunto único de tokens de diseño reutilizables en toda la aplicación.
+- Estar alineados con el tema CSS definido (ShadCN) para colores y variables de CSS.
+- Ofrecer valores tipados en TypeScript para favorecer autocompletado y seguridad de tipos.
+- Servir como fuente de verdad para brand, breakpoints, spacing y paleta de colores de gráficos.
 
-  Ejemplo mínimo:
-  - import { CHART_COLORS, SPACING, BREAKPOINTS } from 'lib/design-tokens';
-  - const styles = {
+## Props / Parámetros
+
+Este archivo no exporta componentes ni funciones. Por lo tanto, no tiene props ni parámetros. Las exportaciones son constantes de tipo objeto:
+
+- BRAND: objeto con nombre y tagline de la marca.
+- BREAKPOINTS: objeto con puntos de quiebre (sm, md, lg, xl).
+- SPACING: objeto con valores de espaciado para página móvil, página de escritorio y separación entre secciones.
+- CHART_COLORS: objeto con asignaciones de colores para gráficos: ingresos, gastos, suscripciones, reservas y crecimiento.
+
+## Retorna
+
+Al ser un módulo de constantes, no "retorna" valores en el sentido tradicional de una función. Se importa para obtener valores estáticos y tipados. Las exportaciones disponibles son:
+
+- BRAND: { name: string; tagline: string } const.
+- BREAKPOINTS: { sm: number; md: number; lg: number; xl: number } const.
+- SPACING: { pageMobile: string; pageDesktop: string; sectionGap: string } const.
+- CHART_COLORS: { income: string; expense: string; subscriptions: string; reservations: string; growth: string } const.
+
+## Dependencias
+
+- No hay dependencias de librerías externas en este módulo.
+- El valor CHART_COLORS para income/expense utiliza referencias a variables CSS:
+  - income: "var(--primary)"
+  - expense: "var(--destructive)"
+  Estas referencias asumen que las variables CSS están definidas en app/globals.css (ShadCN theme).
+- TypeScript puro con uso de as const para preservar tipos literales.
+
+## Ejemplos de uso
+
+- Importar y usar tokens en código TS/JS:
+  - Importación básica:
+    import { BRAND, BREAKPOINTS, SPACING, CHART_COLORS } from "../lib/design-tokens";
+
+  - Ejemplo de uso de spacing en un componente (inline styles):
+    const containerStyle = {
       padding: SPACING.pageDesktop,
-      backgroundColor: CHART_COLORS.income,
+      gap: SPACING.sectionGap,
     };
 
-Notas técnicas
-- Tipado estricto: cada exportación está marcada como const with as const para que sus tipos sean literales, lo que favorece la seguridad tipográfica en todo el código.
-- Semántica de colores:
-  - Los colores de ingresos y gastos se vinculan a variables CSS, permitiendo que el tema cambie dinámicamente si se ajustan las variables globales.
-  - Las demás categorías (suscripciones, reservas, crecimiento) usan colores fijos para estabilidad visual cuando no se quiere depender de variables CSS.
-- Consistencia: este archivo sirve como fuente de verdad para valores de UI comunes (branding, espaciamiento y colores de gráficos), asegurando consistencia entre módulos y equipos.
-- Extensibilidad: si se requieren nuevos tokens de diseño, se pueden añadir como nuevas claves dentro de las estructuras exportadas conservando la convención as const.
+  - Ejemplo de uso de breakpoints (para referencias en CSS-in-JS o tips de estilo):
+    // En un CSS-in-JS hipotético
+    // const styles = {
+    //   [\`@media (min-width: ${BREAKPOINTS.md}px)\`]: { gridTemplateColumns: "repeat(2, 1fr)" }
+    // };
 
-Última actualización
-- 12/5/2026
+  - Ejemplo de colores para un gráfico:
+    // Usar CHART_COLORS.income como color de barras o líneas
+    // const colorPrimary = CHART_COLORS.income;
 
-Notas finales
-- Este archivo está diseñado para que cualquier nuevo desarrollador pueda entender rápidamente qué valores se utilizan para branding, espaciado, breakpoints y colores de gráficos, sin necesidad de inspeccionar múltiples archivos dispersos.
-- No se añaden lógicas de negocio ni efectos dinámicos; es puramente una colección de constantes de diseño.
+- Ejemplo práctico en JSX (si se usa con estilo en línea):
+  /*
+  <div style={{ padding: SPACING.pageMobile }}>
+    <Chart data={datos} color={CHART_COLORS.income} />
+  </div>
+  */
+
+## Notas técnicas
+
+- Tipado estricto con as const:
+  - Cada objeto (BRAND, BREAKPOINTS, SPACING, CHART_COLORS) está marcado con as const, convirtiendo sus propiedades en tipos literales y readonly. Esto evita que alguien reasigne valores accidentalmente y mejora la seguridad de tipos al consumir estos tokens.
+- Semántica y consistencia:
+  - BREAKPOINTS utiliza nombres descriptivos (sm, md, lg, xl) y valores numéricos en píxeles.
+  - SPACING usa strings con unidades (rem) para representar espaciado de página móvil, página de escritorio y un gap entre secciones.
+  - CHART_COLORS:
+    - income y expense se conectan con el tema CSS mediante variables: "var(--primary)" y "var(--destructive)". Esto facilita la adaptación a diferentes temas sin cambiar código TS.
+    - subscriptions, reservations y growth emplean colores hexadecimales fijos para consistencia visual en gráficos.
+- Mantenimiento:
+  - Mantener estos tokens en un único lugar facilita la consistencia visual y simplifica cambios de tema o paleta.
+  - Si se añaden nuevos gráficos, conviene ampliar CHART_COLORS de forma coherente, manteniendo la convención de nombres.
+- Compatibilidad:
+  - Dado que algunos valores son referencias a CSS variables, es crucial que app/globals.css defina esas variables para que haya coherencia entre TS y CSS en tiempo de ejecución.
+
+## Última actualización
+
+29/5/2026
+
+Notas: Si se necesita ampliar tokens, conviene seguir la misma estructura y añadir comentarios descriptivos para cada nueva propiedad, manteniendo el formato as const y la semántica utilizada aquí.

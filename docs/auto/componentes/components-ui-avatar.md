@@ -1,184 +1,211 @@
-# Documentación técnica: components/ui/avatar.tsx
+# Avatar Components (components/ui/avatar.tsx)
 
-Archivo: avatar.tsx (Ruta: components/ui/avatar.tsx)
+Este archivo define un conjunto de componentes de avatar construidos sobre las primitivas de @base-ui/react/avatar. Se utiliza para representar usuarios o entidades con imágenes, sustitutos (fallback) y agrupaciones de avatares. Soporta distintos tamaños y permite componer avatares con imágenes, colgantes (badges) y agrupaciones con contador.
 
-Total de líneas: 110
-
-Este archivo define un conjunto de componentes relacionados con Avatares, utilizando la librería de interfaz base y un sistema de estilos basado en clases (probablemente Tailwind). Proporciona un avatar principal y subcomponentes para imagen, fallback, grupo de avatares y contador de grupo, junto con un componente para el badge del avatar.
+---
 
 ## Descripción general
 
-El módulo exporta un conjunto de componentes para manejar avatares en la UI:
+- Proporciona un componente principal Avatar y componentes asociados:
+  - AvatarImage: renderiza la imagen del avatar.
+  - AvatarFallback: renderiza un fallback (texto o iniciales) cuando no hay imagen disponible.
+  - AvatarBadge: muestra un badge superpuesto en la esquina del avatar.
+  - AvatarGroup: contenedor para agrupar varios avatares en una fila con superposición.
+  - AvatarGroupCount: muestra un contador para la agrupación de avatares.
+- Usa las primitivas de diseño de base UI (@base-ui/react/avatar) y un helper de utilidades de clase (cn) para combinar clases.
+- Soporta tamaños definidos: default, sm, lg, y aplica estilos condicionales mediante data-slot y data-size para un rendering consistente.
 
-- Avatar: componente principal basado en AvatarPrimitive.Root.
-- AvatarImage: imagen del avatar, basado en AvatarPrimitive.Image.
-- AvatarFallback: contenido alternativo cuando no hay imagen, basado en AvatarPrimitive.Fallback.
-- AvatarBadge: insignia o badge asociado al avatar.
-- AvatarGroup: contenedor para agrupar varios avatares.
-- AvatarGroupCount: muestra un contador dentro del contexto de un grupo de avatares.
-
-El diseño se apoya en una estrategia de slots y clases dinámicas para adaptar tamaños y estilos según el tamaño seleccionado (default, sm, lg). Se usan data-slot y data-size para permitir styling específico y una mayor flexibilidad de composición.
+---
 
 ## Responsabilidades
 
-- Proporcionar un conjunto de componentes reusables y tipados para avatares.
-- Facilitar la composición entre imagen, fallback y badge sin perder la semántica y el comportamiento del avatar.
-- Soportar tamaños adaptables (default, sm, lg) mediante clases condicionales basadas en data attributes.
-- Mantener consistencia de estilos a través de una utilidad de concatenación de clases (cn) y estilos base de AvatarPrimitive.
+- Proveer un conjunto de componentes de avatar reutilizables y tipados para uso consistente a través de la UI.
+- Abstraer la lógica de tamaño y la representación visual (imagen, fallback, badge) detrás de componentes simples.
+- Facilitar agrupaciones de avatares con superposición y conteo, manteniendo coherencia visual con las variantes de tamaño.
+- Integrar con el sistema de estilos (Tailwind-like) y con las convenciones de Slot/Data Slot de las primitivas.
+
+---
 
 ## Props / Parámetros
 
-A continuación se describe cada componente exportado y sus props.
+A continuación se detallan los props de cada componente React expuesto en este archivo.
 
 ### Avatar
-- Tipo de componente: React.FC (envoltorio de AvatarPrimitive.Root)
-- Propiedades principales:
-  - className?: string (opcional) — clases CSS adicionales.
-  - size?: "default" | "sm" | "lg" (opcional, predeterminado "default") — tamaño del avatar. Este prop se añade como data-size en el DOM para estilos condicionados.
-  - ...props: AvatarPrimitive.Root.Props (propiedades del Root de la librería base)
-- Descripción:
-  - Envuelve AvatarPrimitive.Root y aplica una clase de grupo y tamaño con soporte para estilos “after” y efectos de borde.
-  - Propaga todas las props del AvatarPrimitive.Root, permitiendo personalizar comportamiento (onClick, onAnimationEnd, etc.) si corresponde.
+
+Tabla de props:
+- Prop: className
+  - Tipo: string | undefined
+  - Requerido: no
+  - Descripción: Clases CSS opcionales para personalizar el estilo del componente.
+- Prop: size
+  - Tipo: "default" | "sm" | "lg"
+  - Requerido: no
+  - Descripción: Tamaño del avatar. El valor se propaga a data-size y se usa para ajustar estilos en CSS.
+- Prop: rest of AvatarPrimitive.Root.Props
+  - Descripción: Propiedades adicionales proporcionadas por la primitiva Root de @base-ui/react/avatar (p. ej., src, alt, etc., dependiendo de las props disponibles en la versión de la primitiva).
+
+Retorna un Avatar envoltorio (AvatarPrimitive.Root) con data-slot="avatar" y data-size correspondiente, junto con las clases combinadas.
 
 ### AvatarImage
-- Tipo de componente: React.FC
-- Propiedades: AvatarPrimitive.Image.Props
-- Parámetros adicionales:
-  - className?: string (opcional)
-- Descripción:
-  - Renderiza AvatarPrimitive.Image con data-slot="avatar-image" y aplica clases para mantener una relación de aspecto cuadrada, rellenar completamente el contenedor y recorte de objeto (object-cover).
-  - Propaga todas las props del AvatarPrimitive.Image.
+
+Tabla de props:
+- Prop: className
+  - Tipo: string | undefined
+  - Requerido: no
+  - Descripción: Clases CSS opcionales para la imagen del avatar.
+- Prop: rest of AvatarPrimitive.Image.Props
+  - Descripción: Propiedades de la primitiva Image (src, alt, etc.).
+
+Retorna un AvatarPrimitive.Image con data-slot="avatar-image" y estilos de imagen (aspect-square, rounded-full, object-cover).
 
 ### AvatarFallback
-- Tipo de componente: React.FC
-- Propiedades: AvatarPrimitive.Fallback.Props
-- Parámetros adicionales:
-  - className?: string (opcional)
-- Descripción:
-  - Renderiza AvatarPrimitive.Fallback con data-slot="avatar-fallback" y aplica estilos para centrar contenido, fondo muted y tamaño condicionado por grupo/slot.
-  - Propaga todas las props del AvatarPrimitive.Fallback.
+
+Tabla de props:
+- Prop: className
+  - Tipo: string | undefined
+  - Requerido: no
+  - Descripción: Clases CSS opcionales para el fallback.
+- Prop: rest of AvatarPrimitive.Fallback.Props
+  - Descripción: Propiedades de la primitiva Fallback (children, etc.).
+
+Retorna un AvatarPrimitive.Fallback con data-slot="avatar-fallback" y estilos para mostrar texto/initials centrados.
 
 ### AvatarBadge
-- Tipo de componente: React.FC (span)
-- Propiedades: React.ComponentProps<"span">
-- Parciales:
-  - className?: string (opcional via props)
-- Descripción:
-  - Renderiza un span con data-slot="avatar-badge" y un conjunto de clases para posicionamiento (absoluto, esquina inferior derecha), estilos de fondo, color y bordes.
-  - Incluye reglas específicas para tamaños de avatar: sm, default, lg, mediante group-data-[size=...]/avatar.
-  - Propaga todas las props del span.
+
+Tabla de props:
+- Prop: className
+  - Tipo: string | undefined
+  - Requerido: no
+  - Descripción: Clases CSS opcionales para el badge.
+- Prop: rest of React.ComponentProps<"span">
+  - Descripción: Propiedades estándar de un span (id, style, etc.).
+
+Retorna un span con data-slot="avatar-badge" y estilos para posicionamiento en la esquina inferior derecha y compatibilidad con tamaños (sm/default/lg) mediante selectors de grupo.
 
 ### AvatarGroup
-- Tipo de componente: React.FC (div)
-- Propiedades: React.ComponentProps<"div">
-- Parciales:
-  - className?: string (opcional)
-- Descripción:
-  - Contenedor para agrupar avatares en una fila, con márgenes negativos para superposición (tailwind -space-x-2).
-  - Soporta styling específico para slots de avatar mediante data-slot="avatar-group".
+
+Tabla de props:
+- Prop: className
+  - Tipo: string | undefined
+  - Requerido: no
+  - Descripción: Clases CSS opcionales para el grupo de avatares.
+- Prop: rest of React.ComponentProps<"div">
+  - Descripción: Propiedades de un div (children, etc.).
+
+Retorna un div con data-slot="avatar-group" y estilos para mostrar avatares en fila con superposición.
 
 ### AvatarGroupCount
-- Tipo de componente: React.FC (div)
-- Propiedades: React.ComponentProps<"div">
-- Parciales:
-  - className?: string (opcional)
-- Descripción:
-  - Contenedor para mostrar un recuento o indicador dentro de un grupo de avatares.
-  - Incluye estilos para tamaño, fondo muted y anillos, con adaptaciones por tamaño del avatar en el grupo (size=lg, size=sm, etc.).
+
+Tabla de props:
+- Prop: className
+  - Tipo: string | undefined
+  - Requerido: no
+  - Descripción: Clases CSS opcionales para el contenedor del contador.
+- Prop: rest of React.ComponentProps<"div">
+  - Descripción: Propiedades de un div.
+
+Retorna un div con data-slot="avatar-group-count" y estilos que muestran un círculo con conteo, adaptándose al tamaño del grupo mediante clases condicionales.
+
+---
 
 ## Retorna
 
-Cada componente devuelve un JSX.Element correspondiente al avatar o a su subcomponente relacionado:
+- Avatar: JSX.Element – envoltorio de la primitiva Root con tamaño y clases aplicadas.
+- AvatarImage: JSX.Element – imagen del avatar.
+- AvatarFallback: JSX.Element – fallback visual para cuando no hay imagen.
+- AvatarBadge: JSX.Element – badge superpuesto.
+- AvatarGroup: JSX.Element – contenedor para agrupar avatares.
+- AvatarGroupCount: JSX.Element – contador dentro del grupo.
 
-- Avatar: JSX.Element que corresponde a AvatarPrimitive.Root con atributos de slot y tamaño, más clases combinadas.
-- AvatarImage: JSX.Element que corresponde a AvatarPrimitive.Image con data-slot y clases específicas (aspect-ratio, object-fit).
-- AvatarFallback: JSX.Element que corresponde a AvatarPrimitive.Fallback con data-slot y clases visuales para fallback.
-- AvatarBadge: JSX.Element span con data-slot y clases de estilo posicionadas.
-- AvatarGroup: JSX.Element div con data-slot y clases para agrupamiento.
-- AvatarGroupCount: JSX.Element div con data-slot y clases para mostrar el conteo dentro del grupo.
+Cada componente devuelve el elemento de la librería base (AvatarPrimitive) correspondiente o un span/div configurado con data-slot, listas de clases y props propagados.
 
-Todos devuelven elementos React (JSX) aptos para ser renderizados en una UI de React/Next.js.
+---
 
 ## Dependencias
 
 - React
-- @base-ui/react/avatar: biblioteca de componentes de avatar que provee AvatarPrimitive.Root, AvatarPrimitive.Image, AvatarPrimitive.Fallback, etc.
-- cn de "@/lib/utils": utilidad para unir/concatenar clases CSS de manera segura.
-- Estilos basados en clases (probablemente Tailwind) y el uso de data-slot y data-size para aplicar estilos condicionales.
+- @base-ui/react/avatar: proporciona las primitivas Avatar (Root), Avatar.Image, Avatar.Fallback, etc.
+- A helper utilitario cn (presumiblemente una función para combinar className): importado desde "@/lib/utils" y utilizado para concatenar clases de forma segura.
+- Estilos/Convenciones de clase parecidos a Tailwind CSS (clases como rounded-full, object-cover, data-... selectors, etc.).
+- El directive "use client" al inicio del archivo indica que estos componentes deben ejecutarse en el cliente (client-side).
 
-Notas sobre implementación:
-- Uso de data-slot para identificar partes del avatar en la composición (avatar, avatar-image, avatar-fallback, avatar-badge, avatar-group, avatar-group-count).
-- Estilos condicionados por data-[size=...] para adaptar tamaños sin duplicar clases.
-- El componente Avatar hace uso de un Wrapper group-avatar para permitir estilos dependientes del tamaño mediante las clases en cn().
-- El código está marcado con "use client" al inicio, indicando que es código de cliente (cliente de React).
+Notas sobre integración:
+- El uso de data-slot y data-size facilita la personalización y composición mediante estilos de la biblioteca base UI.
+- Las clases en la cadena cn incluyen variantes por tamaño (p. ej., data-[size=lg]:size-10) para ajustar visualmente el componente según el tamaño seleccionado.
+
+---
 
 ## Ejemplos de uso
 
-- Avatar básico con imagen y fallback:
+Ejemplo 1: Avatar con imagen y fallback
 ```tsx
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar"
 
-function UserAvatar() {
+export function UserAvatar({ user }) {
   return (
     <Avatar size="default">
-      <AvatarImage src="/images/user-123.jpg" alt="User 123" />
-      <AvatarFallback>UN</AvatarFallback>
+      <AvatarImage src={user.avatarUrl} alt={user.name} />
+      <AvatarFallback>{user.initials}</AvatarFallback>
     </Avatar>
-  );
+  )
 }
 ```
 
-- Avatar de tamaño grande con fallback:
+Ejemplo 2: Avatar con badge y tamaño pequeño
 ```tsx
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback, AvatarBadge } from "./components/ui/avatar"
 
-function LargeUserAvatar() {
+export function UserAvatarWithStatus({ user }) {
   return (
-    <Avatar size="lg">
-      <AvatarImage src="/images/user-456.jpg" alt="User 456" />
-      <AvatarFallback>UT</AvatarFallback>
-      {/* Opcional: AvatarBadge si se desea un indicador */}
+    <Avatar size="sm">
+      <AvatarImage src={user.avatarUrl} alt={user.name} />
+      <AvatarFallback>{user.initials}</AvatarFallback>
       <AvatarBadge>✓</AvatarBadge>
     </Avatar>
-  );
+  )
 }
 ```
 
-- Grupo de avatares con conteo:
+Ejemplo 3: Grupo de avatares con conteo
 ```tsx
-import { AvatarGroup, Avatar, AvatarImage, AvatarFallback, AvatarGroupCount } from "@/components/ui/avatar";
+import { AvatarGroup, Avatar, AvatarImage, AvatarFallback, AvatarGroupCount } from "./components/ui/avatar"
 
-function AvatarGroupExample() {
+export function AvatarTeam({ members }) {
   return (
     <AvatarGroup>
-      <Avatar size="default">
-        <AvatarImage src="/images/u1.jpg" alt="U1" />
-        <AvatarFallback>U1</AvatarFallback>
-      </Avatar>
-      <Avatar size="default">
-        <AvatarImage src="/images/u2.jpg" alt="U2" />
-        <AvatarFallback>U2</AvatarFallback>
-      </Avatar>
-      <AvatarGroupCount>3</AvatarGroupCount>
+      {members.map((m) => (
+        <Avatar key={m.id} size="default">
+          <AvatarImage src={m.avatarUrl} alt={m.name} />
+          <AvatarFallback>{m.initials}</AvatarFallback>
+        </Avatar>
+      ))}
+      <AvatarGroupCount>+{members.length - 3}</AvatarGroupCount>
     </AvatarGroup>
-  );
+  )
 }
 ```
 
-Notas sobre ejemplos:
-- Se muestran ejemplos básicos de composición para Avatar con imagen y fallback.
-- Se muestra un uso de AvatarGroup y AvatarGroupCount para ilustrar agrupamiento y conteo.
+Notas sobre estos ejemplos:
+- Se aprovechan las subcomponentes para componer avatares con imagen y fallback.
+- AvatarGroup y AvatarGroupCount permiten mostrar múltiples avatares de forma compacta con superposición.
+
+---
 
 ## Notas técnicas
 
-- Tipado explícito: cada componente usa tipos provenientes de AvatarPrimitive (Root.Image.Fallback) o de React para garantizar compatibilidad con la librería base.
-- Extensibilidad: el avatar principal acepta cualquier prop de AvatarPrimitive.Root, permitiendo handlers y configuraciones propias de la librería base.
-- Rendimiento: la implementación es principalmente de renderización y composición con clases. No hay lógica asíncrona ni efectos costosos. El uso de cn() facilita la concatenación de múltiples clases sin duplicados.
-- Estilos responsivos: el uso de data-size y distintas variantes de grupo (group-data-...) posibilita cambios de tamaño y visibilidad de elementos internos (p. ej., ocultar/mostrar SVGs dentro del grupo) sin cambiar el código de cada subcomponente.
-- Accesibilidad: se mantienen prácticas estándar de accesibilidad mediante la semántica de etiquetas y la estructura de componentes de avatar. (Ten en cuenta que los detalles de ARIA no están explícitos en este archivo; podrían estar gestionados por AvatarPrimitive.)
+- Diseño y rendimiento:
+  - Se delega la renderización visual a las primitivas de @base-ui/react/avatar, manteniendo una capa de presentación estilística mediante clases de Tailwind-like y el helper cn.
+  - El tamaño se maneja mediante data-size y clases condicionadas (p. ej., data-[size=lg]:size-10) para adaptar reglas de estilo sin lógica adicional.
+- Accesibilidad:
+  - Los props de imágenes y textos de fallback deben proveer alt/textos descriptivos cuando se use AvatarImage o AvatarFallback.
+  - El uso del wrapper y de las estructuras de imagen/fallback facilita una experiencia de ARIA adecuada cuando la biblioteca base maneja roles y atributos accesibles.
+- Extensibilidad:
+  - El diseño permite añadir más subcomponentes en el futuro (p. ej., AvatarSkeleton, AvatarHint) sin alterar la API existente, manteniendo la consistencia con las primitivas base UI.
+
+---
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
-Si necesitas más ejemplos o una guía de migración para una versión específica de @base-ui/react/avatar, puedo ampliarla.
+---

@@ -1,59 +1,66 @@
-# Documentación técnica - footer.tsx
+# Documentación técnica: components/footer.tsx
 
-Ruta del archivo: components/footer.tsx  
-Nombre del archivo: footer.tsx  
-Tareas: 49 líneas
+Archivo: footer.tsx  
+Ruta: components/footer.tsx  
+Longitud: 37 líneas
 
-Contenido relevante del archivo (resumen):
-- Es un componente de React/Next.js llamado `Footer` exportado de forma named export.
-- Devuelve un elemento `<footer>` estilizado con clases Tailwind, compatible con modo claro/oscuro.
-- Contiene tres secciones en un contenedor responsive:
-  - Logo/branding: “RGL Estudio”
-  - Enlaces legales: Política de Privacidad y otros enlaces (Términos de Servicio, Seguridad, Estado) con rutas de muestra o placeholders
-  - Aviso de derechos de autor: “© 2026 RGL Estudio. All rights reserved.”
-- Usa `Link` de Next.js (`import Link from "next/link"`) para la navegación interna.
-- Incluye un comentario TODO para crear las páginas correspondientes cuando se implementen las rutas.
+Contenido relevante del componente
+- El archivo exporta un componente React llamado Footer.
+- Usa Next.js Link para vínculos internos.
+- Estilizado con clases tipo utility (parecen de Tailwind CSS), con soporte para modo claro/oscuro mediante las variantes dark: en las clases.
+- Estructura del DOM:
+  - Footer principal con fondo y colores adaptables a modo claro/oscuro.
+  - Contenedor interno con diseño responsive (flex en columna en mobile y fila en md+), alineación centrada y tamaño máximo de ancho.
+  - Secciones: Logo, Enlaces legales (Política de Privacidad y Términos de Servicio) y Copyright.
 
 ## Descripción general
-footer.tsx implementa el pie de página del proyecto RNG Vantage. Es un componente estático que renderiza branding, enlaces a políticas y términos, y un aviso de copyright. Admite modo claro/oscuro mediante clases de Tailwind y está diseñado para ser incluido en páginas o en un layout general. Su estructura está optimizada para diseño responsive, adaptándose en pantallas medianas y grandes.
+Footer es un componente estático que renderiza la sección inferior de la página. Proporciona:
+- Identidad de la marca en formato texto estilizado ("RGL Estudio").
+- Enlaces legales internos a políticas de privacidad y términos de servicio (ambos navegables internamente mediante Next.js Link).
+- Información de derechos de autor.
+
+El diseño es responsive: los elementos se apilan en columna en pantallas pequeñas y se disponen en fila en pantallas medianas y mayores. También está preparado para modo oscuro, invirtiendo colores entre el modo claro y oscuro.
 
 ## Responsabilidades
-- Renderizar un pie de página consistente en todas las vistas de la aplicación.
-- Mostrar branding de la empresa (RGL Estudio).
-- Proporcionar enlaces legales relevantes (con política de privacidad funcional y otros enlaces como placeholders).
-- Soportar modo claro y modo oscuro mediante clases de Tailwind.
-- Ser reusable y sin dependencias dinámicas (no usa props).
+- Renderizar una barra de pie de página consistente en todas las páginas que lo utilicen.
+- Proporcionar navegación interna a políticas y términos del servicio.
+- Mantener consistencia visual con el resto del sitio mediante el uso de clases utilitarias.
+- Soportar modo oscuro mediante variantes de clase (dark:).
 
 ## Props / Parámetros
-- Sin props. El componente no acepta parámetros ni modifica su contenido dinámicamente.
 
+Propiedades del componente Footer
 | Propiedad | Tipo | Requerido | Descripción |
-|-----------|------|-----------|-------------|
-| Ninguno | - | - | Este componente no recibe props y es estático. |
+|---|---|---|---|
+| Ninguna | N/A | N/A | Este componente no recibe props. Está diseñado para ser utilizado tal cual como un bloque estático de UI. |
 
-## Retorna
-- Un elemento JSX de tipo React.ReactElement que representa un footer semántico.
-- Estructura HTML:
-  - footer (envoltorio)
-    - div contenedor (flex, responsive)
-      - div branding con texto “RGL Estudio”
-      - nav (enlaces legales)
-        - Enlaces con Next.js Link
-      - div de derechos de autor
+Nota: No se esperan props para este componente; su contenido es estático (texto de logo, enlaces y copyright).
 
-Formato de retorno: JSX estructurado para renderizar en el DOM como un pie de página con tres secciones.
+## Retorno
+
+- Tipo: JSX.Element (componente React)
+- Estructura devuelta:
+  - footer (contiene un div de contención)
+    - Div contenedor con tres secciones:
+      - Logo: div con texto "RGL Estudio" estilizado.
+      - Legal Links: nav con dos enlaces internos:
+        - Política de Privacidad → /politica-privacidad
+        - Términos de Servicio → /terminos-servicio
+      - Copyright: texto estático © 2026 RGL Estudio. All rights reserved.
+- Formato: JSX/HTML semántico con enlaces navegables internamente.
 
 ## Dependencias
-- next/link: para enlaces internos (componente Link).
-- React/Next.js: como base para el componente funcional.
-- Tailwind CSS (asumiendo configuración del proyecto): para las clases de estilo (colores, espaciado, responsive, utilidades de modo oscuro).
-- Soporte de modo oscuro proporcionado por Tailwind (clases `dark:*`).
 
-Notas:
-- El código contiene un TODO en un enlace (“Términos de Servicio”) que apunta a `href="#"` indicando que las rutas para esas páginas aún no se implementan.
-- Los enlaces de “Términos de Servicio”, “Seguridad” y “Estado” usan rutas `"#"`, por lo que no llevan a ninguna página real en este momento.
+- next/link: para navegación interna (componente Link).
+- React: base para el componente.
+- Clases CSS utilitarias (parecen Tailwind CSS):
+  - Estilos de diseño responsive (flex, md:, etc.)
+  - Estilos de color y modo oscuro (bg-*, text-*, dark:*)
+  - Atributos de tipografía y espaciado (font-, uppercase, tracking-widest, px-/py-)
+- No depende de datos externos ni de hooks de estado; es un componente puramente presentacional.
 
 ## Ejemplos de uso
+
 Ejemplo mínimo de uso dentro de una página o layout:
 
 ```tsx
@@ -63,6 +70,8 @@ export default function Page() {
   return (
     <div>
       {/* Contenido de la página */}
+      
+      {/* Footer fijo en la página */}
       <Footer />
     </div>
   );
@@ -70,25 +79,27 @@ export default function Page() {
 ```
 
 Notas:
-- Este componente está diseñado para ser incluido en el layout global o en secciones donde se necesite un pie de página consistente.
-- Si se requiere personalizar enlaces o branding, se debería considerar convertir este componente en un componente con props (por ejemplo, para cambiar el texto del logo o las rutas de los enlaces), o crear variantes específicas.
+- Asegúrate de que tu proyecto tenga Tailwind CSS configurado (o el sistema de utilidades equivalente) para que las clases se apliquen correctamente.
+- Si tu estructura de rutas cambia, actualiza los href de los Link internos en el componente.
 
 ## Notas técnicas
-- Estilo y maquetación:
-  - Utiliza Tailwind CSS para la implementación de diseño responsive y soporte de modo claro/oscuro.
-  - El contenedor principal usa una combinación de flexbox y responsive (`md:flex-row`, `flex-col`, etc.) para adaptar la distribución de contenido entre pantallas pequeñas y grandes.
-  - Enlaces de navegación están en mayúsculas y con tracking (espaciado entre letras) para coherencia visual con el branding.
+
+- Diseño responsive:
+  - El contenedor utiliza flexbox con dirección columna en dispositivos pequeños y fila en tamaños md y superiores.
+  - Se aplica un ancho máximo de 1440px y relleno horizontal/vertical para un espaciado consistente.
+- Estilo y modo oscuro:
+  - El footer soporta modo claro y oscuro mediante las variantes dark:. Por ejemplo:
+    - bg-[#2c2f2e] para el fondo en modo claro y dark:bg-[#f5f7f5] para el modo oscuro.
+    - text colores adaptados con dark:text-...
+  - El logo y el texto usan la fuente "font-spaceGrotesk" (clase) y mayúsculas con tracking ancho para una estética de branding.
 - Accesibilidad:
-  - El componente no incluye etiquetas ARIA explícitas para la navegación de enlaces. Si se busca mejorar accesibilidad, se podría añadir `aria-label` en la `<nav>` y/o roles apropiados para clarificar la semántica a lectores de pantalla.
-- Rendimiento:
-  - Es un componente estático sin lógica asíncrona ni dependencias dinámicas, por lo que el costo de renderizado es mínimo.
-- Compatibilidad:
-  - Dependiente de Next.js para el componente `Link`, y de Tailwind para estilos. Asegurar que el proyecto tenga configurado Chakra/Tailwind (según el stack) para que las clases funcionen correctamente.
-- Mantenibilidad:
-  - El TODO indica una ruta para futuras páginas. Cuando se implementen, se deben actualizar los `href` correspondientes y, si es necesario, añadir pruebas de enlace.
+  - Se usa un elemento semántico nav para el conjunto de enlaces legales.
+  - El contenido visual es estático; si en el futuro se añaden props dinámicos, considerar roles o aria-labels para mayor accesibilidad.
+- Limitaciones:
+  - No hay props para personalización de textos o enlaces desde fuera del componente; cualquier cambio requeriría editar el archivo.
+  - Las URLs de políticas están hardcodeadas; para internacionalización o configuración, podría externalizarse.
 
 ## Última actualización
-12/5/2026
+29/5/2026
 
-Observaciones finales:
-- El componente es simple y directo; no existen dependencias de datos en tiempo de ejecución. Si en el futuro se necesita personalizar el contenido (texto, enlaces, año dinámico), sería recomendable añadir props o convertirlo en una versión con props para mantener la reutilibilidad sin duplicar código.
+Si necesitas adaptar este footer a un proyecto diferente (por ejemplo, cambiar el branding, enlaces o estilos), puedo ayudarte a parametrizar el componente o a extraer constantes para facilitar su reutilización.

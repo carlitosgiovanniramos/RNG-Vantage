@@ -1,60 +1,96 @@
+# Documentación técnica: hooks/use-supabase.ts
+
+Archivo: hooks/use-supabase.ts  
+Ruta: hooks/use-supabase.ts  
+Tipo: Hook de React (cliente)
+
+Total de líneas: 9
+
+---
+
 ## Descripción general
 
-Este archivo define un hook de React llamado `useSupabase` que proporciona una instancia de cliente de Supabase. La instancia se crea mediante la función `createClient` (ubicada en `@/lib/supabase/client`) y se memoiza con `useMemo` para evitar reacobrarla en renderizados subsecuentes dentro del mismo componente. Está diseñado para usarse en componentes del lado del cliente (con la directiva `"use client"`).
+useSupabase es un hook de React que devuelve una instancia de cliente de Supabase. La instancia se crea llamando a createClient() y se memoiza con useMemo para evitar recalcularla en re-renders del componente. El archivo incluye la directiva "use client", lo que indica que es un componente cliente de Next.js y debe ejecutarse en el lado del cliente.
+
+---
 
 ## Responsabilidades
 
-- Proveer una instancia de cliente de Supabase para los componentes que lo consumen.
-- Garantizar que la creación del cliente ocurra solo una vez por ciclo de vida del componente (mediante memoización).
-- Asegurar que el hook se ejecute en componentes del cliente en Next.js (debido a la directiva `"use client"`).
+- Proporcionar un acceso fácil y consistente a una instancia de cliente de Supabase a partir de un hook.
+- Garantizar que la instancia del cliente no se recree en cada renderizado del componente mediante memoización (useMemo).
+- Envolver la creación del cliente para centralizar la lógica de inicialización del cliente de Supabase.
+
+---
 
 ## Props / Parámetros
 
-Este hook es una función sin parámetros.
+Este hook no recibe parámetros.
 
-- none
+- useSupabase(): No tiene parámetros de entrada.
+
+---
 
 ## Retorna
 
-- Una instancia del cliente de Supabase creada por `createClient()`. El tipo exacto depende de la implementación de `createClient`, pero en esencia es el objeto cliente que expone las APIs de interacción con la base de datos y el almacenamiento de Supabase.
+- Un valor que corresponde a la instancia devuelta por createClient(), envuelto en useMemo. En otras palabras, devuelve una instancia del cliente de Supabase (el tipo exacto depende de la implementación de createClient; típicamente sería SupabaseClient en proyectos que usan Supabase).
+
+Formato de retorno:
+- Type: el tipo devuelto por createClient (no especificado en este archivo). Tipo recomendado para referencia: SupabaseClient, dependiendo de la implementación de createClient.
+- Descripción: la instancia memoizada del cliente de Supabase para ser utilizada en operaciones de consulta/autoría en la app.
+
+---
 
 ## Dependencias
 
-- React: utiliza `useMemo` para memoización.
-- `@/lib/supabase/client`: importa la función `createClient` para construir la instancia del cliente.
-- Next.js (cliente): la directiva `"use client"` indica que este código se ejecuta en el lado del cliente, por lo que debe ser consumible por componentes del cliente.
+- react: useMemo (hook de memoización de React)
+- "@/lib/supabase/client": createClient (función propietaria que crea la instancia del cliente de Supabase)
+- "use client": Directiva de Next.js que marca este archivo como un componente cliente
+
+Notas sobre dependencias:
+- No hay props ni dependencias externas dentro de useSupabase; la memoización se basa únicamente en la función createClient al momento de la primera ejecución del hook en un componente.
+- Cada componente que consuma este hook obtendrá, tras su montaje, su propia instancia memoizada hasta que ese componente se desmonte.
+
+---
 
 ## Ejemplos de uso
 
-Código de ejemplo básico de cómo utilizar este hook en un componente React:
+Ejemplo mínimo de uso en un componente React dentro de Next.js:
 
 ```tsx
-"use client";
-
-import React from "react";
+// Importa el hook desde su ruta
 import { useSupabase } from "@/hooks/use-supabase";
 
-export default function ExampleComponent() {
+export default function MiComponente() {
   const supabase = useSupabase();
 
-  // Ejemplo de uso (puedes adaptar a tu flujo de trabajo)
-  // const { data, error } = await supabase.from('tabla').select('*');
+  // Ejemplo de uso: realizar una consulta
+  // const { data, error } = await supabase.from("clientes").select("*");
 
   return (
-    <div>
-      {/* Contenido del componente */}
-    </div>
+    <div>Componente con acceso a Supabase</div>
   );
 }
 ```
 
+Notas:
+- El hook devuelve una instancia de cliente que se puede usar para interactuar con la base de datos a través de las APIs de Supabase.
+- Dado que la instancia está memoizada, no se recrea entre re-renders del mismo componente.
+
+---
+
 ## Notas técnicas
 
-- Memoización: `useMemo(() => createClient(), [])` garantiza que la instancia del cliente se cree una única vez durante la vida del componente. Cada componente que use este hook y que se monte por primera vez obtendrá su propia instancia. No es un singleton global para toda la aplicación.
-- Rendimiento: la creación del cliente podría ser costosa si implica operaciones de configuración o lectura de variables de entorno; al usar `useMemo` se evita recomputaciones en rerenders del mismo componente.
-- Compatibilidad: al contener `"use client"`, este hook debe usarse únicamente en componentes del cliente en Next.js. No debe ser utilizado en componentes renderizados en el servidor.
-- Extensibilidad: si en el futuro se desea compartir una única instancia entre todos los componentes, se podría refactorizar para crear y exportar una instancia singleton fuera de componentes o envolverla en un contexto (React Context).
+- Memoización: useMemo(() => createClient(), []) garantiza que la creación del cliente ocurra una sola vez por ciclo de vida del componente que use el hook. No se recrea al re-renderizar.
+- Alcance de la instancia: cada componente que use este hook recibirá su propia instancia memoizada. Esto evita efectos colaterales entre componentes, pero significa que no hay un singleton global compartido a nivel de toda la app. Si se requiere un único cliente compartido, podría considerarse crear el cliente en un módulo/singleton independiente y exportarlo.
+- Comportamiento del cliente: la implementación de createClient() determina el tipo exacto del objeto devuelto y sus capacidades (consultas, autenticación, etc.). Este archivo no define ese tipo; solo delega la creación al helper correspondiente.
+- Entorno de ejecución: al contener la directiva "use client", este hook debe ejecutarse únicamente en componentes cliente de Next.js.
+
+---
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
+
+---
+
+Si necesitas, puedo añadir ejemplos más avanzados de manejo de errores o de integración con otras partes del flujo de ventas y reservas de RNG Vantage.

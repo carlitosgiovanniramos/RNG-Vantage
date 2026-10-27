@@ -2,4 +2,5 @@
 
 Listado de archivos analizados:
 
-- [api-transactions-route](./api-transactions-route.md)
+- [api-admin-export-transactions-route](./api-admin-export-transactions-route.md)
+- [api-webhooks-kushki-route](./api-webhooks-kushki-route.md)

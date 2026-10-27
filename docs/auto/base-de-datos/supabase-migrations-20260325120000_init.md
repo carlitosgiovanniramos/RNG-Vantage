@@ -1,198 +1,203 @@
-# Migración inicial RNG Vantage - 20260325120000_init.sql
+# Documentación técnica: Migración inicial de RNG Vantage
+Ruta: supabase/migrations/20260325120000_init.sql
 
-Esta migración establece la base de datos para el sistema RNG Vantage, cubriendo perfiles de usuarios, servicios, reservas, suscripciones y transacciones. También configura políticas de seguridad a nivel de fila (Row Level Security, RLS), y disparadores (triggers) para mantener campos de auditoría como created_at y updated_at. Incluye mecanismos para crear perfiles automáticamente al registrarse un usuario y para actualizar la marca de tiempo de registro/desactualización.
+Este archivo define la migración inicial para el sistema RNG Vantage, estableciendo la estructura de la base de datos, las políticas de seguridad mediante Row Level Security (RLS), y los mecanismos de auditoría y sincronización de metadatos. Está orientado a Supabase (PostgreSQL) y asume la existencia del esquema auth propio de Supabase para usuarios.
+
+---
 
 ## Descripción general
-- Origen: migración inicial del proyecto RNG Vantage en Supabase.
-- Propósito: crear las tablas principales (profiles, services, reservations, subscriptions, transactions), activar RLS y definir políticas de acceso, así como disparadores para sincronizar metadatos y crear perfiles de usuario automáticamente.
-- Extensiones y dependencias: habilita la extensión UUID (uuid-ossp) y asume la presencia de auth.users en el esquema público; las tablas utilizan claves foráneas y múltiples políticas para garantizar seguridad y consistencia de datos.
+La migración crea las tablas principales del sistema y sus relaciones:
+
+- profiles: extensión de auth.users para almacenar datos de perfil.
+- services: catálogo de servicios/paquetes.
+- reservations: reservas de capacitaciones.
+- subscriptions: suscripciones activas a servicios.
+- transactions: registro de ventas/pagos.
+
+Además:
+- habilita la extensión UUID (uuid-ossp) para generar identificadores únicos.
+- activa Row Level Security (RLS) en las tablas y define políticas detalladas de acceso.
+- define funciones y triggers para mantener datos consistentes (p. ej., updated_at) y para crear perfiles automáticamente al generar un usuario.
+- utiliza referencias a auth.users del esquema público de Supabase.
+
+---
 
 ## Responsabilidades
-- Crear y estructurar las tablas centrales del dominio de ventas, reservas y finanzas.
-- Habilitar Row Level Security (RLS) en todas las tablas relevantes y definir políticas claras de acceso para usuarios, administradores y terceros autorizados.
-- Implementar disparadores y funciones para:
-  - Crear automáticamente un perfil en perfiles cuando se crea un usuario en auth.users.
-  - Mantener actualizado el campo updated_at en cambios de registros.
-- Definir controles de integridad (check constraints) y valores por defecto razonables para campos como estado, tipo y fechas.
-- Proporcionar una base sólida para futuras migraciones, con una separación clara entre perfiles, servicios, reservas, suscripciones y transacciones.
+- Definir la estructura básica de la base de datos para perfiles, servicios, reservas, suscripciones y transacciones.
+- Habilitar y aplicar RLS en todas las tablas relevantes.
+- Proporcionar políticas de seguridad basadas en el rol del usuario (admin vs. cliente) y en la pertenencia a registros.
+- Implementar mecanismos de auditoría y sincronización de metadatos mediante triggers y funciones:
+  - crear perfil automáticamente al signup.
+  - actualizar updated_at en modificaciones de registros.
+- Definir dependencias necesarias (extensión uuid-ossp) para generación de UUIDs.
 
-## Estructura de migración (Tablas y objetos)
+---
 
-A continuación se describe cada objeto principal creado en esta migración, con columnas, tipos y restricciones relevantes.
+## Estructura de la base de datos (entidades principales)
 
-- Extensión y soporte
-  - Extensión: uuid-ossp (create extension if not exists "uuid-ossp";) para generar UUIDs cuando no se especifican.
-  - Tabla de referencia para usuarios: auth.users (utilizada por múltiples tablas mediante claves foráneas).
+Notas generales:
+- Todas las tablas llevan created_at y updated_at (donde aplica) para trazabilidad.
+- Se asume la existencia de auth.users en Supabase, con id como UUID.
+- Las claves foráneas usan comportamientos de eliminación definidos por cada entidad (cascade, set null, restrict).
 
-- 1. PROFILES (extiende auth.users)
-  - Tabla: public.profiles
-  - Columnas:
-    - id: uuid, primary key, referencias auth.users on delete cascade, not null
-    - full_name: text
-    - avatar_url: text
-    - role: text, not null, default 'client', check (role in ('admin','client'))
-    - data_consent_at: timestamptz
-    - created_at: timestamptz, default now(), not null
-    - updated_at: timestamptz, default now(), not null
-  - Seguridad: habilitada Row Level Security (alter table ... enable row level security;)
-  - Políticas (SELECT/UPDATE/INSERT):
-    - "Users can view their own profile": usar auth.uid() = id
-    - "Admins can view all profiles": permitir si existe un perfil admin con id = auth.uid()
-    - "Users can update their own profile": usar auth.uid() = id
-    - "Users can insert their own profile": permitir inserción con auth.uid() = id
-  - Disparador/Función:
-    - handle_new_user(): al crear un usuario, inserta un perfil con id, full_name y avatar_url tomados de new.raw_user_meta_data
-    - on_auth_user_created: dispara after insert on auth.users para ejecutar handle_new_user()
-    - handle_updated_at(): actualiza updated_at = now(); disparador on_profiles_updated antes de UPDATE
-  - Disparadores:
-    - on_profiles_updated: before update on public.profiles
+1) PROFILES (extiende auth.users)
+- id: uuid, primary key, referencias auth.users on delete cascade, not null
+- full_name: text
+- avatar_url: text
+- role: text, not null, default 'client', check (role in ('admin','client'))
+- data_consent_at: timestamptz
+- created_at: timestamptz, default now(), not null
+- updated_at: timestamptz, default now(), not null
+- Seguridad: RLS habilitado con políticas para ver/actualizar/insertar/crear perfiles (ver más abajo)
+- Funciones/Triggers:
+  - handle_new_user(): al crear un auth.user, inserta un registro en profiles con id, full_name y avatar_url extraídos de new.raw_user_meta_data.
+  - handle_updated_at(): actualiza updated_at en cambios de perfiles.
+  - Triggers: on_auth_user_created (después de insert en auth.users) y on_profiles_updated (antes de update en profiles).
 
-- 2. SERVICES (catálogo de servicios/paquetes)
-  - Tabla: public.services
-  - Columnas:
-    - id: uuid, default uuid_generate_v4(), primary key
-    - name: text, not null
-    - description: text
-    - type: text, not null, check (type in ('manejo_redes','auditoria','capacitacion','otro'))
-    - price: numeric(10,2), not null, check (price >= 0)
-    - duration_months: int, not null, default 1, check (duration_months > 0)
-    - is_active: boolean, not null, default true
-    - created_at: timestamptz, default now(), not null
-    - updated_at: timestamptz, default now(), not null
-  - Seguridad: habilitada Row Level Security
-  - Políticas:
-    - "Anyone can view active services": is_active = true
-    - "Admins can view all services": admin check via profiles
-    - "Admins can insert/update/delete services": admin check en cada operación
-  - Disparador:
-    - on_services_updated: before update on public.services para ejecutar handle_updated_at()
-  - Notas: las políticas permiten visibilidad y control/edición sólo a admins. Entrada y actualización registran updated_at.
+2) SERVICES (catálogo de servicios/paquetes)
+- id: uuid, primary key, default uuid_generate_v4()
+- name: text, not null
+- description: text
+- type: text, not null, check (type in ('manejo_redes','auditoria','capacitacion','otro'))
+- price: numeric(10,2), not null, check (price >= 0)
+- duration_months: int, not null, default 1, check (duration_months > 0)
+- is_active: boolean, not null, default true
+- created_at: timestamptz, default now(), not null
+- updated_at: timestamptz, default now(), not null
+- Seguridad: RLS habilitado
+- Políticas:
+  - Anyone can view active services (is_active = true)
+  - Admins can view all services
+  - Admins can insert/update/delete (revisión de admin en people profile)
+- Trigger: on_services_updated para actualizar updated_at.
 
-- 3. RESERVATIONS (reservas de capacitaciones)
-  - Tabla: public.reservations
-  - Columnas:
-    - id: uuid, default uuid_generate_v4(), primary key
-    - user_id: uuid, referencias auth.users on delete set null
-    - full_name: text, not null
-    - email: text, not null
-    - phone: text
-    - preferred_date: timestamptz, not null
-    - status: text, not null, default 'pending', check (status in ('pending','confirmed','cancelled','completed'))
-    - notes: text
-    - data_consent: boolean, not null, default false
-    - created_at: timestamptz, default now(), not null
-    - updated_at: timestamptz, default now(), not null
-  - Seguridad: habilitada Row Level Security
-  - Políticas:
-    - "Users can view their own reservations": auth.uid() = user_id
-    - "Admins can view all reservations": admin check via profiles
-    - "Authenticated users can create reservations": insert permitido si auth.uid() no es null
-    - "Admins can update reservations": admin check para update
-  - Disparador:
-    - on_reservations_updated: before update para actualizar updated_at
-  - Notas: diseño orientado a usuario/cliente con capacidad de crear y a admin para gestión.
+3) RESERVATIONS (reservas de capacitaciones)
+- id: uuid, primary key, default uuid_generate_v4()
+- user_id: uuid, referencias auth.users on delete set null
+- full_name: text, not null
+- email: text, not null
+- phone: text
+- preferred_date: timestamptz, not null
+- status: text, not null, default 'pending', check (status in ('pending','confirmed','cancelled','completed'))
+- notes: text
+- data_consent: boolean, not null, default false
+- created_at: timestamptz, default now(), not null
+- updated_at: timestamptz, default now(), not null
+- Seguridad: RLS habilitado
+- Políticas:
+  - Users can view their own reservations (auth.uid() = user_id)
+  - Admins can view all reservations
+  - Authenticated users can insert (create) reservations (auth.uid() is not null)
+  - Admins can update any reservation
+- Trigger: on_reservations_updated para actualizar updated_at.
 
-- 4. SUBSCRIPTIONS (suscripciones activas)
-  - Tabla: public.subscriptions
-  - Columnas:
-    - id: uuid, default uuid_generate_v4(), primary key
-    - user_id: uuid, referencias auth.users on delete cascade not null
-    - service_id: uuid, referencias public.services on delete restrict not null
-    - starts_at: timestamptz, not null, default now()
-    - ends_at: timestamptz, not null
-    - status: text, not null, default 'active', check (status in ('active','expired','cancelled','pending'))
-    - auto_renew: boolean, not null, default false
-    - created_at: timestamptz, default now(), not null
-    - updated_at: timestamptz, default now(), not null
-  - Seguridad: habilitada Row Level Security
-  - Políticas:
-    - "Users can view their own subscriptions": auth.uid() = user_id
-    - "Admins can view all subscriptions": admin check
-    - "Authenticated users can create subscriptions": insert permitido si auth.uid() = user_id
-    - "Admins can update subscriptions": admin check
-  - Disparador:
-    - on_subscriptions_updated: before update para actualizar updated_at
+4) SUBSCRIPTIONS (suscripciones activas)
+- id: uuid, primary key, default uuid_generate_v4()
+- user_id: uuid, referencias auth.users on delete cascade not null
+- service_id: uuid, referencias public.services on delete restrict not null
+- starts_at: timestamptz, not null, default now()
+- ends_at: timestamptz, not null
+- status: text, not null, default 'active', check (status in ('active','expired','cancelled','pending'))
+- auto_renew: boolean, not null, default false
+- created_at: timestamptz, default now(), not null
+- updated_at: timestamptz, default now(), not null
+- Seguridad: RLS habilitado
+- Políticas:
+  - Users can view their own subscriptions
+  - Admins can view all subscriptions
+  - Authenticated users can create subscriptions (auth.uid() = user_id)
+  - Admins can update subscriptions
+- Trigger: on_subscriptions_updated para actualizar updated_at.
 
-- 5. TRANSACTIONS (registro de ventas/pagos)
-  - Tabla: public.transactions
-  - Columnas:
-    - id: uuid, default uuid_generate_v4(), primary key
-    - user_id: uuid, referencias auth.users on delete set null
-    - subscription_id: uuid, referencias public.subscriptions on delete set null
-    - amount: numeric(10,2), not null, check (amount >= 0)
-    - payment_method: text, not null, default 'pending', check (payment_method in ('cash','transfer','card','pending'))
-    - status: text, not null, default 'pending', check (status in ('pending','completed','failed','refunded'))
-    - notes: text
-    - created_at: timestamptz, default now(), not null
-    - updated_at: timestamptz, default now(), not null
-  - Seguridad: habilitada Row Level Security
-  - Políticas:
-    - "Users can view their own transactions": auth.uid() = user_id
-    - "Admins can view all transactions": admin check
-    - "Admins can insert transactions": admin check
-    - "Admins can update transactions": admin check
-  - Disparador:
-    - on_transactions_updated: before update para actualizar updated_at
+5) TRANSACTIONS (registro de ventas/pagos)
+- id: uuid, primary key, default uuid_generate_v4()
+- user_id: uuid, referencias auth.users on delete set null
+- subscription_id: uuid, referencias public.subscriptions on delete set null
+- amount: numeric(10,2), not null, check (amount >= 0)
+- payment_method: text, not null, default 'pending', check (payment_method in ('cash','transfer','card','pending'))
+- status: text, not null, default 'pending', check (status in ('pending','completed','failed','refunded'))
+- notes: text
+- created_at: timestamptz, default now(), not null
+- updated_at: timestamptz, default now(), not null
+- Seguridad: RLS habilitado
+- Políticas:
+  - Users can view their own transactions
+  - Admins can view all transactions
+  - Admins can insert/update transactions (operadas por admin)
+- Trigger: on_transactions_updated para actualizar updated_at.
 
-- Notas de seguridad y políticas de acceso
-  - Cada tabla habilita RLS y define políticas específicas para:
-    - Lectura: quién puede ver solo su propio registro o todos (según rol).
-    - Inserción/Actualización/Eliminación: controlado principalmente por roles de administrador; algunas operaciones permiten inserciones por usuarios autenticados (por ejemplo, reservas y suscripciones por usuario).
-  - Las políticas utilizan consultas basadas en auth.uid() y verificación de rol a través de la tabla public.profiles.
+---
 
-## Props / Parámetros
-Este archivo es una migración SQL y no define componentes ni funciones con parámetros de entrada para ser consumidos por código. A continuación se describen, de forma estructurada, las principales entidades y sus campos para comprender cómo está compuesto el esquema:
+## Políticas de seguridad y RLS (Row Level Security)
 
-- Tablas y columnas clave (resumen)
-  - profiles(id, full_name, avatar_url, role, data_consent_at, created_at, updated_at)
-  - services(id, name, description, type, price, duration_months, is_active, created_at, updated_at)
-  - reservations(id, user_id, full_name, email, phone, preferred_date, status, notes, data_consent, created_at, updated_at)
-  - subscriptions(id, user_id, service_id, starts_at, ends_at, status, auto_renew, created_at, updated_at)
-  - transactions(id, user_id, subscription_id, amount, payment_method, status, notes, created_at, updated_at)
+- Todas las tablas relevantes (profiles, services, reservations, subscriptions, transactions) habilitan RLS.
+- Las políticas permiten:
+  - Lectura/visualización restringida a registros propios para usuarios comunes (por ejemplo, perfiles de usuario, reservas propias, transacciones propias, suscripciones propias).
+  - Visualización general para admins (existencia de usuario con rol admin en profiles).
+  - Inserciones y actualizaciones controladas para administradores en las tablas correspondientes.
+  - Ciertas tablas permiten a usuarios autenticados crear registros (p. ej., reservas y suscripciones), siempre que exista un usuario autenticado.
+- Las funciones utilizadas para seguridad y auditoría:
+  - auth.uid(): para determinar la identidad del usuario autenticado.
+  - handle_new_user(): crea automáticamente un registro en profiles al crear un usuario en auth.users.
+  - handle_updated_at(): actualiza updated_at en cada modificación de filas.
+- Notas: estas políticas dependen del esquema public y del tabla auth.users proporcionado por Supabase. En entornos fuera de Supabase, puede requerirse ajuste de schemas o de funciones de autenticación.
 
-- Funciones y disparadores (sin parámetros visibles)
-  - handle_new_user(): inserta un perfil al momento de crear un auth.user
-  - handle_updated_at(): actualiza updated_at en cada update
-  - Disparadores: on_auth_user_created, on_profiles_updated, on_services_updated, on_reservations_updated, on_subscriptions_updated, on_transactions_updated
-
-- Dependencias y extensiones
-  - Extensión uuid-ossp para generar UUIDs compatibles
-  - auth.users como fuente de identidades y referencia para profiles, transactions, subscriptions (según corresponda)
+---
 
 ## Dependencias
-- Dependencias de base de datos:
-  - PostgreSQL con extensión uuid-ossp
-  - Esquemas: public (con auth.users de Supabase)
-- Lógica de negocio y seguridad:
-  - Row Level Security (RLS) activada en todas las tablas pertinentes
-  - Políticas de acceso basadas en auth.uid() y roles almacenados en public.profiles
-  - Funciones/Disparadores para sincronización de metadatos y creación de perfiles
+
+- Extensión PostgreSQL: uuid-ossp (create extension if not exists "uuid-ossp";) para generar UUIDs con uuid_generate_v4().
+- Esquema auth de Supabase: uso de auth.users como fuente de identidad (foreign keys y triggers).
+- Funciones y triggers definidos en el mismo script:
+  - public.handle_new_user()
+  - public.handle_updated_at()
+  - public.handle_updated_at() aplicado a varias tablas
+- Row Level Security (RLS) habilitado en todas las tablas relevantes.
+
+---
 
 ## Ejemplos de uso
-- Aplicar migration desde psql (ejemplo típico)
-  - psql "postgres://usuario:contraseña@host:5432/base_de_datos" -f 20260325120000_init.sql
-- Uso desde consola de Supabase (CLI/editor SQL)
-  - Copiar y ejecutar el contenido del archivo en una ventana SQL de Supabase Studio o mediante CLI correspondiente a tu flujo de trabajo de migraciones.
-- Nota sobre reversión
-  - Este archivo no incluye una sección de "down" o migración de deshacer. Revertir cambios requeriría una migración adicional que elimine objetos en el orden inverso o restaure estados previos manualmente.
+
+- Ejecutar la migración (local o en un entorno de despliegue):
+  - En un entorno típico con PostgreSQL (psql):
+    - psql -h <host> -U <usuario> -d <base_de_datos> -f supabase/migrations/20260325120000_init.sql
+  - En Supabase CLI / migraciones integradas:
+    - La migración se aplica como parte del flujo de migrations al inicializar el proyecto o al aplicar cambios en la base de datos.
+- Verificación rápida post-migración:
+  - Verificar tablas creadas:
+    - SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
+  - Verificar RLS y políticas:
+    - SELECT * FROM pg_rls; (o consultar las políticas en las tablas con pg_policy)
+  - Verificar triggers y funciones:
+    - \d+ public.handle_new_user
+    - \d+ public.handle_updated_at
+  - Comprobar extensión UUID:
+    - SELECT extname FROM pg_extension;
+
+- Observaciones para mantenimiento:
+  - Si se añade un nuevo tipo para Service (en services.type), debe actualizarse la restricción check correspondiente.
+  - Cualquier cambio en las políticas de seguridad debe ser probado con diferentes perfiles de usuario (admin vs cliente) para evitar brechas.
+
+---
 
 ## Notas técnicas
-- Consistencia y seguridad
-  - Se utiliza RLS para encapsular el acceso a datos por usuario y rol, reduciendo exposición de datos sensibles.
-  - Las políticas suelen usar patrones seguros como exists (select 1 from public.profiles where id = auth.uid() and role = 'admin') para determinar privilegios de administrador.
-- Integridad de datos
-  - Check constraints en varios campos (p. ej., type en servicios, status en reservas, subscriptions, transactions) para garantizar que los valores sean válidos.
-  - Valores por defecto útiles para created_at y updated_at, asegurando auditoría básica.
-- Auditoría y trazabilidad
-  - Disparadores para actualizar updated_at proporcionan una trazabilidad básica de cambios.
-  - El disparador handle_new_user crea perfiles de usuario automáticamente, lo que facilita la onboarding sin intervención manual.
-- Rendimiento y escalabilidad
-  - Las políticas basadas en auth.uid() son comunes en arquitecturas con múltiples tablas vinculadas a usuarios; se debe considerar indexar columnas usadas en condiciones de filtrado frecuente (p. ej., user_id, id) para mejorar rendimiento de consultas con RLS.
-- Limitaciones conocidas
-  - No hay migración de tipo down en este archivo; para revertir cambios, se necesitaría crear migraciones complementarias.
-  - Las restricciones de negocio están definidas a nivel de base de datos; cualquier validación adicional de negocio debe implementarse en la capa de servicio de la aplicación si fuese necesario.
+
+- Consistencia de timestamps: updated_at se mantiene actualizado mediante triggers before update en cada tabla, asegurando trazabilidad de modificaciones.
+- Integración con auth.users: las referencias y permisos se basan en la identidad proporcionada por auth.uid() y en la existencia de usuarios en el esquema auth de Supabase.
+- Seguridad por defecto: se adoptan políticas de mínimo privilegio, permitiendo a usuarios autenticados ver sus propios datos y administradores gestionar todos los registros.
+- Eliminación de registros:
+  - profiles.id está ligado a auth.users con on delete cascade (última instancia de usuario elimina su perfil).
+  - transactions.user_id y subscriptions.user_id usan on delete set null / cascade, según el caso, para preservar histórico de transacciones aun si el usuario se elimina.
+  - subscriptions.service_id usa on delete restrict para evitar que se elimine un servicio con suscripciones activas.
+- Validaciones de negocio:
+  - Estados y tipos limitados por check constraints para evitar valores no soportados.
+  - Fechas y duraciones deben respetar rangos y lógicas de negocio (e.g., duration_months > 0, ends_at > starts_at implícitamente esperado por uso).
+
+---
 
 ## Última actualización
-- Fecha: 12/5/2026
+29/5/2026
 
-Si quieres que amplíe alguna sección (por ejemplo, una tabla con columnas de cada entidad en formato más detallado o ejemplos de consultas típicas que respeten las políticas de seguridad), dime y lo agrego.
+---
+
+Si necesitas que la documentación se extienda con diagramas ER, ejemplos de consultas de uso común (SELECTs para obtener perfiles, reservas, etc.), o una guía de migraciones incremental para cambios futuros, dímelo y lo incorporo.

@@ -6,4 +6,4 @@ Listado de archivos analizados:
 - [(auth)-layout](./(auth)-layout.md)
 - [(auth)-login-page](./(auth)-login-page.md)
 - [(auth)-register-page](./(auth)-register-page.md)
-- [(dashboard)-dashboard-page](./(dashboard)-dashboard-page.md)
+- [(dashboard)-clientes-actions](./(dashboard)-clientes-actions.md)

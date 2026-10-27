@@ -1,6 +1,6 @@
 # Documentación Técnica Automática — RNG Vantage
 
-> Generada el 12/5/2026 por el Agente IA RNG Vantage
+> Generada el 29/5/2026 por el Agente IA RNG Vantage
 
 > ⚠️ No editar manualmente. Estos archivos se sincronizan con la rama develop-prueba.
 

@@ -1,140 +1,125 @@
 # 20260402000000_split_full_name.sql
 
-Archivo de migración SQL ubicado en: supabase/migrations/20260402000000_split_full_name.sql  
-Nombre: 20260402000000_split_full_name.sql  
-Líneas: 64
+Archivo: supabase/migrations/20260402000000_split_full_name.sql
 
-Este archivo implementa una migración para descomponer el campo full_name en first_name y last_name en dos tablas clave (profiles y reservations), y define un trigger (handle_new_user) para sincronizar nuevos usuarios con la tabla profiles.
+Tipo: Migración SQL
+
+Propósito: Separar el campo full_name en first_name y last_name en las tablas Profiles y Reservations, y definir una función de trigger para sincronizar nuevos usuarios en Profiles.
+
+---
 
 ## Descripción general
 
-La migración realiza estas acciones en secuencia:
+Esta migración realiza tres bloques principales:
 
-1) En la tabla public.profiles:
-- Añade dos columnas: first_name y last_name (ambas de tipo text).
-- Migra los datos existentes desde full_name dividiéndolos en first_name y last_name.
-- Elimina la columna full_name.
+1) PROFILES
+- Añade las columnas first_name y last_name a la tabla public.profiles.
+- Migra los datos existentes de full_name dividiéndolos en first_name (la primera palabra) y last_name (el resto tras la primera palabra, con trimming).
+- Elimina la columna full_name de public.profiles.
 
-2) En la tabla public.reservations:
-- Añade dos columnas: first_name y last_name (ambas de tipo text).
-- Migra los datos existentes desde full_name de forma similar a profiles.
-- Elimina la columna full_name.
-- Marca las columnas first_name y last_name como NOT NULL.
+2) RESERVATIONS
+- Añade las columnas first_name y last_name a la tabla public.reservations.
+- Migra los datos existentes de full_name de la misma lógica que en Profiles.
+- Elimina la columna full_name de public.reservations.
+- Establece las columnas first_name y last_name como NOT NULL.
 
-3) Crear o reemplazar la función de trigger public.handle_new_user:
-- Es una función PL/pgSQL que se ejecuta como trigger y, cuando se active, inserta un registro en public.profiles basándose en datos contenidos en new.raw_user_meta_data (first_name, last_name, avatar_url) y asocia la fila con new.id.
-- Esta parte facilita la creación automática de perfiles cuando se crea un nuevo usuario.
+3) TRIGGER handle_new_user
+- Crea o reemplaza la función pública public.handle_new_user() que devuelve un trigger.
+- Al activarse, inserta un registro en public.profiles con id, first_name, last_name y avatar_url extraídos de new.raw_user_meta_data (campos first_name, last_name y avatar_url).
 
-La migración está diseñada para simplificar la gestión de nombres y centralizar la información de identidad en perfiles, manteniendo coherencia entre perfiles y reservas.
+Notas importantes:
+- La migración define la función handle_new_user, pero no adjunta un trigger explícito en este archivo. Se espera que haya un trigger existente (o definido en otra migración) que invoque esta función al insertar un nuevo usuario.
+- El procesamiento de strings maneja casos simples: primero se toma la primera palabra como first_name y lo que sigue (si hay espacio) como last_name; si no hay espacio, last_name queda como cadena vacía. Si full_name es NULL, no se migra ese registro.
+
+---
 
 ## Responsabilidades
 
-- Actualizar el esquema de datos:
-  - profiles: añadir first_name, last_name; eliminar full_name.
-  - reservations: añadir first_name, last_name; eliminar full_name; asegurar NOT NULL en las nuevas columnas.
-- Extraer y migrar datos existentes desde full_name hacia first_name y last_name.
-- Proporcionar un mecanismo de sincronización automática de usuarios con perfiles mediante la función handle_new_user (trigger pattern).
+- Modificar el esquema de datos:
+  - Añadir columnas: public.profiles(first_name text, last_name text) y public.reservations(first_name text, last_name text).
+- Migración de datos existente:
+  - Para cada fila con full_name no null:
+    - first_name = primera palabra de full_name (split_part(full_name, ' ', 1)).
+    - last_name = resto tras la primera palabra, con trim para eliminar espacios exteriores.
+  - Eliminar full_name de ambas tablas.
+- Consistencia de datos:
+  - En reservations, asegurar que first_name y last_name sean NOT NULL tras la migración.
+- Extensión de lógica de negocio:
+  - Definir la función handle_new_user para sincronizar nuevos usuarios en profiles usando metadata de usuario (raw_user_meta_data).
 
-## Props / Parámetros
+---
 
-Este archivo no es un componente, sino una migración SQL más una función de trigger. A continuación se detallan los elementos funcionales relevantes y sus parámetros:
+## Párrafos / Parámetros
 
-- Tabla: public.profiles
-  - Nuevas columnas añadidas:
-    - first_name: text
-    - last_name: text
+Este archivo no es una función React ni una función de código con parámetros; es una migración SQL. Por lo tanto:
+- Parámetros: No aplica.
+- Retorno: No aplica (la migración modifica esquema y datos; no devuelve valores).
 
-- Tabla: public.reservations
-  - Nuevas columnas añadidas:
-    - first_name: text
-    - last_name: text
-
-- Migración de datos:
-  - full_name (origen) -> first_name, last_name
-  - Lógica de extracción:
-    - first_name = split_part(full_name, ' ', 1)
-    - last_name = proceso condicional:
-      - si hay al menos un espacio en full_name, toma la parte después del primer espacio
-      - de lo contrario, asigna ''
-    - Se aplica solo si full_name no es null
-
-- Función de trigger: public.handle_new_user()
-  - Firma:
-    - retorna trigger
-  - Parámetros: no tiene parámetros explícitos (usa el registro NEW propio de triggers)
-  - Campos utilizados desde NEW:
-    - NEW.id: id del usuario (para usar como id en profiles)
-    - NEW.raw_user_meta_data: jsonb
-      - NEW.raw_user_meta_data->>'first_name'
-      - NEW.raw_user_meta_data->>'last_name'
-      - NEW.raw_user_meta_data->>'avatar_url'
-  - Comportamiento: inserta en public.profiles un registro con:
-    - id = NEW.id
-    - first_name = NEW.raw_user_meta_data->>'first_name'
-    - last_name = NEW.raw_user_meta_data->>'last_name'
-    - avatar_url = NEW.raw_user_meta_data->>'avatar_url'
-  - Retorna: NEW
-
-Nota: La migración define la función y su código, pero no se incluye el bloque de creación del trigger que referiría a handle_new_user. Se asume que en otras partes de la base de datos existe el trigger adecuado que invoca esta función al crear un nuevo usuario.
+---
 
 ## Retorna
 
-- En la migración:
-  - Cambios de esquema en profiles y reservations.
-  - Actualización de datos existente y eliminación de full_name.
-  - Añadidos índices o no; el script no define índices nuevos.
-- En la función handle_new_user:
-  - Returna NEW (el registro recién insertado) para que el flujo de triggers continúe.
+La migración no retorna valores. Efectúa cambios en el esquema (agregar/eliminar columnas) y en los datos (migración de full_name a first_name/last_name) y define una función de trigger.
 
-Nota: No hay una exportación o valor de retorno para una función independiente aquí; es una función de trigger que devuelve un registro (RETURNS trigger).
+---
 
 ## Dependencias
 
-- PostgreSQL (al menos versión que soporte:
-  - ALTER TABLE, ADD COLUMN, DROP COLUMN
-  - UPDATE con expresiones SQL complejas
-  - TRIGGER FUNCTION (RETURNS trigger) en PL/pgSQL
-  -Uso de funciones de texto y jsonb:
-  - split_part, position, substring, trim
-  - NEW.raw_user_meta_data (jsonb) ->> operador para extraer texto
-- Esquemas existentes:
-  - public.profiles debe existir (con id y otros campos)
-  - public.reservations debe existir (con full_name antes de migrar)
-- Supabase/SaaS de migraciones: este archivo es parte de la carpeta de migraciones (supabase/migrations) y se espera que se aplique mediante el sistema de migraciones de Supabase.
+- PostgreSQL (funcionalidades nativas utilizadas: split_part, position, substring, trim, y operadores JSON/JSONB).
+- Esquemas y tablas implicados:
+  - public.profiles con columnas previas: id, full_name, avatar_url, entre otras.
+  - public.reservations con columnas previas: id, full_name, entre otras.
+- raw_user_meta_data en la tabla de usuarios (o la entidad que dispara el trigger) con claves:
+  - first_name, last_name, avatar_url (accedidas con ->>'clave').
+- La migración define la función public.handle_new_user, pero el trigger que invoca la función debe existir o definirse por separado.
 
-Notas de implementación:
-- La extracción de last_name asume que el nombre consta de al menos una palabra, con la posibilidad de no haber espacio (en cuyo caso last_name resulta en una cadena vacía).
-- Después de mover full_name fuera de profiles y reservations, la columna full_name se elimina, por lo que cualquier lógica que dependa de full_name debe migrarse o ajustarse.
-- En reservations, se establece NOT NULL para first_name y last_name luego de la migración. Si hay filas que no cumplen estas columnas tras la migración, la migración fallará; de lo contrario, las filas quedan con estos campos como NOT NULL.
+---
 
 ## Ejemplos de uso
 
-- Aplicar la migración:
-  - En un entorno con psql o mediante el pipeline de migraciones de Supabase, este archivo se ejecuta como parte de la secuencia de migraciones para actualizar el esquema y los datos.
-- Creación de nuevos usuarios (comportamiento esperado con trigger):
-  - Al insertarse un nuevo registro en la tabla de usuarios (no incluido en este snippet), el trigger (asumiendo su existencia) llamaría a public.handle_new_user para crear un correspondiente perfil con first_name, last_name y avatar_url tomados desde new.raw_user_meta_data.
+- Aplicación manual mediante psql (para entornos de desarrollo o pruebas):
+ 1) Consolida la conexión a la base de datos:
+    psql "postgres://usuario:clave@host:5432/tu_basedatos"
+ 2) Ejecuta la migración:
+    \i supabase/migrations/20260402000000_split_full_name.sql
 
-Ejemplo conceptual del flujo de datos para handle_new_user:
-- Registro nuevo en la tabla de usuarios con:
-  - id: 123
-  - raw_user_meta_data: {"first_name": "Ana", "last_name": "Pérez", "avatar_url": "http://..."}
-- El trigger ejecuta handle_new_user:
-  - Inserta en public.profiles: (id=123, first_name='Ana', last_name='Pérez', avatar_url='http://...')
-  - Retorna NEW para continuar el flujo del trigger original.
+- En entorno de Supabase (flujo recomendado):
+  - Coloca el archivo en supabase/migrations/20260402000000_split_full_name.sql dentro del repositorio.
+  - Ejecuta el flujo normal de migraciones de Supabase (por ejemplo, mediante la CLI de Supabase o el flujo de CI/CD configurado). La migración se aplicará como parte del proceso de despliegue y/o sincronización de la base de datos.
+
+Notas:
+- Se recomienda realizar un respaldo de la base de datos y probar la migración en staging antes de aplicarla en producción.
+- Verifica si existe el trigger que referenciará la función handle_new_user; si no está presente, la función quedará creada sin ser ejecutada.
+
+---
 
 ## Notas técnicas
 
-- Complejidad de migración de datos:
-  - La migración de full_name a first_name y last_name depende de la presencia de espacios en full_name.
-  - Si full_name contiene más de un espacio, la lógica toma la primera palabra como first_name y la parte restante (después del primer espacio) como last_name (con trim).
-  - Si full_name es una sola palabra, last_name quedaría como '', lo cual podría contravenir NOT NULL en reservations; este riesgo es parte del comportamiento descrito por la migración y debe ser considerado al planificar datos existentes.
-- Rendimiento:
-  - Las migraciones de datos en tablas grandes pueden ser costosas; la migración aplica UPDATEs por fila con operaciones de texto, que son razonables para cantidades moderadas de datos. En escenarios con tablas muy grandes, podría requerirse un enfoque por lotes.
-- Seguridad y privilegios:
-  - La función handle_new_user está definida como SECURITY DEFINER, lo que implica que se ejecuta con los privilegios del definidor, no del usuario que ejecuta el trigger. Esto puede tener implicaciones de permisos y seguridad si se modifica el contexto de ejecución.
+- Lógica de separación de nombres
+  - first_name: se asigna split_part(full_name, ' ', 1) — la primera palabra.
+  - last_name: se determina con una expresión que toma el resto después del primer espacio y se aplica trim para eliminar espacios iniciales/finales. Si no hay espacio, last_name queda como cadena vacía ('').
+- Edge cases de nombres
+  - Si full_name tiene varias palabras, last_name contendrá todo lo que siga a la primera palabra, incluyendo posibles espacios internos.
+  - Si full_name contiene solo una palabra, last_name se establece en '' (cadena vacía) y first_name toma esa palabra.
+  - Si full_name es NULL, no se migra ese registro y las nuevas columnas quedan con NULL (en Profiles) hasta que se actualicen de forma adicional.
+- Resiliencia de la migración
+  - profiles: no se fuerza NOT NULL en first_name/last_name; por lo tanto, posibles NULLs persisten si full_name era NULL.
+  - reservations: se establece NOT NULL para first_name y last_name tras la migración, asegurando integridad para reservas futuras.
+- Trigger handle_new_user
+  - La función usa datos de new.raw_user_meta_data (JSON) para poblar perfiles con id, first_name, last_name y avatar_url.
+  - El comportamiento de inserción depende de la presencia de estos campos en el JSON; si alguno falta, ese valor será NULL en el registro de perfiles.
+  - La función está definida con "SECURITY DEFINER".
+  - Este archivo no aplica un trigger directamente; se asume que existe o se definirá un trigger que invoque handle_new_user al insertar un nuevo usuario.
+- Rendimiento y migración de datos
+  - Las operaciones de actualización recorren filas existentes de profiles y reservations. En tablas grandes, considera ejecutar en ventanas o monitorizar el impacto de carga durante la migración.
+  - El uso de funciones de manipulación de cadenas en PostgreSQL (split_part, position, substring, trim) es eficiente para este tipo de migración, pero puede requerir ajustes si las tablas son extremadamente grandes.
+
+---
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
-Si necesitas que adapte la documentación a un público específico (por ejemplo, equipo de frontend, DevOps o DBA), o que añada ejemplos de scripts de rollback, puedo ampliarlo.
+---
+
+Esta documentación cubre el comportamiento, las dependencias y el impacto esperado de la migración 20260402000000_split_full_name.sql para que cualquier desenvolvedor nuevo entienda el propósito y la implementación sin necesidad de revisar el código completo.

@@ -1,84 +1,69 @@
-# Documentación técnica – 20260403010000_fix_profiles_admin_policy.sql
+# Documentación técnica: 20260403010000_fix_profiles_admin_policy.sql
 
-Contenido del archivo
-- Ruta: supabase/migrations/20260403010000_fix_profiles_admin_policy.sql
-- Nombre: 20260403010000_fix_profiles_admin_policy.sql
-- Líneas: 9
+Archivo: supabase/migrations/20260403010000_fix_profiles_admin_policy.sql  
+Nombre: 20260403010000_fix_profiles_admin_policy.sql  
+Total de líneas: 9
 
-Este archivo es una migración de Supabase/PostgreSQL destinada a corregir la política de control de acceso en la tabla public.profiles para el rol de admin. En concreto, reemplaza la política existente por una versión que utiliza el claim role del JWT para permitir el acceso de lectura (SELECT) a todos los perfiles cuando el usuario tiene rol admin, evitando posibles problemas de recursión infinita en la definición de la política.
+Contenido principal del script (resumen)
+- Propósito: corregir la política de Row Level Security (RLS) para la tabla public.profiles, asegurando que solo los perfiles con role 'admin' puedan realizar consultas SELECT.
+- Operaciones:
+  - Elimina la política existente con el nombre "Admins can view all profiles" si existe.
+  - Crea una nueva política con el mismo nombre, aplicable a SELECT sobre public.profiles, usando una condición basada en el JWT del usuario: (auth.jwt() ->> 'role') = 'admin'.
 
-## Descripción general
+Descripción general
+Este archivo es una migración SQL de Supabase destinada a asegurar que la política de RLS para la tabla profiles funcione correctamente. Se encarga de eliminar cualquier política previa con el mismo nombre para evitar inconsistencias y luego define una nueva política que permite que solo los administradores, identificados por el claim 'role' en el JWT, puedan realizar consultas SELECT sobre la tabla. El comentario inicial indica que se trata de una corrección para evitar una posible recursión infinita en la política de admin.
 
-La migración realiza lo siguiente:
-- Elimina (si existe) la política denominada "Admins can view all profiles" sobre la tabla public.profiles.
-- Recrea dicha política para la operación FOR SELECT, utilizando una cláusula USING que verifica que el rol extraído del JWT sea 'admin':
-  - auth.jwt() ->> 'role' = 'admin'
-- El objetivo es asegurar que los administradores pueden visualizar todos los perfiles, evitando una recursión infinita en la política anterior.
+Responsabilidades
+- Mantener la seguridad de acceso a perfiles a través de RLS.
+- Garantizar que la política "Admins can view all profiles" esté definida de forma correcta y sin duplicados.
+- Asegurar que el acceso de lectura (SELECT) a public.profiles esté restringido a usuarios con role = 'admin'.
 
-Propósito dentro del proyecto:
-- Garantizar un comportamiento estable y predecible de la seguridad a nivel de fila (RLS) para la tabla de perfiles cuando se realizan consultas de lectura, confiando en el token JWT proporcionado por Supabase.
+Props / Parámetros
+- Este archivo es un script de migración SQL. No expone parámetros modificables.
+- No hay props React ni entradas de función; las modificaciones son directas sobre el esquema de la base de datos mediante DDL.
 
-## Responsabilidades
+Retorna
+- No devuelve valores. Ejecuta cambios en la base de datos (DDL) y no produce outputs de retorno en el flujo de ejecución normal.
 
-- Mantener la política de RLS para public.profiles enfocada en permitir lectura (SELECT) a usuarios con rol admin.
-- Evitar problemas de recursión infinita en la definición de la política mediante un reemplazo explícito de la política existente.
-- Asegurar que la migración se aplique de forma atómica: se elimina la política anterior (si existe) y se crea la nueva en el mismo script.
+Dependencias
+- PostgreSQL con Row Level Security (RLS) habilitado en la tabla public.profiles.
+- Supabase (o entorno compatible) que expone la función auth.jwt() para extraer claims del JWT.
+- El comportamiento depende de que el claim 'role' exista en el JWT y que el valor sea comparable con la cadena 'admin'.
+- Es recomendable ejecutar dentro de un entorno de migraciones gestionado para evitar inconsistencias entre entornos.
 
-## Props / Parámetros
-
-Este archivo no es un componente ni una función de código ejecutable en frontend; es una migración SQL. A continuación se describen los elementos relevantes de la migración:
-
-- DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
-  - Elimina la política existente con ese nombre en la tabla public.profiles si ya está definida.
-- CREATE POLICY "Admins can view all profiles"
-  - ON public.profiles FOR SELECT
-  - USING ((auth.jwt() ->> 'role') = 'admin');
-  - Crea una nueva política denominada exactamente "Admins can view all profiles" para operaciones de SELECT en public.profiles.
-  - La cláusula USING utiliza la función auth.jwt() (proveída por Supabase) para obtener el claim 'role' del JWT y admite la vista de filas solo cuando ese valor es 'admin'.
-
-Parámetros clave dentro de la política:
-- auth.jwt(): función que devuelve el JWT decodificado del usuario actual.
-- ->> 'role': extrae el valor del claim 'role' como texto.
-- = 'admin': condición que debe cumplirse para que la fila sea visible a través de esta política (solo para administradores).
-
-## Retorna
-
-- Esta migración no devuelve valores. Su efecto es modificar la configuración de seguridad a nivel de fila (RLS) de la tabla public.profiles.
-- En el entorno de ejecución de la base de datos, la migración se aplica como un script DDL que altera la política.
-
-## Dependencias
-
-- PostgreSQL con Row Level Security (RLS) habilitada para la tabla public.profiles (ENABLE ROW LEVEL SECURITY).
-- Supabase Auth: la función auth.jwt() para leer claims del token JWT.
-- Política de seguridad basada en RLS: la política depende de la presencia de la función auth.jwt() y del uso de la cláusula USING para definir visibilidad de filas.
-- Nombre de la política: "Admins can view all profiles" (debe coincidir para que el DROP funcione con IF EXISTS).
-
-## Ejemplos de uso
-
-- Caso de administrador (role = 'admin'):
-  - Un usuario con JWT cuyo claim role es 'admin' ejecuta:
-    - SELECT * FROM public.profiles;
-  - Resultado: se devuelve todas las filas de public.profiles (dado que la cláusula USING se evalúa como verdadera para admin).
-
-- Caso no administrador (otros roles):
-  - Un usuario con JWT cuyo claim role no es 'admin' ejecuta:
-    - SELECT * FROM public.profiles;
-  - Resultado: no se devuelve ninguna fila debido a la política de RLS que evalúa USING como false para esas filas/usuarios.
-
+Ejemplos de uso
+- Ejecución directa de la migración (PSQL):
+  - psql "postgres://USER:PASSWORD@HOST:5432/DATABASE" -f supabase/migrations/20260403010000_fix_profiles_admin_policy.sql
+- Verificación de la política tras la migración:
+  - psql -d DATABASE -c "SELECT polname, relid::regclass, permissive FROM pg_policies WHERE polname = 'Admins can view all profiles';"
+  - o, para ver la lógica de la política:
+    - SELECT policyname, cmd, qual FROM pg_policy JOIN pg_class ON pg_policy.polrelid = pg_class.oid WHERE pg_class.relname = 'profiles' AND polname = 'Admins can view all profiles';
 Notas:
-- Esta política sólo define visibilidad para SELECT. Si hay otras políticas o permisos, su interacción debe revisarse para evitar restricciones no deseadas.
-- Si se desea restringir filas a ciertos criterios incluso para admins, se podría ampliar la cláusula USING; en la versión actual, cualquier fila es visible para admins.
+- Si se utiliza el flujo de migraciones de Supabase CLI, asegúrate de que el entorno de destino aplique la migración en el orden correcto.
+- Después de aplicar, la política debe permitir SELECT solo a usuarios cuyo JWT tenga role = 'admin'. Otros roles no verán filas de profiles (asumiendo que no exista otra política que lo permita).
 
-## Notas técnicas
+Notas técnicas
+- La migración es idempotente en cuanto a la eliminación de la política existente: DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles; Esto evita duplicaciones si el script se ejecuta varias veces.
+- La nueva política está definida con USING ((auth.jwt() ->> 'role') = 'admin'), lo que implica:
+  - Se evalúa el valor del claim 'role' dentro del JWT del usuario autenticado.
+  - Solo los usuarios con role 'admin' cumplen la condición de visibilidad de filas.
+  - La cláusula FOR SELECT especifica que la política aplica a consultas SELECT sobre public.profiles.
+- Requisitos previos:
+  - RLS debe estar habilitado en public.profiles para que las políticas tengan efecto.
+  - La función auth.jwt() debe estar disponible (común en entornos Supabase) y el claim 'role' debe formar parte del JWT.
+- Limitaciones:
+  - Si existen otras políticas de acceso a public.profiles, su interacción dependerá de la configuración de RLS (por ejemplo, políticas adicionales podrían ampliar o restringir el acceso). Esta migración asume el diseño deseado: un único control de acceso basado en admin para lectura.
+  - Si el JWT no contiene el claim 'role' o si el valor no es 'admin', la política actual negará el acceso a lectura, a menos que haya políticas adicionales que lo permitan de forma explícita.
 
-- El nombre de la política contiene espacios y se cita con comillas dobles para asegurar la coincidencia exacta.
-- El uso de auth.jwt() permite depender del token de sesión de Supabase, lo cual facilita la verificación basada en JWT sin mantener información adicional en la base de datos.
-- Esta migración presume que la máquina de despliegue ya tiene habilitada RLS en public.profiles; no habilita RLS ni crea otras políticas de seguridad adicionales.
-- Es recomendable revisar la consistencia de políticas en la tabla public.profiles tras aplicar la migración, para confirmar que no existan políticas conflictivas o redundantes.
+Última actualización
+29/5/2026
 
-## Última actualización
-
-12/5/2026
-
-Observaciones finales:
-- Este archivo es una migración de estructura de base de datos (SQL) y no un componente de frontend o una función en TypeScript. Su objetivo es corregir la definición de una política de seguridad para asegurar que los administradores puedan ver todos los perfiles mediante la verificación del rol admin en el JWT.
+Fragmento relevante del contenido (para referencia)
+- Eliminación de política existente:
+  DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+- Creación de la nueva política:
+  CREATE POLICY "Admins can view all profiles"
+    ON public.profiles FOR SELECT
+    USING (
+      (auth.jwt() ->> 'role') = 'admin'
+    );

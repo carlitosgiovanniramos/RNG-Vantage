@@ -1,163 +1,158 @@
-# Documentación técnica: app/(auth)/login/page.tsx
+# RNG Vantage – app/(auth)/login/page.tsx
 
-Este documento describe el archivo TypeScript/React app/(auth)/login/page.tsx del proyecto RNG Vantage. Proporciona una visión general, responsabilidades, API de componentes, dependencias, ejemplos de uso y notas técnicas para facilitar la comprensión y el mantenimiento sin necesidad de revisar el código fuente completo.
+Archivo: app/(auth)/login/page.tsx  
+Propósito: Página de inicio de sesión (cliente) del flujo de autenticación. Implementa un formulario controlado con validación, manejo de estados de acción (login y reenvío de confirmación), y soporte para parámetros de URL como redirección y estado de registro.
+
+Fecha de última actualización: 29/5/2026
+
+---
 
 ## Descripción general
 
-El archivo define la página de inicio de sesión de la aplicación RNG Vantage. Es un componente de cliente (cliente de Next.js) que integra:
-- Un formulario de inicio de sesión con validación (React Hook Form + Zod).
-- Manejo de estado asíncrono para la acción de login y la reenvío de confirmación de correo.
-- Visualización de mensajes de éxito/error y soporte para reenvío de confirmación.
-- Detección de redirección post-login mediante query params.
+Este archivo define una página de inicio de sesión para la plataforma RNG Vantage. Es un componente cliente de Next.js que integra:
+
+- Un formulario de inicio de sesión con validación basada en zod (loginSchema) a través de react-hook-form.
+- Estados de acción gestionados por useActionState para dos acciones de servidor:
+  - login: captura credenciales y ejecuta la autenticación.
+  - resendSignupConfirmation: reenvía el correo de confirmación para usuarios que no han verificado su cuenta.
+- Soporte para parámetros de URL:
+  - redirect: ruta a la que redirigir tras un inicio de sesión exitoso.
+  - registered: indica que la cuenta fue creada (muestra un mensaje).
+  - hint: guía adicional para mostrar mensajes como “confirm-or-login”.
+  - email: prellena el campo de correo electrónico.
+- UI accesible y visual con íconos y estados deError/exito.
 - Opción para mostrar/ocultar la contraseña.
-- Enlace a la página de registro.
+- Formulario de reenvío de confirmación que aparece condicionalmente cuando procede.
 
-La página utiliza componentes de UI propios (Button, Input, Label) y utiliza íconos de lucide-react para mejorar la UX. También maneja un modo de envío nativo para asegurar compatibilidad con la navegación de Next.js.
+La página principal (LoginPage) renderiza un formulario de inicio de sesión dentro de un contenedor con Suspense y ofrece un enlace a la página de registro.
 
-La página exporta un componente por defecto LoginPage que renderiza un login form dentro de Suspense y un enlace a la página de registro.
+---
 
 ## Responsabilidades
 
-- Presentar una interfaz de inicio de sesión con campos de correo electrónico y contraseña.
-- Validar entradas con un esquema de validación (loginSchema) y mostrar errores de validación.
-- Gestionar el estado de la acción de login (esperando, éxito, error) mediante useActionState.
-- Gestionar el estado de la acción de reenviar la confirmación de registro (resendSignupConfirmation) y mostrar mensajes correspondientes.
-- Soportar redirección tras el login mediante un parámetro redirect en la URL.
-- Soportar parámetros de estado de la URL para mostrar mensajes de registro previo o hint de confirmación (registered, hint, email).
-- Soportar reenvío de confirmación si el usuario no recibió el correo.
-- Permitir mostrar u ocultar la contraseña mediante un botón de toggling.
-- Mantener un layout y estilo consistente con los componentes de UI de la aplicación.
+- Proveer una interfaz de inicio de sesión funcional con validación en el cliente.
+- Gestionar visibilidad de la contraseña (toggle).
+- Coordinar con acciones de servidor (login y resendSignupConfirmation) mediante useActionState.
+- Mostrar mensajes de error y de éxito relevantes para el usuario.
+- Soportar redirección post-login a través del parámetro redirect.
+- Ofrecer un camino para reenvío de confirmación en caso de no haber sido confirmada la cuenta.
+- Integrar con el flujo de registro existente (mensaje cuando ya hay una cuenta creada).
+- Mantener la experiencia UX incluso cuando la página es cargada inicialmente o cuando hay prefill de datos desde la URL.
+
+---
 
 ## Props / Parámetros
 
-Este archivo define componentes React que no reciben props explícitos a través de JSX. En concreto:
+Nota: Este archivo exporta componentes React sin props explícitos visibles para su uso externo. A continuación se describe lo relevante.
 
-- LoginPage
-  - Props: ninguno
-  - Descripción: Página que renderiza el formulario de inicio de sesión dentro de Suspense y un enlace a Registro.
+| Componente | Prop | Tipo | Requerido | Descripción |
+|---|---|---|---|---|
+| LoginForm (componente interno) | none | — | Sí | No tiene props públicos; maneja su estado, validación y acciones de login y reenvío internamente. |
+| LoginPage (exportado por defecto) | none | — | Sí | No recibe props; renderiza LoginForm y un enlace a la página de registro. |
 
-- LoginForm (componente interno)
-  - Props: ninguno
-  - Descripción: Fragmento de UI que implementa el formulario de inicio de sesión y la lógica de interacción (validación, envío, mensajes, etc.).
+Observación: Todas las interacciones y datos (estado, errores, etc.) se gestionan internamente dentro de LoginForm y mediante el hook useActionState.
 
-Notas:
-- No se exponen props para estos componentes en el archivo; el comportamiento está controlado por el estado interno y los hooks usados.
-- Otros valores contextuales (redirection, prefill de email, mensajes) se obtienen de la URL mediante useSearchParams.
+---
 
 ## Retorna
 
-- LoginPage
-  - Retorna JSX que compone la página de inicio de sesión, envuelta en un div con espaciado. Contiene:
-    - Suspense con un fallback de carga.
-    - El componente LoginForm.
+- LoginPage:
+  - Un contenedor principal con:
+    - Un bloque Suspense que renderiza LoginForm (con fallback de “Cargando formulario...”).
     - Un párrafo con un enlace a la página de registro.
+- LoginForm:
+  - Un formulario de inicio de sesión con campos de correo electrónico y contraseña, con validación de errores.
+  - Mensajes condicionados para: cuenta creada, confirmación pendiente, errores de login, y errores de reenvío de confirmación.
+  - Botón de inicio de sesión que refleja el estado de carga.
+  - Opción para mostrar/ocultar la contraseña.
+  - Formulario adicional para reenviar la confirmación (visible cuando corresponde).
 
-- LoginForm
-  - Retorna JSX que compone:
-    - Un bloque de cabecera con una etiqueta “Acceso seguro” y títulos.
-    - Un formulario con:
-      - Campos de correo electrónico y contraseña (con validación y errores).
-      - Botón de mostrar/ocultar contraseña.
-      - Botón de submit que cambia su texto cuando la acción está en curso.
-    - Mensajes condicionados:
-      - Confirmación de cuenta creada (wasRegistered).
-      - Indicaciones para confirmar correo (hint).
-      - Mensajes de éxito/errores de reenviar confirmación.
-      - Mensajes de error de login.
-    - Sección para reenviar la confirmación (mostrar cuando shouldShowResend es true):
-      - Campo de correo para reenviar.
-      - Botón de reenviar confirmación.
-    - Botón de submit para iniciar sesión.
-    - Enlaces y textos de ayuda.
+---
 
 ## Dependencias
 
-Este archivo depende de varias librerías, componentes y hooks:
-
-- React y hooks de React:
-  - useState, useEffect, useRef, Suspense
+- React (client) y hooks:
+  - useEffect, useRef, useState
 - Next.js:
-  - Link (next/link)
-  - useSearchParams (next/navigation)
-- UI y composición:
-  - Button, Input, Label (componentes propios)
+  - Link (navegación), useSearchParams (parámetros de URL)
+- UI components:
+  - Button, Input, Label desde "@/components/ui/..."
 - Iconografía:
-  - lucide-react: Eye, EyeOff, LockKeyhole, Mail, Sparkles (Sparkles no se usa en el código mostrado)
-- Gestión de formularios y validación:
-  - react-hook-form: useForm
-  - @hookform/resolvers: zodResolver
-  - zod: integración vía loginSchema
-- Validaciones y tipos:
+  - lucide-react (Eye, EyeOff, LockKeyhole, Mail)
+- Formulario y validación:
+  - react-hook-form (useForm)
+  - @hookform/resolvers/zod (zodResolver)
+  - zod (a través de loginSchema)
+- Validación y tipos:
   - loginSchema, type LoginInput desde "@/lib/validators/auth"
-- Acciones asíncronas:
+- Acciones de servidor (Next.js App Router):
   - login, resendSignupConfirmation desde "@/app/(auth)/actions"
-  - useActionState (hook propio para manejar estados de acción asíncrona)
-- Navegación y parámetros de la URL:
-  - useSearchParams para leer redirect, registered, hint, email
-- Comportamiento de submit:
-  - Mecanismo para coordinar submit nativo y manejo con React Hook Form (allowNativeSubmitRef)
+  - useActionState para gestionar estados de acción y resultados
+- Otros:
+  - Suspense para renderizado asíncrono
+  - Manejo de redirecciones y estados basados en URL (redirect, registered, hint, email)
 
-Notas técnicas relevantes:
-- Sparkles está importado pero no utilizado en el código mostrado.
-- El formulario utiliza un truco para combinar manejo de submit de React Hook Form y submit nativo para compatibilidad con Next.js Actions:
-  - handleSubmit(() => { allowNativeSubmitRef.current = true; formElement.requestSubmit(); })
-- Se emplea Suspense para el LoginForm con fallback de carga, lo que sugiere que la carga de datos podría ser asíncrona o que se prefiere mostrar un estado de carga inicial.
-- Validación de campos:
-  - email: requerido, formato email (validación proviene de loginSchema).
-  - password: requerido.
-- UI/UX:
-  - Campos con iconografía, entradas con estilos de Tailwind, telemetro de accesibilidad con aria-label en el botón de toggling de contraseña.
-  - Mensajes de estado de operaciones mostrados de forma destacada (con colores como border/red/green etc.) según estado.
+Notas:
+- login y resendSignupConfirmation son acciones del servidor; useActionState facilita su ejecución desde el cliente y expone state, action y isPending.
+- El código hace uso de validación con un esquema Zod y maneja mensajes de error/éxito en la UI.
+- Se utilizan componentes UI personalizados (Input, Button, Label) para consistencia visual.
+
+---
 
 ## Ejemplos de uso
 
-- Acceder a la página de inicio de sesión:
-  - URL: /login
-- Pasar redirección después del login:
-  - URL: /login?redirect=/dashboard
-- Mostrar mensaje de cuenta creada y pedir confirmación:
-  - URL: /login?registered=1
-- Indicar que se debe confirmar el correo antes de iniciar sesión:
-  - URL: /login?hint=confirm-or-login
-- Prefijar email para el formulario:
-  - URL: /login?email=usuario@example.com
-- Reenviar confirmación si no llegó el correo:
-  - Cuando la URL contiene hint con valor relacionado o al activar Resend, se muestra el bloque para reenviar (gracias a shouldShowResend).
+- Acceder a la página de login (ruta):
+  - /login
+- Inicio de sesión con redirección a una ruta tras el login:
+  - /login?redirect=%2Fdashboard
+  - En caso de éxito, el flujo redirige al path indicado en redirect.
+- Caso de cuenta recién creada:
+  - /login?registered=1
+  - Se muestra un aviso informando que la cuenta fue creada y que hay que confirmar el correo.
+- Caso de usar el flujo de confirmación:
+  - /login?hint=confirm-or-login
+  - Se muestra un mensaje que indica confirmar el correo si ya se registró.
 
-Ejemplo mínimo de uso en tu proyecto Next.js:
-- Coloca este archivo en app/(auth)/login/page.tsx.
-- Accede a la ruta /login desde el navegador para ver la página de inicio de sesión con funcionalidad completa.
+Ejemplo mínimo de uso desde otro componente (conceptual):
+- Navegar al login para autenticarse y luego redirigir a la ruta deseada:
+  - <Link href="/login?redirect=/dashboard">Iniciar sesión</Link>
+
+---
 
 ## Notas técnicas
 
-- Manejo de estado asíncrono:
-  - login y resendSignupConfirmation se gestionan mediante el hook personalizado useActionState, devolviendo [state, action, isPending] o [resendState, resendAction, isResending].
-  - isPending e isResending se utilizan para deshabilitar botones y mostrar textos de estado.
-- Redirección y prefilling:
-  - redirectParams se obtiene desde la query param redirect.
-  - El formulario incluye un input oculto con name="redirect" y value del redirectParams para conservar la información durante el flujo de envío.
-  - Prefill email desde state.values.email o from query param email.
+- Cliente vs. servidor:
+  - La página es un componente cliente (declara "use client" al inicio).
+  - las acciones login y resendSignupConfirmation son acciones del servidor invocadas desde el cliente mediante useActionState.
+- Flujo de envío:
+  - El formulario utiliza un manejo mixto entre submit nativo y React Hook Form.
+  - Una bandera allowNativeSubmitRef controla cuándo permitir submit nativo para que el flujo de Next.js App Router pueda interceptarlo adecuadamente.
+  - Al hacer submit, se invoca handleSubmit y luego se activa el submit nativo para completar la acción del servidor.
 - Validación y errores:
-  - Se utiliza zodResolver con loginSchema para validar los campos.
-  - Errores se muestran bajo cada campo cuando existen.
-  - Mensajes de error globales se muestran en bloques de alerta (rojo) y mensajes de éxito (verde) para acciones de reenviar.
-- Reenvío de confirmación:
-  - El bloque de reenvío aparece condicionalmente en shouldShowResend, que depende de hint y/o errores de confirmación de correo.
-  - El formulario de reenviar utiliza resendAction y un input de correo con valor por defecto de state.values.email, prefillEmail o resends values.
-- Enlace a registro:
-  - Debajo del formulario, se ofrece un enlace a /register para que los usuarios creen una cuenta.
-- Consideraciones de rendimiento:
-  - Suspense envuelve el login form; el fallback es un texto de carga centrado.
-  - Uso de timers en useEffect para detectar autofill/prefill de correo y resetear el formulario en consecuencia (tiene un setTimeout de 120 ms).
-- Accesibilidad:
-  - Campos tienen etiquetas y placeholders descriptivos.
-  - Botón para mostrar/ocultar contraseña tiene aria-label adecuado.
-- Observaciones:
-  - Sparkles importado, pero no utilizado en el código proporcionado.
-  - La estructura maneja tanto submit para React Hook Form como submit nativo vía requestSubmit para interoperabilidad con Next.js Actions.
+  - Se valida con loginSchema a través de zodResolver.
+  - Errores de campos (email, password) se muestran bajo cada input.
+  - Mensajes de error globales para estados de login y reenvío de confirmación se muestran en tarjetas con estilo consistente.
+- Prefill y autofill:
+  - Soporta prefillEmail desde el query parameter email.
+  - Hay lógica para detectar autofill en el campo email o en password después de 120 ms y restablecer el formulario para evitar valores no deseados.
+- Accesibilidad y UX:
+  - Campos tienen etiquetas (Label) adecuadas.
+  - Iconos de entrada (Mail, LockKeyhole) para indicar el tipo de input.
+  - Botón de mostrar/ocultar contraseña con aria-label adecuado.
+- Rendimiento y estabilidad:
+  - Suspense alrededor del formulario puede permitir futuras mejoras de carga dinámica si las acciones del servidor requieren esperas.
+  - Los mensajes de estado (cargando, errores, éxitos) están condicionados para evitar mostrar información irrelevante.
+- Limitaciones conocidas:
+  - El flujo de reenviar confirmación depende de la acción server-side resendSignupConfirmation y del estado mostrado por useActionState; cualquier cambio en la API de esas acciones puede requerir ajustes en la UI de mensajes.
+  - El comportamiento de redirección asume que la ruta indicada en redirect es válida y accesible; validaciones adicionales podrían ser necesarias en producción.
+- Mantenibilidad:
+  - El uso de componentes UI reutilizables (Input, Button, Label) facilita consistencia visual a lo largo de la aplicación.
+  - La lógica de prefill y autofill está encapsulada en el componente LoginForm, reduciendo el impacto en otras partes de la aplicación.
+
+---
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
-Si necesitas que agregue ejemplos adicionales, pruebas unitarias/mocks para los componentes o una breve guía de migración para cambios futuros, dímelo y lo amplio.
+Si necesitas que ajuste la documentación a un formato distinto o quieras agregar ejemplos de prueba, házmelo saber.

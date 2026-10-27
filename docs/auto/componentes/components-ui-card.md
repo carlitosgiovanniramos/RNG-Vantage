@@ -1,110 +1,140 @@
-# RNG Vantage - Card UI Components (components/ui/card.tsx)
+# Documentación técnica: card.tsx (components/ui/card.tsx)
 
-La carpeta components/ui contiene componentes de UI reutilizables. Este archivo define un conjunto de componentes para construir tarjetas (cards) consistentes, con apoyo para cabeceras, títulos, descripciones, contenido, acciones y pie de página. Se diseñaron para ser combinados fácilmente con otros elementos de la UI del proyecto RNG Vantage.
+Fecha de última actualización: 29/5/2026
+
+Esta sección describe en detalle el componente Card y sus subcomponentes implementados en el archivo components/ui/card.tsx. Está pensada para que un desarrollador nuevo entienda la finalidad, uso y detalles técnicos sin necesidad de revisar el código fuente completo.
 
 ## Descripción general
 
-El archivo exporta un conjunto de componentes de tarjeta:
+El archivo define un conjunto de componentes para construir tarjetas (cards) consistentes dentro de la UI del proyecto RNG Vantage. El componente principal es Card, que funciona como contenedor flexible y estilizado. A su vez, se proporcionan subcomponentes que representan áreas típicas de una tarjeta:
 
-- Card: contenedor principal de la tarjeta.
-- CardHeader: cabecera de la tarjeta.
-- CardTitle: título dentro de la cabecera.
-- CardDescription: descripción breve dentro de la cabecera.
-- CardContent: área principal de contenido de la tarjeta.
-- CardAction: área para acciones (botones, enlaces) dentro de la tarjeta.
-- CardFooter: pie de página de la tarjeta.
+- CardHeader
+- CardTitle
+- CardDescription
+- CardContent
+- CardAction
+- CardFooter
 
-El diseño utiliza un sistema de slots basado en data-slot y clases utilitarias (parecidas a Tailwind) para permitir estilos dependientes de la presencia de ciertos slots y tamaños. El componente Card soporta un tamaño opcional ("default" o "sm") que ajusta espaciados y alineación dentro de la tarjeta.
+Todos los subcomponentes comparten un patrón de composición basado en slots mediante atributos data-slot, permitiendo una organización clara del contenido y facilitando estilos consistentes a través de la aplicación.
+
+El diseño se alinea con Tailwind CSS (clases utilitarias) y utiliza un helper de clases cn para combinar clases por defecto con clases recibidas a través de props.
+
+---
 
 ## Responsabilidades
 
-- Proporcionar una estructura consistente para tarjetas con separación clara entre header, content y footer.
-- Facilitar la composición mediante slots etiquetados con data-slot (card, card-header, card-title, card-description, card-content, card-action, card-footer).
-- Soportar un modo compacto (size="sm") que reduce paddings y gaps para tarjetas más pequeñas.
-- Exponer props flexibles (propagación de props de div) para permitir atributos HTML adicionales y estilos personalizados.
+- Proporcionar una estructura de tarjeta reutilizable y estilizable.
+- Soportar dos tamaños: default y sm, afectando espaciados y distribución.
+- Permitir composición mediante slots (data-slot) para una organización semántica y de estilos.
+- Ofrecer un conjunto de subcomponentes para construir tarjetas completas (header, title, description, content, actions y footer).
+- Permitir extensibilidad a través de className y props de div estándar (spread de props).
+
+---
 
 ## Props / Parámetros
 
-A continuación se detallan las props de cada componente exportado.
+A continuación se listan las props de cada componente, junto con su tipo y una breve descripción.
 
-- Card
-  - Tipo: React.ComponentProps<"div"> & { size?: "default" | "sm" }
-  - Requerido: No (size tiene valor por defecto)
-  - Descripción:
-    - className: cadenas de CSS opcionales para estilo adicional.
-    - size: tamaño de la tarjeta. Puede ser "default" (valor por defecto) o "sm" para un modo más compacto.
-    - Otros props de div: se propagan al elemento raíz.
+### Card
+- Tipo de props: React.ComponentProps<"div"> & { size?: "default" | "sm" }
+- Requerido: No (size es opcional)
+- Descripción:
+  - className?: string — Clases CSS adicionales para combinar con las por defecto.
+  - size?: "default" | "sm" — Tamaño de la tarjeta. Afecta el espaciado y el layout a través de classNames condicionadas (data-[size=sm]).
+  - Además, recibe todas las props estándar de un div (children, estilo, id, etc.) mediante spreading {...props}.
+- Notas:
+  - Se renderiza como un div con data-slot="card" y data-size={size}.
+  - Las clases por defecto incluyen un conjunto amplio de utilidades para bordes, color, espaciado y comportamiento de grupo.
 
-- CardHeader
-  - Tipo: React.ComponentProps<"div">
-  - Requerido: No
-  - Descripción:
-    - className: clases CSS opcionales para estilo adicional.
-    - Otros props de div: se propagan al elemento raíz.
-  - Notas: el slot data-slot="card-header" facilita la selección y estilos derivados.
+### CardHeader
+- Tipo de props: React.ComponentProps<"div">
+- Requerido: No
+- Descripción:
+  - className?: string — Clases CSS adicionales para combinar con las por defecto.
+  - También acepta todas las props de div mediante {...props}.
+- Notas:
+  - Se renderiza como un div con data-slot="card-header".
+  - Las clases por defecto incluyen estructura de grid, espaciado y manejo de tamaños responsive (size=sm).
 
-- CardTitle
-  - Tipo: React.ComponentProps<"div">
-  - Requerido: No
-  - Descripción:
-    - className: clases CSS opcionales para estilo adicional.
-    - Otros props de div: se propagan al elemento raíz.
-  - Notas: el slot data-slot="card-title" facilita su identificación.
+### CardTitle
+- Tipo de props: React.ComponentProps<"div">
+- Requerido: No
+- Descripción:
+  - className?: string
+  - Otros props de div via {...props}
+- Notas:
+  - data-slot="card-title"
+  - Estilo base: texto con tamaño base y alto de línea ajustado; adaptaciones para tamaño sm cuando se aplica group-data-[size=sm]/card:text-sm.
 
-- CardDescription
-  - Tipo: React.ComponentProps<"div">
-  - Requerido: No
-  - Descripción:
-    - className: clases CSS opcionales para estilo adicional.
-    - Otros props de div: se propagan al elemento raíz.
-  - Notas: el slot data-slot="card-description" facilita su identificación.
+### CardDescription
+- Tipo de props: React.ComponentProps<"div">
+- Requerido: No
+- Descripción:
+  - className?: string
+  - Otros props de div via {...props}
+- Notas:
+  - data-slot="card-description"
+  - Estilo base: texto más pequeño y con color de texto mutado (text-muted-foreground).
 
-- CardContent
-  - Tipo: React.ComponentProps<"div">
-  - Requerido: No
-  - Descripción:
-    - className: clases CSS opcionales para estilo adicional.
-    - Otros props de div: se propagan al elemento raíz.
-  - Notas: el slot data-slot="card-content" facilita su identificación.
+### CardContent
+- Tipo de props: React.ComponentProps<"div">
+- Requerido: No
+- Descripción:
+  - className?: string
+  - Otros props de div via {...props}
+- Notas:
+  - data-slot="card-content"
+  - Espaciado horizontal adaptado para tamaño default y(sm) mediante group-data-[size=sm]/card:px-3.
 
-- CardAction
-  - Tipo: React.ComponentProps<"div">
-  - Requerido: No
-  - Descripción:
-    - className: clases CSS opcionales para estilo adicional.
-    - Otros props de div: se propagan al elemento raíz.
-  - Notas: el slot data-slot="card-action" facilita su identificación y posición dentro de la grid de la cabecera.
+### CardAction
+- Tipo de props: React.ComponentProps<"div">
+- Requerido: No
+- Descripción:
+  - className?: string
+  - Otros props de div via {...props}
+- Notas:
+  - data-slot="card-action"
+  - Alineación y disposición: se posiciona para estar en la esquina superior derecha del grid, facilitando la acción principal de la tarjeta.
 
-- CardFooter
-  - Tipo: React.ComponentProps<"div">
-  - Requerido: No
-  - Descripción:
-    - className: clases CSS opcionales para estilo adicional.
-    - Otros props de div: se propagan al elemento raíz.
-  - Notas: el slot data-slot="card-footer" facilita su identificación y permite estilos condicionados cuando está presente gracias a selectores como has-data-[slot=card-footer].
+### CardFooter
+- Tipo de props: React.ComponentProps<"div">
+- Requerido: No
+- Descripción:
+  - className?: string
+  - Otros props de div via {...props}
+- Notas:
+  - data-slot="card-footer"
+  - Estilo: borde superior, fondo con cierta opacidad, padding y soporte para tamaños sm (group-data-[size=sm]/card:p-3).
+
+---
 
 ## Retorna
 
-- Card: JSX.Element que representa un div configurado como contenedor de la tarjeta. Incluye data-slot="card" y data-size={size}, así como una clase combinada con cn() y cualquier className adicional. Props adicionales se propagan al div.
-- CardHeader, CardTitle, CardDescription, CardContent, CardAction, CardFooter: cada uno retorna un JSX.Element div con su correspondiente data-slot (card-header, card-title, card-description, card-content, card-action, card-footer) y las clases definidas. También aceptan className y props de div, propagándose al elemento raíz.
+- Card: React.ReactElement de tipo div con atributos data-slot="card" y data-size, conteniendo sus children.
+- CardHeader, CardTitle, CardDescription, CardAction, CardContent, CardFooter: Regresan divs u otros elementos HTML apropiados, con data-slot correspondientes y las clases por defecto fusionadas con cualquier className recibido.
 
-Ejemplos de retorno típicos:
-- Card devuelve un div con estructura y slots para su composición.
-- Los demás componentes devuelven divs anidados en el layout de la tarjeta con su slot correspondiente.
+Todos los componentes son presentacionales y están pensados para ser usados en conjunto para construir una tarjeta con varios apartados.
+
+---
 
 ## Dependencias
 
 - React
-  - Utiliza React para la definición de componentes funcionales y tipos TypeScript.
-- cn (helper de classNames)
-  - Importado desde "@/lib/utils". Se usa para combinar clases CSS de forma condicional.
-- Estilo/slots basado en data-slot
-  - El diseño depende de un sistema de estilos que aprovecha data-slot y selectores de atributos (p. ej., has-data-[slot=card-footer]:pb-0) para adaptar el espaciado y el layout dependiendo de qué slots están presentes.
-- No se observa uso directo de hooks, servicios o Stores dentro de este archivo.
+  - Utiliza funcionalidad de React para composing y props typing.
+- cn utilitario (importado desde "@/lib/utils")
+  - Función de combinación de clases CSS: cn(...classes, className) para fusionar clases por defecto con las proporcionadas por el usuario.
+- Tailwind CSS (o configuración equivalente de utilidades)
+  - Las clases en className son utilitarias (p. ej., flex, rounded-xl, bg-card, ring-1, etc.).
+- data-slot y data-[slot=...] selectors
+  - Se utilizan para organizar y aplicar estilos condicionales basados en la composición de la tarjeta sin acoplar el CSS a los componentes exactos.
+
+Notas: Las rutas de importación, como "@/lib/utils" y el uso de className con utilidades de Tailwind, están alineadas con el resto del proyecto RNG Vantage y su configuración de alias.
+
+---
 
 ## Ejemplos de uso
 
-Ejemplo básico de composición de una Card con header, título y descripción, contenido y pie de página con una acción:
+Ejemplo mínimo de uso de Card con su cabecera y contenido:
 
 ```tsx
 import {
@@ -115,60 +145,55 @@ import {
   CardContent,
   CardFooter,
   CardAction
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 
 function ExampleCard() {
   return (
-    <Card size="default" className="my-4">
-      <CardHeader className="justify-between">
-        <div>
-          <CardTitle>Resumen de ventas</CardTitle>
-          <CardDescription>Últimas 24 horas</CardDescription>
-        </div>
-        <CardAction>
-          {/* Botones u otras acciones pueden ir aquí */}
-        </CardAction>
+    <Card size="default" className="w-full max-w-md mx-auto">
+      <CardHeader>
+        <CardTitle>Resumen de la venta</CardTitle>
+        <CardDescription>Datos rápidos de la operación</CardDescription>
       </CardHeader>
 
       <CardContent>
-        {/* Contenido principal de la tarjeta */}
-        <p>Ventas totales: 1,234</p>
+        <p>Here goes the main content of the card.</p>
       </CardContent>
 
-      <CardFooter className="mt-2">
-        <span>Fuente: sistema interno</span>
+      <CardFooter>
+        <CardAction>
+          <button>Ver detalles</button>
+        </CardAction>
+        <span>Fecha: 29/05/2026</span>
       </CardFooter>
     </Card>
-  )
+  );
 }
 ```
 
 Notas sobre el ejemplo:
-- CardHeader contiene CardTitle y CardDescription dentro de su estructura.
-- CardAction se posiciona según el layout definido (grid/filas) gracias a las clases internas y slots.
-- CardContent alberga el contenido principal; CardFooter se utiliza para notas o acciones finales.
+- Se puede ajustar size a "default" o "sm" para cambiar espaciados y distribución.
+- Los subcomponentes deben utilizarse dentro de Card para mantener la coherencia de los slots y el styling.
+
+---
 
 ## Notas técnicas
 
-- Diseño basado en slots:
-  - El uso de data-slot permite a la hoja de estilos aplicar reglas específicas en función de la presencia de cada slot. Esto facilita el mantenimiento y la coherencia visual entre tarjetas.
-- Compatibilidad de tamaño:
-  - Card acepta size="default" o "sm". Cuando size="sm" se aplican cambios mediante selectores tipo data-[size=sm] para reducir gaps y paddings, ajustando el diseño para pantallas o contextos donde se necesite un aspecto más compacto.
-- Encapsulamiento de estilos:
-  - Las clases en cada componente están construidas para trabajar en conjunto con una hoja de estilos/tema que define:
-    - bg-card, text-card-foreground, border radii (rounded-xl, rounded-t-xl, rounded-b-xl)
-    - espaciados (py-4, px-4, gap-4, etc.)
-    - comportamiento del grid y del layout en card-header y card-action
-- Rendimiento:
-  - Los componentes son simples wrappers funcionales que no realizan lógica adicional ni efectos secundarios. Esto favorece la legibilidad y el rendimiento, ya que sólo gestionan props y clases.
-- Mantenimiento:
-  - El diseño facilita la sustitución de estilos a nivel de clase sin cambiar la estructura de los componentes.
-  - Al depender de data-slot para estilos, es crucial que el sistema de CSS/tema mantenga estos selectores para evitar estilos desincronizados.
+- Slot-based styling: Cada subcomponente utiliza data-slot para definir su rol dentro de la tarjeta (card, card-header, card-title, etc.). Esto facilita el estilo dependiente del slot sin acoplar lógica adicional.
+- Estilos condicionados por tamaño: El componente Card utiliza data-[size=sm] para aplicar ajustes de espaciado y layout cuando el tamaño es pequeño. Esto permite una representación más compacta para tarjetas en listados o móviles.
+- Composición flexible: Debido a que cada parte es un componente separado que renderiza su propio contenedor con un data-slot específico, es sencillo personalizar o reestructurar una tarjeta sin tocar la lógica base.
+- Tipografía y color: Las clases por defecto incluyen estilos de texto (texto base, título, descripción) y colores (bg-card, text-card-foreground, text-muted-foreground) que deben estar alineados con la paleta de diseño de la aplicación.
+- Extensibilidad: Cualquier subcomponente expone props de div estándar; se pueden añadir clases o atributos según necesidad, sin romper la composición.
+
+Limitaciones conocidas:
+- No hay lógica de negocio en estos componentes; son puramente presentacionales y dependientes del sistema de estilos.
+- El comportamiento exacto de los estilos puede depender de la configuración global de Tailwind y del tema (por ejemplo, bg-card, text-card-foreground) definida en el proyecto.
+
+---
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
-Notas finales:
-- Esta documentación cubre la estructura y el uso de los componentes del archivo card.tsx sin asumir funcionalidades fuera del código presente.
-- Si se agregan comportamientos adicionales en el futuro (p. ej., propagation de eventos o hooks de estado), se deberá actualizar esta documentación para reflejar las nuevas capacidades y limitaciones.
+---
+
+Si necesitas ampliar la documentación con más ejemplos de uso (p. ej., tarjetas con múltiples CardHeader/ CardContent, o tarjetas con distintos tamaños) o con una guía de migración de estos componentes a una versión futura, puedo prepararla.

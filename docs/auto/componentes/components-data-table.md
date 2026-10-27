@@ -1,161 +1,185 @@
-# DataTable (components/data-table.tsx)
+# DataTable - RNG Vantage
 
-Este archivo define un componente genérico de tabla con capacidad de filtrado, paginación y renderizado personalizado por columna. Es utilizado para mostrar datasets de forma organizada y navegable dentro de RNG Vantage.
+Documentación técnica del archivo: `components/data-table.tsx` (data-table.tsx)
+
+Fecha de última actualización: 29/5/2026
 
 ## Descripción general
 
-DataTable es un componente React cliente que renderiza una tabla basada en un conjunto de datos genérico T[], con:
+DataTable es un componente React de tipo cliente (cliente Next.js) que proporciona una tabla genérica y reutilizable con:
+- filtrado global por texto
+- paginación (configurable por página)
+- renderizado personalizado de celdas mediante una función de renderizado por columna
+- encabezados y estilo consistentes a través de componentes UI ya existentes en el proyecto
 
-- Cabeceras configurables por columna.
-- Filtrado en cliente que busca texto en todas las columnas.
-- Paginación con tamaño de página configurable.
-- Renderización customizada de celdas por columna (opcional).
-- Estilos consistentes con el tema de UI de la aplicación (usando componentes UI y utilidades de clase).
+El componente está diseñado para funcionar con cualquier tipo de dato T que extienda un objeto de clave-valor, permitiendo definir columnas dinámicas y personalizar la visualización de cada fila.
 
-La implementación favorece la reutilización sobre diferentes tipos de datos, permitiendo especificar cómo se deben renderizar las celdas de cada columna.
+Propósito dentro del proyecto:
+- Ofrece una tabla estandarizada para mostrar datasets en varias pantallas (listados de ventas, reservas, finanzas, etc.) con búsqueda rápida y paginación sin dependencia de backend adicional.
+- Mantener la consistencia visual y el comportamiento (estilos, inicialización de estados, interacción) a través de la aplicación.
 
 ## Responsabilidades
 
-- Renderizar una barra de filtrado y mostrar la cantidad de resultados.
-- Generar filtrado en cliente para el conjunto de datos, buscando el texto ingresado en cualquier valor de la fila.
-- Implementar paginación del conjunto filtrado, con cálculo de páginas y navegación entre ellas.
-- Renderizar una tabla con cabeceras configurables, filas de datos y celdas que soportan renderización personalizada.
-- Manejar el estado de página y filtro de forma aislada dentro del componente.
-- Proporcionar una experiencia de usuario consistente con el tema visual de la aplicación (tipografías, colores, tamaños, etc.).
+- Gestionar estado de la paginación (página actual) y del filtro de búsqueda.
+- Filtrar datos de forma global sobre todas las celdas de cada fila.
+- Calcular páginas totales y seleccionar el subconjunto de datos a renderizar en la página actual.
+- Renderizar una tabla con columnas dinámicas definidas por el usuario.
+- Soportar renderización personalizada de celdas por columna.
+- Proveer una UI de filtrado y una barra de paginación con botones de navegación.
 
 ## Props / Parámetros
 
-### DataTableColumn<T>
+El componente tiene dos tipos principales de props: DataTable y DataTableColumn. A continuación se detallan.
 
-Tipo de una columna de la tabla. Define cómo se debe mostrar cada columna en una fila.
-
-- key: keyof T | string
-  - Clave de la fila que corresponde a esta columna (si no se usa render, se mostrará el valor convertido a string a partir de esta clave).
-  - Requerido.
-- header: string
-  - Título de la columna mostrado en la cabecera.
-  - Requerido.
-- className?: string
-  - Clases CSS opcionales aplicadas a la celda de cabecera (y también se utilizan para las celdas cuando renderiza).
-- render?: (row: T) => React.ReactNode
-  - Función opcional para renderizar el contenido de la celda a partir de la fila actual.
-  - Si se proporciona, se usa para renderizar la celda; de lo contrario se intenta mostrar el valor de row[column.key].
-
-### DataTableProps<T extends Record<string, unknown>>
+### DataTable<T extends Record<string, unknown>> (componente)
 
 - data: T[]
-  - Conjunto de datos a visualizar. Requerido.
+  - Descripción: arreglo de datos a mostrar en la tabla.
+  - Tipo: array de objetos genéricos.
+  - Requerido: Sí
 - columns: DataTableColumn<T>[]
-  - Configuración de las columnas (cabeceras y renderizado). Requerido.
+  - Descripción: definición de columnas que se mostrarán en la tabla.
+  - Tipo: arreglo de DataTableColumn
+  - Requerido: Sí
 - pageSize?: number
-  - Tamaño de página (número de filas por página). Opcional; valor por defecto: 10.
+  - Descripción: tamaño de página para la paginación.
+  - Tipo: number
+  - Valor por defecto: 10
+  - Requerido: No
 - filterPlaceholder?: string
-  - Texto de placeholder del input de filtrado. Opcional; valor por defecto: "Filtrar...".
+  - Descripción: texto de placeholder para el input de filtrado.
+  - Tipo: string
+  - Valor por defecto: "Filtrar..."
+  - Requerido: No
 - className?: string
-  - Clases CSS adicionales para el contenedor principal del componente. Opcional.
+  - Descripción: clases CSS para el contenedor principal del componente.
+  - Tipo: string
+  - Requerido: No
 
-Notas sobre el comportamiento de las props:
-- El filtrado es sensible a todos los valores de la fila. Se convierten a cadena, se normalizan a minúsculas y se verifica si incluyen la consulta.
-- Si no hay resultados tras el filtrado, se muestra una fila indicando “Sin resultados”.
-- El paginado se recalcula ante cambios en el conjunto filtrado; la página actual se mantiene dentro del rango válido y se reinicia a la primera página al cambiar el filtro.
+### DataTableColumn<T> (definición de columna)
+
+- key: keyof T | string
+  - Descripción: clave del objeto de datos que corresponde a esta columna.
+  - Tipo: keyof T | string
+  - Requerido: Sí
+- header: string
+  - Descripción: texto mostrado en el encabezado de la columna.
+  - Tipo: string
+  - Requerido: Sí
+- className?: string
+  - Descripción: clases CSS para la celda/columna.
+  - Tipo: string
+  - Requerido: No
+- render?: (row: T) => React.ReactNode
+  - Descripción: función opcional para renderizar el contenido de la celda de una fila específica.
+  - Tipo: (row: T) => React.ReactNode
+  - Requerido: No
+  - Si está presente, se utiliza en lugar del valor por defecto de la columna.
 
 ## Retorna
 
-DataTable<T> devuelve un ReactElement que renderiza:
+DataTable<T> devuelve un JSX que representa:
+- Un contenedor con filtrado y resultados, seguido de la tabla y, finalmente, la barra de paginación.
+- Normalmente renderiza:
+  - Un input de búsqueda con icono de búsqueda (lucide-react) y placeholder configurable.
+  - Un panel de “Resultados” que muestra la cantidad de filas filtradas.
+  - Una tabla con encabezados estáticos basados en columns y filas basadas en el subconjunto filtrado y paginado de data.
+  - Un estado de "Sin resultados" cuando no hay filas para mostrar.
+  - Navegación de página con botones Anterior y Siguiente (deshabilitados en extremos).
 
-- Un panel superior con un Input de filtrado y un contador de resultados.
-- Una tabla estructurada con:
-  - TableHeader y TableRow para las cabeceras, renderizando cada columna con TableHead.
-  - TableBody con filas paginadas; cada fila utiliza TableRow y, dentro, TableCell para cada columna.
-  - Un posible estado de “Sin resultados” si no hay filas para renderizar.
-- Un panel inferior con información de la página actual y controles de navegación (Anterior y Siguiente).
-- Comportamiento de paginación: Actualiza la página al usar los botones, deshabilitando cuando no hay página previa/siguiente.
-
-Formato de salida en pantalla:
-- Texto en español para indicadores de paginación y acciones (Página X de Y, Anterior, Siguiente, Filtrar..., Sin resultados).
+La estructura visual depende de los componentes UI de la aplicación (Table, TableHeader, TableRow, TableCell, Button, Input, etc.).
 
 ## Dependencias
 
-- React (hooks: useMemo, useState)
-- Componentes UI internos:
-  - Button, Input
-  - Table, TableBody, TableCell, TableHead, TableHeader, TableRow
-- Utilidades:
-  - cn (función de concatenación de clases)
-- Tipado genérico de TypeScript:
-  - DataTableColumn<T>, DataTableProps<T>
+Este archivo depende de varias librerías y componentes, entre ellos:
 
-Notas sobre dependencias externas:
-- Los componentes UI (Button, Input, Table) se importan desde la ruta de componentes de UI del proyecto ( "@/components/ui/..." ).
-- La utilidad cn se importa de "@/lib/utils" para construir clases condicionales.
+- React (useMemo, useState)
+- lucide-react (Search icon)
+- Componentes UI internos:
+  - Button (importado desde @/components/ui/button)
+  - Input (importado desde @/components/ui/input)
+  - Table, TableBody, TableCell, TableHead, TableHeader, TableRow (importados desde @/components/ui/table)
+- Utilidad de clases
+  - cn (importado desde @/lib/utils) para concatenar clases CSS de manera segura
+- Tipado TypeScript:
+  - DataTableColumn<T>
+  - DataTableProps<T>
+
+Notas sobre dependencias:
+- El componente hace uso de estilos y clases CSS predefinidas en la base de diseño del proyecto (ej., font-family, colores de fondo, bordes, etc.) a través de las clases de Tailwind u otra capa de estilos que define la UI.
+- No realiza llamadas a APIs ni lógica de negocio aparte del filtrado y el paginado en el cliente.
 
 ## Ejemplos de uso
 
-Ejemplo mínimo (sin render personalizado):
+A continuación se muestra un ejemplo práctico de uso del DataTable con un dataset de usuarios:
 
 ```tsx
-import { DataTable, DataTableColumn } from "@/components/data-table"; // o ruta correcta según el proyecto
-
 type User = {
   id: number;
   name: string;
   email: string;
+  role: string;
 };
 
 const users: User[] = [
-  { id: 1, name: "Ana García", email: "ana@example.com" },
-  { id: 2, name: "Luis Pérez", email: "luis@example.com" },
-  { id: 3, name: "Marta Ruiz", email: "marta@example.com" },
+  { id: 1, name: "Ana López", email: "ana@example.com", role: "Administrador" },
+  { id: 2, name: "Carlos Díaz", email: "carlos@example.com", role: "Venta" },
+  // … más usuarios
 ];
 
 const columns: DataTableColumn<User>[] = [
   { key: "id", header: "ID" },
   { key: "name", header: "Nombre" },
   { key: "email", header: "Correo" },
+  {
+    key: "role",
+    header: "Rol",
+    render: (row) => <span className="font-semibold">{row.role}</span>,
+  },
 ];
 
-// En algún render/layout
-<DataTable data={users} columns={columns} />
+function UsuariosTable() {
+  return (
+    <DataTable<User>
+      data={users}
+      columns={columns}
+      pageSize={5}
+      filterPlaceholder="Buscar usuarios..."
+    />
+  );
+}
 ```
 
-Ejemplo con render personalizado:
-
-```tsx
-const columns: DataTableColumn<User>[] = [
-  { key: "id", header: "ID" },
-  { key: "name", header: "Nombre", render: (row) => <span className="font-semibold">{row.name}</span> },
-  { key: "email", header: "Correo" },
-];
-```
-
-Este enfoque permite que una columna muestre contenido distinto al valor bruto de la fila, por ejemplo con estilos, componentes o enlaces.
-
+Notas del ejemplo:
+- Se define un tipo User y un conjunto de columnas. 
+- Se utiliza render para personalizar la visualización de la columna Role.
+- Se especifica pageSize para controlar cuántos registros se muestran por página.
+  
 ## Notas técnicas
 
-- Comportamiento de filtrado:
-  - El filtrado realiza una búsqueda en todas las columnas de cada fila.
-  - Si no hay texto de filtro, se devuelve la data original sin cambios.
-  - El estado de página se resetea a 1 cuando el usuario cambia el texto de filtrado.
+- Generics y tipado:
+  - DataTable es genérico en T extends Record<string, unknown>, lo que permite usar cualquier tipo de fila siempre que sea un objeto.
+  - DataTableColumn<T> permite especificar el key como keyof T o string, de modo que se pueda mapear a claves existentes o definir claves dinámicas cuando sea necesario.
+- Rendering de celdas:
+  - Si una columna tiene render, el contenido de la celda se renderiza con render(row).
+  - En ausencia de render, se muestra el valor por defecto extraído como String(row[column.key as keyof T] ?? "").
+- Filtrado:
+  - El filtrado es global, recorriendo todos los valores de cada fila (Object.values(row)) y haciendo una inclusión basada en cadena en minúsculas.
+  - El filtro es sensible a presencia de valores nulos/undefined, que se convierten en cadenas vacías para la comparación.
 - Paginación:
   - pageSize por defecto es 10.
-  - totalPages se calcula como max(1, ceil(filteredData.length / pageSize)).
-  - currentPage se ajusta para no exceder totalPages.
-  - Los controles de navegación deshabilitan buttons apropiadamente (Anterior deshabilitado en la primera página, Siguiente deshabilitado en la última).
-- Rendering de celdas:
-  - Si una columna define render, se usa render(row).
-  - En ausencia de render, se muestra String(row[column.key as keyof T] ?? "").
-  - El key de las filas utiliza el índice de la iteración (index) para ayudar a React a identificar filas; esto puede tener implicaciones si el orden de filas cambia dinámicamente. En escenarios con reordenamientos o filas dinámicas críticas, podría considerarse usar un identificador único de la fila (si está disponible) como key.
-- Rendimiento:
-  - useMemo se utiliza para evitar recomputaciones de filtrado y paginación a menos que data, filter, currentPage o pageSize cambien.
-  - El filtrado en cliente implica recorrer todas las filas y, para cada una, valores de todas las columnas, lo que puede impactar en datasets muy grandes.
+  - Se calculan totalPages y currentPage para evitar out-of-range y para mantener la experiencia de usuario estable al cambiar datos o filtros.
+  - Los botones de navegación deshabilitan cuando se alcanza la primera o la última página.
+- Renderización de la tabla:
+  - Encabezados generados dinámicamente a partir de columns.
+  - Filas generadas a partir de la porción paginada de data.
+  - Manejo de “Sin resultados” cuando no hay filas que mostrar.
 - Estilos:
-  - Las clases CSS siguen el esquema de Tailwind CSS o utilidades similares, con nombres como border-border, bg-card, text-foreground, etc. Esto depende del tema del proyecto.
-  - La apariencia está diseñada para integrarse con el diseño existente del proyecto RNG Vantage.
+  - El componente usa cn para concatenar clases y aplica estilos consistentes con el diseño del proyecto (colores, shadows, bordes, etc.).
+  - Las clases están distribuidas para un layout responsive, con barra de filtros adaptándose a pantallas pequeñas y a pantallas grandes.
 
 ## Última actualización
 
-12/5/2026
+29/5/2026
 
----
-
-Si necesitas, puedo adaptar la documentación para un formato específico (por ejemplo, para una wiki interna o para una página de referência de componentes) o añadir ejemplos más complejos (por ejemplo, con selección de filas, acciones por fila o integración con API).
+Si necesitas adaptar el DataTable a casos específicos (p. ej., cargar datos desde una API, añadir clasificación por columnas, o habilitar selección de filas), puedo ayudarte a extender este componente manteniendo la compatibilidad con el diseño existente.

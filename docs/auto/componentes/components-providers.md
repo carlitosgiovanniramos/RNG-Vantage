@@ -1,78 +1,80 @@
-# Documentación técnica – Providers (components/providers.tsx)
+# Documentación técnica – providers.tsx
 
 Archivo: components/providers.tsx  
 Nombre: providers.tsx  
-Líneas: 23
+Total de líneas: 23
 
- Descripción general
-Este archivo define el componente React Providers, un wrapper de alto nivel que inicializa y proporciona un cliente de React Query (TanStack Query) a todos sus hijos. Está diseñado para centralizar la configuración global de consultas y asegurar que los componentes dentro de la aplicación puedan suscribirse y realizar consultas de forma consistente.
+Este archivo define un componente cliente de React llamado `Providers` que prepara y provee una instancia de React Query (TanStack) a toda la aplicación a través de `QueryClientProvider`. Es un envoltorio simple cuyo objetivo es centralizar la configuración de consultas y asegurar un único `QueryClient` a lo largo del árbol de componentes.
 
- Responsabilidades
-- Crear una instancia de QueryClient con configuración predeterminada.
-- Proveer ese QueryClient a través de QueryClientProvider para que los componentes hijos puedan usar React Query.
-- Garantizar que la instancia de QueryClient se mantenga estable entre re-renders del componente, utilizando useState para creación perezosa.
-- Configurar límites de rendimiento y comportamiento de reconsulta para las consultas (staleTime y refetchOnWindowFocus).
+## Descripción general
 
- Props / Parámetros
-- Componente: Providers
-  - children: ReactNode
-    - Tipo: ReactNode
-    - Requerido: Sí
-    - Descripción: Contenido que consume el contexto de React Query proporcionado por este componente.
+El componente `Providers` es un wrapper de alto nivel que:
 
- Retorna
-- Un elemento React: QueryClientProvider con la propiedad client estableciendo la instancia de QueryClient, envolviendo a {children}.
-- Formato: ReactElement (QueryClientProvider) que envuelve a los hijos.
+- Marca el archivo como componente cliente (directiva `"use client"`).
+- Crea de forma lazy una instancia de `QueryClient` con opciones por defecto para las consultas.
+- Expone `QueryClient` a través de `QueryClientProvider` para que los componentes hijos puedan usar hooks de React Query (por ejemplo, `useQuery`, `useMutation`).
+- Evita re-inicializar el `QueryClient` entre renders gracias a `useState`.
 
- Dependencias
-- @tanstack/react-query
-  - QueryClient: clase para crear la instancia de cliente de consultas.
-  - QueryClientProvider: proveedor de contexto para React Query.
-- React
-  - useState: para crear y mantener la instancia de QueryClient.
-  - ReactNode: tipo de los hijos (children).
-- Next.js (directiva de componente)
-  - "use client": indica que este archivo es un componente cliente (client component) para el app router, necesario para usar React Query en el cliente.
+Este patrón facilita la gestión centralizada de la configuración de React Query y evita duplicados de la instancia del cliente en el árbol de componentes.
 
- Ejemplos de uso
-- Descripción: Envolver la aplicación o una sección de la app con este proveedor para habilitar React Query en todos los componentes hijos.
-- Ejemplo básico:
-  - Dentro de un layout o componente raíz:
+## Responsabilidades
 
-    import { Providers } from "./components/providers";
+- Proveer un `QueryClient` configurado con opciones globales para todas las consultas.
+- Exponer el `QueryClientProvider` envolviendo a los `children` recibidos.
+- Garantizar que la instancia de `QueryClient` se cree una sola vez por ciclo de vida del componente (sin recreación innecesaria).
+- Mantener el comportamiento por defecto de React Query para no refetch al enfocarse la ventana si no se especifica lo contrario.
 
-    export default function RootLayout({ children }: { children: React.ReactNode }) {
-      return (
-        <html lang="es">
-          <body>
-            <Providers>
-              {children}
-            </Providers>
-          </body>
-        </html>
-      );
-    }
+## Props / Parámetros
 
-- Otro ejemplo mínimo:
-  - En una página que requiera consultas, simplemente envolver el árbol de componentes con <Providers> para habilitar React Query en esa sección.
+| Prop | Tipo | Requerido | Descripción |
+|------|------|-----------|-------------|
+| children | ReactNode | Sí | Contenido (componentes) que deben tener acceso a React Query a través del contexto proporcionado por `QueryClientProvider`. |
 
- Notas técnicas
-- Creación y persistencia del QueryClient:
-  - El QueryClient se crea dentro de useState utilizando una función de inicialización. Esto garantiza que la instancia se cree una sola vez y persista entre re-renders del componente Providers.
-- Configuración predeterminada (defaultOptions):
-  - staleTime: 60 * 1000 (60 segundos). Las consultas permanecen consideradas “frescas” durante 1 minuto, evitando re-consultas innecesarias.
-  - refetchOnWindowFocus: false. No se disparan re-consultas automáticas cuando la ventana recupera el foco, reduciendo tráfico de red y ruido de actualizaciones frecuentes.
-- Alcance del contexto:
-  - Este proveedor envuelve a {children}, por lo que todas las consultas realizadas por componentes descendientes pueden usar hooks como useQuery, useMutation, etc., sin necesidad de reconfigurar el cliente en cada parte de la app.
-- Consideraciones de rendimiento y escalabilidad:
-  - La configuración actual es razonable para muchas apps pequeñas o medianas, pero puede ajustarse fácilmente para escenarios que requieran reconsultas más agresivas o más conservadoras.
-  - Si en el futuro se quisiera personalizar comportamientos por ruta o por tipo de consulta, se podría ampliar este componente para aceptar props de configuración adicionales o crear múltiples QueryClientProviders anidados con diferentes configuraciones.
-- Compatibilidad:
-  - Diseñado para Next.js con la app router (componente cliente). Asegúrate de que este archivo se utilice en contextos donde React Query pueda ejecutarse en el cliente.
+Notas sobre el diseño:
+- Este es un componente de envoltura; su único propósito es inicializar y propagar el `QueryClient` a sus hijos.
 
- Última actualización
-- 12/5/2026
+## Retorna
 
-Observaciones especiales
-- El archivo es relativamente simple (23 líneas) y no introduce lógica adicional fuera de la creación del QueryClient y su provisión a través de QueryClientProvider.
-- No se añaden efectos secundarios ni lógica de negocio; su propósito es puramente estructural y de configuración de React Query para la aplicación RNG Vantage.
+- Un elemento React (`ReactElement`) que consiste en un `QueryClientProvider` con la instancia de `queryClient` inyectada y que envuelve a `children`. No devuelve nada por fuera del árbol de React; su efecto es disponibilizar el contexto de React Query a todos los componentes hijos.
+
+## Dependencias
+
+- React (hooks: `useState`, tipo `ReactNode`).
+- @tanstack/react-query (exporta `QueryClient`, `QueryClientProvider`).
+- Directiva de Next.js/React 18 para componentes cliente: `"use client"` al inicio del archivo.
+- Este archivo forma parte de un proyecto Next.js con TypeScript.
+
+## Ejemplos de uso
+
+Ejemplo mínimo de uso en una app Next.js:
+
+```tsx
+"use client";
+
+import { Providers } from "../components/providers";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Providers>
+      {children}
+    </Providers>
+  );
+}
+```
+
+Otro ejemplo típico sería envolver toda la aplicación, por ejemplo en `_app.tsx` o `layout.tsx` (según la estructura del proyecto) para que todas las rutas/child components tengan acceso a React Query sin necesidad de envolver cada página individualmente.
+
+## Notas técnicas
+
+- Inicialización lazy: la instancia de `QueryClient` se crea dentro de `useState` mediante una función de inicialización. Esto garantiza que el `QueryClient` se construya una única vez y no se recree en cada render, lo cual es crucial para evitar la pérdida de estado de consultas y reacciones globales.
+- Configuración por defecto: `defaultOptions.queries` establece:
+  - `staleTime: 60 * 1000` (60 segundos): las respuestas se consideran frescas durante 60 segundos, por lo que no se vuelven a fetchear a menos que haya una invalidación explícita o un refetch programado.
+  - `refetchOnWindowFocus: false`: evita que las consultas se refetcheen automáticamente cuando la ventana recupera el foco, reduciendo solicitudes de red no deseadas durante la navegación.
+- Alcance: al usar este componente, todos los componentes hijos pueden usar hooks de React Query sin necesidad de crear sus propios `QueryClient` ni pasar proveedores individualmente.
+- Rendimiento: al centralizar la instancia de `QueryClient` y sus opciones, se reduce overhead asociado a múltiples instancias y posibles inconsistencias en la configuración de consultas a través de la aplicación.
+
+## Última actualización
+
+29/5/2026
+
+Si necesitas adaptar el comportamiento de React Query (por ejemplo, cambiar `staleTime` o habilitar `refetchOnWindowFocus`), puedes modificar las opciones dentro de la creación de `QueryClient` en este archivo, manteniendo la misma estructura para no afectar a los componentes que consumen el contexto.

@@ -1,84 +1,91 @@
-# Documentación Técnica – lib/supabase/admin.ts
+# Documentación técnica: lib/supabase/admin.ts
 
-A continuación se detalla el propósito, uso y consideraciones del archivo lib/supabase/admin.ts del proyecto RNG Vantage.
+Archivo: lib/supabase/admin.ts  
+Nombre: admin.ts  
+Total de líneas: 19
+
+Entrega: Función para crear un cliente de Supabase autenticado con rol de servicio (admin) para uso en el servidor.
+
+---
 
 ## Descripción general
+Este archivo exporta la función createAdminClient(), que genera y devuelve un cliente de Supabase autorizado con la clave de rol de servicio. El cliente está configurado para operar en entorno de servidor (server-side) y no mantiene sesiones de usuario ni refresca tokens, ya que se utiliza para operaciones administrativas mediante la clave de servicio.
 
-Este archivo exporta la función createAdminClient, que crea y devuelve un cliente de Supabase configurado para uso administrativo.  
-Principales características:
-
-- Garantía de ejecución en servidor mediante la importación "server-only".
-- Utiliza variables de entorno para obtener la URL de Supabase y la clave de servicio (service role key).
-- Configura el cliente de Supabase para deshabilitar la gestión de sesión y la actualización automática de tokens, asegurando que las operaciones administrativas no generen sesiones de usuario.
-
-El propósito dentro del proyecto es proporcionar un cliente de admin de Supabase listo para realizar operaciones con privilegios elevados sin exponer credenciales en el cliente.
+---
 
 ## Responsabilidades
+- Proporcionar un cliente de Supabase configurado con un rol de servicio (admin) para operaciones administrativas en el backend.
+- Validar la presencia de las variables de entorno necesarias (URL de Supabase y clave del rol de servicio) y lanzar un error si faltan.
+- Configurar el cliente para no gestionar autenticación de usuario (autoRefreshToken: false, persistSession: false).
+- Garantizar que el módulo se ejecute en el entorno de servidor mediante la instrucción "server-only".
 
-- Crear y devolver un cliente de Supabase preparado para uso administrativo.
-- Validar la presencia de las variables de entorno necesarias y fallar temprano si no están definidas.
-- Configurar el cliente para operar sin manejo de sesiones (persistencia de sesión deshabilitada y desactivación de auto-refresh de tokens), adecuado para operaciones server-side con la service role key.
+---
 
-## Parámetros
+## Props / Parámetros
+- Sin parámetros de entrada (la función no recibe argumentos).
+- Variables de entorno requeridas:
+  - NEXT_PUBLIC_SUPABASE_URL: URL de la instancia de Supabase.
+  - SUPABASE_SERVICE_ROLE_KEY: Clave de rol de servicio (admin) para autenticación con privilegios elevados.
+- Comportamiento ante ausencia de variables:
+  - Si alguno de los valores falta, la función lanza un Error con el mensaje: "Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY".
 
-La función no recibe parámetros explícitos. Sin embargo, utiliza las siguientes entradas desde el entorno:
+Nota: Aunque la URL lleva el prefijo NEXT_PUBLIC_, este módulo está marcado como server-only, por lo que no debería exponerse al cliente. Sin embargo, conviene entender que NEXT_PUBLIC_ indica que, fuera de este contexto, esa variable podría ser expuesta al cliente.
 
-- NEXT_PUBLIC_SUPABASE_URL (string): URL de la instancia de Supabase.
-  - Descripción: punto de conexión de la instancia de Supabase.
-- SUPABASE_SERVICE_ROLE_KEY (string): Service Role Key de Supabase.
-  - Descripción: clave de rol de servicio con privilegios elevados. Debe permanecer en el servidor y no exponerse al cliente.
-
-La función valida que ambas variables existan y, en su ausencia, lanza un error.
+---
 
 ## Retorna
+- Un objeto de tipo SupabaseClient (proporcionado por @supabase/supabase-js) configurado con:
+  - URL de Supabase: based on NEXT_PUBLIC_SUPABASE_URL
+  - Llave de servicio: based on SUPABASE_SERVICE_ROLE_KEY
+  - Configuración de autenticación:
+    - auth.autoRefreshToken = false
+    - auth.persistSession = false
+- Este cliente está destinado a uso en operaciones administrativas en el backend.
 
-- Un objeto de tipo SupabaseClient (proveniente de @supabase/supabase-js), configurado para uso administrativo.
-- Configuración específica:
-  - auth.autoRefreshToken: false
-  - auth.persistSession: false
-
-Este cliente está preparado para realizar operaciones administrativas sin gestionar sesiones de usuario.
+---
 
 ## Dependencias
+- @supabase/supabase-js: Biblioteca cliente de Supabase para TypeScript/JavaScript.
+- server-only: Directiva de Next.js para asegurar que el módulo se ejecute únicamente en el servidor.
+- Entorno de ejecución Node/Next.js (con soporte para process.env).
 
-- @supabase/supabase-js: biblioteca cliente de Supabase para TypeScript/JavaScript.
-- server-only: importación que fuerza que este código se ejecute sólo en el entorno del servidor (Next.js), evitando uso en el cliente.
-- Entorno (variables de entorno):
-  - NEXT_PUBLIC_SUPABASE_URL
-  - SUPABASE_SERVICE_ROLE_KEY
+---
 
 ## Ejemplos de uso
 
-Ejemplo básico de uso en un entorno servidor (por ejemplo, en una ruta API o en un servidor de Next.js):
+Ejemplo de uso típico en código del servidor (p. ej., en rutas API o funciones del servidor):
 
 ```ts
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const adminClient = createAdminClient();
+const admin = createAdminClient();
 
-// Ejemplo: usar el cliente para consultar una tabla con privilegios de administrador
-// const { data, error } = await adminClient.from('some_table').select('*');
+// Ejemplo de consulta administrativa
+const { data, error } = await admin.from("admin_logs").select("*").limit(100);
 ```
 
 Notas:
-- Este helper debe invocarse solo en código del servidor y no en el cliente, ya que utiliza la service role key.
-- El cliente devuelto puede realizar operaciones administrativas en la base de datos a través de la API de Supabase.
+- Este módulo debe importarse y utilizarse únicamente en código del lado del servidor (server components/API routes, etc.). No debe ser utilizado desde código que se ejecute en el cliente.
+- Debido a que usa la clave de servicio, las operaciones deben restringirse adecuadamente y no exponer datos sensibles.
+
+---
 
 ## Notas técnicas
-
 - Seguridad de credenciales:
-  - La clave de servicio (SERVICE ROLE KEY) tiene privilegios elevados. Debe mantenerse en el entorno del servidor y no debe exponerse al cliente.
-  - La presencia de "server-only" en el archivo ayuda a evitar cargas en el cliente por parte de Next.js.
+  - La clave del rol de servicio (SUPABASE_SERVICE_ROLE_KEY) es una credencial sensible; debe almacenarse en variables de entorno seguras y no registrarse.
+  - El archivo garantiza que la clave no se use en el cliente gracias a "server-only".
+- Publicidad de la URL:
+  - NEXT_PUBLIC_SUPABASE_URL es una variable de entorno con prefijo NEXT_PUBLIC, lo cual la haría pública si se ejecutara en el cliente. Sin embargo, al ser un módulo server-only, la variable y su valor permanecen en el entorno del servidor y no se exponen al cliente.
 - Configuración de autenticación:
-  - Se desactiva el manejo de tokens de sesión en el cliente del administrador: autoRefreshToken y persistSession están deshabilitados. Esto evita la creación de sesiones de usuario en operaciones administrativas.
-- Validación temprana:
-  - Si faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY, se lanza un error claro en tiempo de ejecución para evitar inicializar un cliente incompleto.
-- Limitaciones:
-  - El código no implementa manejo adicional de errores de conexión o validación de permisos más allá de la verificación de env vars.
-  - No se realiza logging dentro del helper; cualquier logging debe hacerse en las capas que utilicen el cliente.
+  - El cliente se crea con autoRefreshToken: false y persistSession: false, lo que evita la gestión de tokens de sesión de usuario. Esto es adecuado para interacciones administrativas con clave de servicio, pero no para operaciones de usuario final.
+- Manejo de errores:
+  - Si faltan las variables de entorno necesarias, se lanza un Error claro, evitando que se cree un cliente mal configurado.
+- Consideraciones de rendimiento:
+  - La función crea un nuevo cliente cada vez que se invoca. Si se van a hacer múltiples llamadas, podría considerarse reutilizar un cliente (p. ej., cachearlo en un singleton) para evitar reconstrucciones repetidas. Actualmente, el código no implementa caching.
+
+---
 
 ## Última actualización
+29/5/2026
 
-12/5/2026
-
-Si necesitas adaptar este archivo a un entorno distinto (por ejemplo, usar una clave de servicio distinta o permitir ciertas interacciones de sesión en escenarios específicos), asegúrate de actualizar las validaciones de entorno y la configuración de autenticación según corresponda.
+---

@@ -1,101 +1,145 @@
-# Documentación técnica: checkbox.tsx
+# Documentación técnica: components/ui/checkbox.tsx
 
-Ruta: components/ui/checkbox.tsx
+Ruta: components/ui/checkbox.tsx  
+Nombre: checkbox.tsx  
+Líneas: 30
 
-Nombre: checkbox.tsx
+Descripción breve: Componente Checkbox personalizado que envuelve el componente primitivo de Checkbox deBase UI, aplicando estilos consistentes, con soporte para estados de foco, deshabilitado, inválido y tema oscuro. Expone todas las props del CheckboxPrimitive.Root y añade un icono de verificación (CheckIcon) cuando está seleccionado.
 
-Total de líneas: 30
+---
 
- Descripción general
-Este archivo define un componente React llamado `Checkbox` que actúa como una envoltura (wrapper) estilizada alrededor del componente primitivo de checkbox proporcionado por la librería de UI base (`@base-ui/react/checkbox`). El objetivo es proporcionar una experiencia de usuario consistente con el diseño del proyecto RNG Vantage, incluyendo estilos, estado de accesibilidad y soporte para temas (claro/oscuro).
+## Descripción general
 
- El componente se implementa como un componente cliente de Next.js (directiva "use client"), y utiliza un conjunto de utilidades de estilo (Tailwind classes) junto con iconografía de `lucide-react`.
+Checkbox es un componente React cliente que actúa como envoltorio estilizado alrededor de CheckboxPrimitive.Root obtenido desde @base-ui/react/checkbox. Su propósito es garantizar una apariencia y comportamiento consistentes en toda la aplicación, integrando temas (claros/oscuro), estados de validación (aria-invalid), y estados de interacción (focus-visible, deshabilitado). El indicador del checkbox (CheckboxPrimitive.Indicator) contiene un icono de verificación (CheckIcon) proporcionado por lucide-react.
 
- Responsabilidades
-- Proporcionar un checkbox estilizado y accesible, con indicativo de estado cuando está marcado.
-- Centralizar la lógica de estilo en un solo lugar para mantener la consistencia visual con el resto de la UI.
-- Propagar todos los props recibidos al componente primitivo de la librería (`CheckboxPrimitive.Root`), asegurando compatibilidad con comportamiento controlado/descontrolado, eventos, etc.
-- Soportar modos claro/oscuro mediante clases de Tailwind.
+- Es un componente “client” (directiva "use client").
+- Delegación de props al primitive subyacente para conservar la API.
+- Estilos complejos con Tailwind para coherencia con el design system local.
 
- Props / Parámetros
-- Props del componente: acepta todas las props del `CheckboxPrimitive.Root.Props` (propiedades del checkbox primitivo). Además, expone un prop adicional específico en la firma del componente:
-  - `className?: string` — clase de CSS adicional para personalizar el estilo.
+---
 
-Notas sobre los props:
-- El componente desestructura `className` y luego propaga el resto de props mediante `{...props}` al `CheckboxPrimitive.Root`. Esto significa que puedes usar props típicos de un checkbox controlable/descontrolado (p. ej., `checked`, `defaultChecked`, `onCheckedChange`, `aria-invalid`, etc.) tal como lo harías con el componente de base.
-- El contenido visual del checkbox se compone de:
-  - `CheckboxPrimitive.Root` con atributos de estilo y datos de slot para integración con el diseño del sistema.
-  - `CheckboxPrimitive.Indicator` que contiene el icono `CheckIcon` cuando el checkbox está marcado.
+## Responsabilidades
 
- Retorna
-- El componente retorna un nodo JSX que corresponde a:
-  - Un `CheckboxPrimitive.Root` configurado con:
-    - Atributos de slot para identificación (`data-slot="checkbox"`, `data-slot="checkbox-indicator"`).
-    - Clases CSS que combinan estilos del proyecto (Tailwind) con el `className` proporcionado.
-    - Propagación de todos los props recibidos.
-  - Un `CheckboxPrimitive.Indicator` que centra el contenido y contiene el `CheckIcon` de `lucide-react`, que se muestra cuando el estado es marcado.
+- Proveer un checkbox estilizado y accesible con comportamiento consistente.
+- Mantener compatibilidad con el estado marcado (data-checked) y estilos correspondientes (data-checked:...).
+- Soportar estados de deshabilitado (disabled) y validación (aria-invalid) con estilos visuales adecuados.
+- Integrar con el tema oscuro automáticamente mediante clases dark:...
+- Pasar todas las props del CheckboxPrimitive.Root al componente subyacente para una API completa (control, handlers, etc.).
+- Mostrar un icono de verificación cuando el estado está marcado a través del Indicator.
 
- Dependencias
-- React (Next.js, componente cliente)
-- @base-ui/react/checkbox (Checkbox primitivo)
-- lucide-react (icono CheckIcon)
-- "@/lib/utils" (utilidad `cn` para combinar clases)
-- Sistemas de estilos Tailwind (clases como border, ring, dark:, data-checked:, etc.)
-- Soporte de accesibilidad (ARIA) implícito a través de props y estado del checkbox
+---
 
- Ejemplos de uso
-A continuación se muestran ejemplos simples de uso del componente en distintas situaciones:
+## Props / Parámetros
 
-1) Uso básico (controlado)
-- Este ejemplo asume un estado controlado en el componente padre.
+Este componente es un envoltorio del CheckboxPrimitive.Root y admite todas las props definidas por CheckboxPrimitive.Root.Props, además de una prop adicional explícita:
 
+| Nombre del prop | Tipo | Requerido | Descripción |
+|---|---|---|---|
+| className | string | No | Clases CSS adicionales para personalizar el estilo del root del checkbox. Se concatenan usando la función cn junto con las clases predeterminadas del componente. |
+| ...props | CheckboxPrimitive.Root.Props | No | Todas las props del componente root del primitive. Esto incluye, entre otras, control de estado (checked, defaultChecked), handlers (onCheckedChange), props de accesibilidad y otras configuraciones propias del primitive. Se pasan mediante spread {...props}. |
+
+Notas:
+- La API exacta de CheckboxPrimitive.Root.Props depende del paquete @base-ui/react/checkbox; el wrapper no redefine estas props, sino que las reenvía.
+- El componente incluye un indicador (CheckboxPrimitive.Indicator) que contiene el icono de verificación cuando el estado está marcado.
+
+---
+
+## Retorna
+
+El componente devuelve un elemento JSX que representa un checkbox estilizado. En su estructura:
+
+- CheckboxPrimitive.Root: el nodo raíz del checkbox, con data-slot="checkbox" y una cadena de clases que define el aspecto, estados de foco, deshabilitado, validación, y soporte para modo oscuro.
+- CheckboxPrimitive.Indicator: el contenedor del icono de verificación mostrado cuando el estado es seleccionado (data-checked).
+- CheckIcon: icono de verificación de lucide-react renderizado dentro del Indicator.
+
+Formato de retorno: un React element (JSX) que renderiza el checkbox completo y listo para ser usado en la UI.
+
+---
+
+## Dependencias
+
+- "use client": indica que este archivo es un componente cliente de Next.js.
+- @base-ui/react/checkbox: CheckboxPrimitive, utilizado como la implementación base del checkbox (Root y Indicator).
+- lucide-react: CheckIcon, icono de verificación mostrado cuando está marcado.
+- "@/lib/utils": cn (utilidad de concatenación de clases).
+- React (tipo de props y composición JSX).
+
+Notas técnicas:
+- El componente se apoya fuertemente en clases de Tailwind para estilos, incluyendo estados como disabled, aria-invalid, data-checked, y variantes dark.
+- data-slot se utiliza para identificar las partes del checkbox en pruebas o integraciones.
+- El diseño admite accesibilidad y transiciones visuales para una mejor experiencia de usuario.
+
+---
+
+## Ejemplos de uso
+
+1) Uso básico con estado controlado
+
+```tsx
+import React from "react"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useState } from "react"
 
-export default function Example() {
-  const [checked, setChecked] = useState(false)
+function MyForm() {
+  const [checked, setChecked] = React.useState(false)
 
   return (
-    <Checkbox
-      checked={checked}
-      onCheckedChange={setChecked}
-      aria-label="Aceptar términos"
-    />
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <Checkbox
+        checked={checked}
+        onCheckedChange={setChecked}
+        aria-label="Acepto términos"
+      />
+      Acepto los términos y condiciones
+    </label>
   )
 }
+```
 
-2) Uso en modo descontrolado
-- Útil cuando no necesitas gestionar el estado desde el componente padre.
+2) Uso con estado no controlado (default)
 
+```tsx
+import React from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 
-export default function Example() {
+function TermsToggle() {
   return (
-    <Checkbox aria-label="Aceptar términos" defaultChecked={false} />
+    <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+      <Checkbox defaultChecked={false} aria-label="Suscripción" />
+      Suscribirme
+    </label>
   )
 }
+```
 
-Notas sobre el uso:
-- El componente está diseñado para integrarse con el sistema de diseño existente, por lo que puedes combinarlo con otros componentes de formulario y contenedores del proyecto.
-- El helper `cn` se encarga de fusionar las clases base con cualquier `className` adicional que pases.
+Notas de uso:
+- Se pueden añadir más props del CheckboxPrimitive.Root según la API del paquete base-ui para manejo de estado, eventos y accesibilidad.
+- El componente acepta className para personalización.
 
- Notas técnicas
-- Estilización:
-  - El `CheckboxPrimitive.Root` recibe una serie de clases de Tailwind que gestionan tamaño, borde, estado, y adaptaciones para modos claro/oscuro.
-  - Se usan utilidades como `data-checked:border-primary`, `data-checked:bg-primary` para reflejar el estado marcado.
-  - Compatibilidad con modo oscuro mediante prefijos `dark:` para fondo, borde y estado de marcado.
-  - Soporte de estados de accesibilidad (aria-invalid) para indicar errores y aplicar estilos de borde/ring correspondientes.
-  - El estado visual del check se maneja mediante el `Indicator`, que centra el `CheckIcon` (de `lucide-react`) cuando está marcado.
-- Estructura:
-  - El componente es una pieza de UI pura (sin side effects) que solo renderiza el checkbox con su indicator. La lógica de estado (checked, onChange) se maneja a través de las props que se propagan al `CheckboxPrimitive.Root`.
-  - Se utilizan atributos de slot (`data-slot`) para facilitar la integración en un sistema de diseño modular o para pruebas automatizadas.
-- Rendimiento:
-  - El componente es liviano y no introduce complejidad adicional aparte de la envoltura de estilo. Al no crear efectos secundarios, su rendimiento es óptimo para listas y formularios de tamaño moderado.
-- Compatibilidad:
-  - Dado que depende de `@base-ui/react/checkbox`, la API y comportamiento está alineado con esa librería. Cualquier cambio en esa dependencia podría requerir ajustes menores en este wrapper.
+---
 
- Última actualización
-- 12/5/2026
+## Notas técnicas
 
-Notas finales
-- Este archivo es una envoltura específica de la UI del proyecto para estandarizar el look-and-feel de checkboxes. Si se requieren variaciones (p. ej., tamaño diferente, iconos alternativos, o estados adicionales como indeterminate), se pueden añadir manteniendo la misma estructura para conservar coherencia en toda la base de código.
+- Este Checkbox es un wrapper que garantiza consistencia visual y semántica en toda la aplicación.
+- El uso de Data Slots (data-slot) facilita pruebas y mapear partes del componente en herramientas de UI.
+- La clase principal del Root incluye estilos para:
+  - Disposición y tamaño (peer relative flex items center, etc.)
+  - Bordes y fondo acorde al tema (border-input, dark:bg-input/30, etc.)
+  - Respuesta a estados de focus (focus-visible:border-ring, focus-visible:ring-3, etc.)
+  - Estados deshabilitados (disabled:cursor-not-allowed, disabled:opacity-50)
+  - Estados de validación aria-invalid (aria-invalid:...)
+  - Variantes de estado marcado (data-checked:border-primary, data-checked:bg-primary, data-checked:text-primary-foreground)
+- El indicador (CheckboxPrimitive.Indicator) está configurado para centrar el icono y ajustar su tamaño mediante la directiva de clase [&>svg]:size-3.5.
+- El icono CheckIcon se renderiza cuando el estado está marcado; si el estado no está marcado, no se muestra contenido adicional en el Indicator.
+- No hay lógica de estado local en este archivo; la gestión del estado se delega al usuario a través de props pasados al Root.
+
+Limitaciones conocidas:
+- El archivo depende de la API de CheckboxPrimitive.Root de @base-ui/react/checkbox; cambios en esa API podrían requerir actualización de este wrapper.
+- El tamaño y el aspecto están fuertemente ligados a las clases de Tailwind y al sistema de diseño existente; personalizaciones profundas podrían requerir ajuste de las clases en la cadena de clase.
+
+---
+
+## Última actualización
+
+29/5/2026
+
+---

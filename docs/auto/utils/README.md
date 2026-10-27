@@ -3,8 +3,10 @@
 Listado de archivos analizados:
 
 - [lib-design-tokens](./lib-design-tokens.md)
-- [lib-utils](./lib-utils.md)
-- [lib-validators-auth](./lib-validators-auth.md)
-- [lib-validators-index](./lib-validators-index.md)
-- [lib-validators-reservation](./lib-validators-reservation.md)
-- [lib-validators-service](./lib-validators-service.md)
+- [lib-email-client](./lib-email-client.md)
+- [lib-email-templates](./lib-email-templates.md)
+- [lib-kushki-card-fields](./lib-kushki-card-fields.md)
+- [lib-kushki-client](./lib-kushki-client.md)
+- [lib-kushki-config](./lib-kushki-config.md)
+- [lib-kushki-types](./lib-kushki-types.md)
+- [lib-kushki-webhook](./lib-kushki-webhook.md)
