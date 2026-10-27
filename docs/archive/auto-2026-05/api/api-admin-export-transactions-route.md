@@ -1,7 +1,7 @@
 # Documentación técnica — app/api/admin/export-transactions/route.ts
 
-Archivo: route.ts  
-Ruta API: /api/admin/export-transactions  
+Archivo: route.ts\
+Ruta API: /api/admin/export-transactions\
 Propósito: Exportar todas las transacciones en formato CSV para contabilidad. Accesible únicamente para administradores activos.
 
 Nota: Este archivo forma parte del módulo RNG Vantage, un sistema de automatización de ventas, reservas y control financiero construido con Next.js, TypeScript y Supabase.
@@ -70,7 +70,7 @@ La ruta está marcada para ejecutarse en Node.js (runtime: "nodejs"), lo que imp
     - Content-Type: text/csv; charset=utf-8
     - Content-Disposition: attachment; filename="transacciones-YYYY-MM-DD.csv" (con fecha de hoy en formato ISO: YYYY-MM-DD)
 - Formato CSV:
-  - Encabezado (header): 
+  - Encabezado (header):
     - Fecha, Cliente, Monto USD, Estado, Metodo, Pasarela, ID Kushki, ID Transaccion
   - Filas: una por cada transacción, con:
     - Fecha: created_at formateado como locale es-EC

@@ -1,7 +1,7 @@
 # RNG Vantage - Dashboard (app/(dashboard)/dashboard/page.tsx)
 
-Archivo: page.tsx  
-Ruta: app/(dashboard)/dashboard/page.tsx  
+Archivo: page.tsx\
+Ruta: app/(dashboard)/dashboard/page.tsx\
 Lenguaje: TypeScript / React (Server Component de Next.js)
 
 Este archivo implementa la página de tablero administrativo del módulo RNG Vantage. Se trata de un componente de servidor que solicita datos a Supabase, calcula métricas clave y renderiza un dashboard con tarjetas de datos, un resumen operativo y gráficos.

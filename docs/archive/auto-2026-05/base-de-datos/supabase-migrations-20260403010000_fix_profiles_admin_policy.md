@@ -1,7 +1,7 @@
 # Documentación técnica: 20260403010000_fix_profiles_admin_policy.sql
 
-Archivo: supabase/migrations/20260403010000_fix_profiles_admin_policy.sql  
-Nombre: 20260403010000_fix_profiles_admin_policy.sql  
+Archivo: supabase/migrations/20260403010000_fix_profiles_admin_policy.sql\
+Nombre: 20260403010000_fix_profiles_admin_policy.sql\
 Total de líneas: 9
 
 Contenido principal del script (resumen)

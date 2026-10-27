@@ -1,7 +1,7 @@
 # 20260522000000_kushki_gateway_columns.sql — Documentación técnica
 
-Archivo: supabase/migrations/20260522000000_kushki_gateway_columns.sql  
-Nombre: 20260522000000_kushki_gateway_columns.sql  
+Archivo: supabase/migrations/20260522000000_kushki_gateway_columns.sql\
+Nombre: 20260522000000_kushki_gateway_columns.sql\
 Total de líneas: 28 (contenido relevante mostrado en el bloque de código)
 
 Resumen rápido

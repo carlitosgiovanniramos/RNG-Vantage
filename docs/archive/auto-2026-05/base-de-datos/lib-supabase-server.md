@@ -1,7 +1,7 @@
 # Documentación técnica: lib/supabase/server.ts
 
-Archivo: lib/supabase/server.ts  
-Nombre: server.ts  
+Archivo: lib/supabase/server.ts\
+Nombre: server.ts\
 Líneas: 29
 
 Este archivo define una utilidad para crear un cliente de Supabase en el contexto de Next.js Server Components, conectando el cliente SSR de Supabase con el sistema de cookies de Next.js para gestionar la sesión del usuario en el lado del servidor.

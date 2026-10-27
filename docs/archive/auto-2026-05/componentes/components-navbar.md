@@ -83,7 +83,7 @@ Notas sobre implementación:
 
 - Uso básico en una página o layout donde se desee incluir la barra de navegación:
   - Importar y renderizar el componente en la parte superior de la página o layout.
-  
+
 Código de ejemplo ( TypeScript / React ):
 ```tsx
 import { Navbar } from "@/components/navbar";

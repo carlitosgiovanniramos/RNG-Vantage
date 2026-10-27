@@ -1,6 +1,6 @@
 # Documentación técnica: components/catalogo-hero.tsx
 
-Archivo: components/catalogo-hero.tsx  
+Archivo: components/catalogo-hero.tsx\
 Tipo: Componente React (Next.js, TypeScript)
 
 Resumen rápido

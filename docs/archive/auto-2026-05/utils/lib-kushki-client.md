@@ -1,7 +1,7 @@
 # Documentación técnica: lib/kushki/client.ts
 
-Archivo: lib/kushki/client.ts  
-Nombre: client.ts  
+Archivo: lib/kushki/client.ts\
+Nombre: client.ts\
 Líneas: 84 (archivo proporcionado)
 
 Fecha de última actualización: 29/5/2026

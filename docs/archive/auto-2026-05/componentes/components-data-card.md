@@ -78,7 +78,7 @@ function Ejemplo() {
     <DataCard
       title="Ventas Totales"
       value={ "$124.500" }
-      icon={<DollarSign />} 
+      icon={<DollarSign />}
       trend={{ value: "+12%", direction: "up", label: "Este Mes" }}
     />
   );

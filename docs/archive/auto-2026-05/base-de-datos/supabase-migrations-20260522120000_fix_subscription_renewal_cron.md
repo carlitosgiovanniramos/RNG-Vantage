@@ -1,6 +1,6 @@
 # Documentación técnica: 20260522120000_fix_subscription_renewal_cron.sql
 
- Archivo: supabase/migrations/20260522120000_fix_subscription_renewal_cron.sql  
+ Archivo: supabase/migrations/20260522120000_fix_subscription_renewal_cron.sql\
  Tipo: migración de base de datos (PostgreSQL) para corrección del flujo de renovaciones de suscripciones
 
 Fecha de última actualización: 29/5/2026

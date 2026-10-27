@@ -1,7 +1,7 @@
 # Documentación técnica: lib/kushki/webhook.ts
 
-Ruta: lib/kushki/webhook.ts  
-Nombre: webhook.ts  
+Ruta: lib/kushki/webhook.ts\
+Nombre: webhook.ts\
 Líneas: 39
 
 Este archivo contiene la lógica pura del webhook de Kushki. No tiene dependencias de entorno ni de red, lo que facilita su pruebas unitarias. Exporta dos utilidades relacionadas con estados de transacciones y su mapeo a estados internos.

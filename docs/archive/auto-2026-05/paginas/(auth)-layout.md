@@ -65,7 +65,7 @@ Ejemplo típico en Next.js App Router (uso recomendado):
 
 Ejemplo aislado (propósito demostrativo, no representa la estructura de enrutamiento):
 - Código:
- 
+
   import AuthLayout from './layout'; // Ruta relativa al layout dentro del proyecto
 
   function DemoLoginContent() {

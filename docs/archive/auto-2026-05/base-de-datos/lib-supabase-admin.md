@@ -1,7 +1,7 @@
 # Documentación técnica: lib/supabase/admin.ts
 
-Archivo: lib/supabase/admin.ts  
-Nombre: admin.ts  
+Archivo: lib/supabase/admin.ts\
+Nombre: admin.ts\
 Total de líneas: 19
 
 Entrega: Función para crear un cliente de Supabase autenticado con rol de servicio (admin) para uso en el servidor.

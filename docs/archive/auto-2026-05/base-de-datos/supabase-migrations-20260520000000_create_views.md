@@ -1,7 +1,7 @@
 # RNG Vantage - Migración 20260520000000_create_views.sql
 
-Ruta: supabase/migrations/20260520000000_create_views.sql  
-Nombre: 20260520000000_create_views.sql  
+Ruta: supabase/migrations/20260520000000_create_views.sql\
+Nombre: 20260520000000_create_views.sql\
 Líneas: 165
 
 Este archivo contiene la migración SQL que define cinco vistas (views) en el schema público para optimizar el dashboard y la parte administrativa. Todas las vistas usan SECURITY INVOKER (comportamiento por defecto en PostgreSQL 15+), por lo que respe­tan las políticas de Row Level Security (RLS) existentes: administradores visualizan todos los registros y clientes ven solo sus propios datos.

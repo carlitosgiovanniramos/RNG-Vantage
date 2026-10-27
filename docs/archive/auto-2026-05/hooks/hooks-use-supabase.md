@@ -1,7 +1,7 @@
 # Documentación técnica: hooks/use-supabase.ts
 
-Archivo: hooks/use-supabase.ts  
-Ruta: hooks/use-supabase.ts  
+Archivo: hooks/use-supabase.ts\
+Ruta: hooks/use-supabase.ts\
 Tipo: Hook de React (cliente)
 
 Total de líneas: 9

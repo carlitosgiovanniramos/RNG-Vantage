@@ -1,7 +1,7 @@
 # Documentación técnica: lib/validators/index.ts
 
-Archivo: lib/validators/index.ts  
-Nombre: index.ts  
+Archivo: lib/validators/index.ts\
+Nombre: index.ts\
 Líneas: 6
 
 Contenido del archivo

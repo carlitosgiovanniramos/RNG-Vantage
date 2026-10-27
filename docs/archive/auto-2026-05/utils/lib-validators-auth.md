@@ -1,6 +1,6 @@
 # Documentación técnica – lib/validators/auth.ts
 
-Autor: RNG Vantage Dev Team  
+Autor: RNG Vantage Dev Team\
 Fecha de última actualización: 12/5/2026
 
 Este archivo define y exporta los esquemas de validación de entrada para autenticación (inicio de sesión y registro) utilizando la librería Zod. También expone los tipos TypeScript derivados de dichos esquemas.
@@ -51,7 +51,7 @@ A continuación se describen las exportaciones del archivo, junto con el propós
     - last_name: string, mínimo 2 caracteres. Mensaje: "El apellido debe tener al menos 2 caracteres".
     - email: string, debe ser un correo válido. Mensaje: "Ingresa un correo electrónico válido".
     - password: string, debe cumplir la expresión regular strongPasswordRegex.
-      - Regex y mensaje: 
+      - Regex y mensaje:
         - strongPasswordRegex: ^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$
         - Mensaje: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial"
     - confirm_password: string, mínimo 1 carácter. Mensaje: "Confirma tu contraseña".

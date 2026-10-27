@@ -1,7 +1,7 @@
 # Documentación técnica: app/api/webhooks/kushki/route.ts
 
-Archivo: route.ts  
-Ruta: app/api/webhooks/kushki/route.ts  
+Archivo: route.ts\
+Ruta: app/api/webhooks/kushki/route.ts\
 Longitud: ~405 líneas (contenido disponible en el código proporcionado)
 
 Propósito general
@@ -109,7 +109,7 @@ Notas sobre dependencias relevantes para estas funciones:
 ## Retorna
 
 - POST(req: Request): NextResponse
-  - Retorna 200 en la mayoría de los casos cuando se procesa correctamente o se detecta repetición (idempotencia). En casos de errores de BD o actualización, retorna 500. En casos de autenticación fallida, retorna 401. En payloads inválidos, retorna 400. En casos de lookup fallido, 500.  
+  - Retorna 200 en la mayoría de los casos cuando se procesa correctamente o se detecta repetición (idempotencia). En casos de errores de BD o actualización, retorna 500. En casos de autenticación fallida, retorna 401. En payloads inválidos, retorna 400. En casos de lookup fallido, 500.\
   - En el flujo de contracargo, cobro recurrente y transacciones existentes, se utilizan NextResponse para indicar si el webhook fue recibido, si es idempotente, o para indicar errores.
 
 - Helpers (handleRecurringCharge, handleChargeback, getUserEmail, etc.)

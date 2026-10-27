@@ -1,7 +1,7 @@
 # Documentación técnica — app/api/transactions/route.ts
 
-Archivo: route.ts  
-Ruta del archivo en el proyecto RNG Vantage: app/api/transactions/route.ts  
+Archivo: route.ts\
+Ruta del archivo en el proyecto RNG Vantage: app/api/transactions/route.ts\
 Estado (según el código actual): No implementado
 
 Resumen rápido

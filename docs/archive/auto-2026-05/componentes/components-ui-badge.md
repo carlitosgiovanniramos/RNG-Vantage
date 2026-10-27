@@ -1,7 +1,7 @@
 # Documentación técnica – RNG Vantage
 
-Archivo: components/ui/badge.tsx  
-Nombre: badge.tsx  
+Archivo: components/ui/badge.tsx\
+Nombre: badge.tsx\
 Líneas: 53
 
 Este archivo define el componente Badge y su variante de estilos mediante class-variance-authority (cva). Se trata de un badge compacto, diseñado para ser utilizado en la interfaz de usuario de RNG Vantage, con soporte para variantes visuales y renderizado flexible a través del hook de renderizado personalizado.

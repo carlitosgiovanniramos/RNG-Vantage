@@ -10,7 +10,7 @@ Este archivo define una utilidad para crear un cliente de Supabase en el lado de
 
 ## Props / Parámetros
 
-- Parámetros: ninguno.  
+- Parámetros: ninguno.\
   Descripción: la función `createClient` no recibe argumentos y, al ser llamada, crea y devuelve una instancia de cliente de Supabase utilizando las variables de entorno.
 
 ## Retorna

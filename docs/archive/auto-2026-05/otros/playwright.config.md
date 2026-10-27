@@ -1,6 +1,6 @@
 # Documentación técnica: playwright.config.ts
 
-Archivo: playwright.config.ts  
+Archivo: playwright.config.ts\
 Proyecto: RNG Vantage (automatización de pruebas end-to-end con Playwright)
 
 Fecha de última actualización: 29/5/2026

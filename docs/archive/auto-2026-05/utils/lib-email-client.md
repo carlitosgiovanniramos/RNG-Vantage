@@ -109,6 +109,6 @@ Notas:
 ## Última actualización
 29/5/2026
 
---- 
+---
 
 Este desglose está basado en la implementación presente en lib/email/client.ts y describe su comportamiento, dependencias y uso esperado para que cualquier nuevo desarrollador pueda entenderlo sin revisar el código completo. Si se requieren ejemplos adicionales (por ejemplo, pruebas unitarias o mocks de fetch), se pueden añadir en una sección adicional.

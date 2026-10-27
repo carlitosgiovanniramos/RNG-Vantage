@@ -1,7 +1,7 @@
 # Documentación técnica – providers.tsx
 
-Archivo: components/providers.tsx  
-Nombre: providers.tsx  
+Archivo: components/providers.tsx\
+Nombre: providers.tsx\
 Total de líneas: 23
 
 Este archivo define un componente cliente de React llamado `Providers` que prepara y provee una instancia de React Query (TanStack) a toda la aplicación a través de `QueryClientProvider`. Es un envoltorio simple cuyo objetivo es centralizar la configuración de consultas y asegurar un único `QueryClient` a lo largo del árbol de componentes.

@@ -1,7 +1,7 @@
 # Documentación técnica: components/ui/checkbox.tsx
 
-Ruta: components/ui/checkbox.tsx  
-Nombre: checkbox.tsx  
+Ruta: components/ui/checkbox.tsx\
+Nombre: checkbox.tsx\
 Líneas: 30
 
 Descripción breve: Componente Checkbox personalizado que envuelve el componente primitivo de Checkbox deBase UI, aplicando estilos consistentes, con soporte para estados de foco, deshabilitado, inválido y tema oscuro. Expone todas las props del CheckboxPrimitive.Root y añade un icono de verificación (CheckIcon) cuando está seleccionado.

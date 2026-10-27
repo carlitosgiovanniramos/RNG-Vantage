@@ -1,7 +1,7 @@
 # RNG Vantage - Documento técnico del archivo: app/(auth)/actions.ts
 
-Ruta del archivo: app/(auth)/actions.ts  
-Nombre: actions.ts  
+Ruta del archivo: app/(auth)/actions.ts\
+Nombre: actions.ts\
 Líneas: 385
 
 Este archivo implementa las acciones del lado del servidor para autenticación (login, signup, logout) y reenvío de confirmaciones de cuenta. Utiliza Supabase para la gestión de usuarios y perfiles, y está diseñado para usarse desde el App Router de Next.js mediante acciones de formulario.
@@ -103,7 +103,7 @@ Funciones auxiliares internas (no exportadas):
 - En signup, si no hay sesión (debido a verificación necesaria), se redirige a /login?registered=1&email=...; si hay sesión, se redirige a /catalogo.
 
 Notas relevantes sobre retornos:
-- Los errores de validación son devoluciones directas.  
+- Los errores de validación son devoluciones directas.\
 - Los errores de autenticación (desde Supabase) se mapean a mensajes amigables en español mediante mapSupabaseAuthError.
 - Los redirects se implementan con redirect(...) y no requieren retorno de valor para esa ruta.
 

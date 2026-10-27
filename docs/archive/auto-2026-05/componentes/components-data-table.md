@@ -151,10 +151,10 @@ function UsuariosTable() {
 ```
 
 Notas del ejemplo:
-- Se define un tipo User y un conjunto de columnas. 
+- Se define un tipo User y un conjunto de columnas.
 - Se utiliza render para personalizar la visualización de la columna Role.
 - Se especifica pageSize para controlar cuántos registros se muestran por página.
-  
+
 ## Notas técnicas
 
 - Generics y tipado:

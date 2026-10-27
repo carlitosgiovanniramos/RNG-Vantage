@@ -2,7 +2,7 @@
 
 Descripción general
 - RealtimeRefresher es un componente React de cliente (client component) utilizado para suscribirse a cambios en tiempo real de tablas específicas a través de Supabase.
-- Escucha eventos de cambios en Postgres para las tablas indicadas y, cuando ocurre un cambio, fuerza la actualización de la ruta actual mediante router.refresh(). 
+- Escucha eventos de cambios en Postgres para las tablas indicadas y, cuando ocurre un cambio, fuerza la actualización de la ruta actual mediante router.refresh().
 - Si el evento es un INSERT en una tabla para la cual hay un label definido en INSERT_LABELS, muestra una notificación toast con ese mensaje.
 - No renderiza UI; devuelve null y funciona únicamente por efectos secundarios.
 

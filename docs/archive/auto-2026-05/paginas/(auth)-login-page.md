@@ -1,6 +1,6 @@
 # RNG Vantage – app/(auth)/login/page.tsx
 
-Archivo: app/(auth)/login/page.tsx  
+Archivo: app/(auth)/login/page.tsx\
 Propósito: Página de inicio de sesión (cliente) del flujo de autenticación. Implementa un formulario controlado con validación, manejo de estados de acción (login y reenvío de confirmación), y soporte para parámetros de URL como redirección y estado de registro.
 
 Fecha de última actualización: 29/5/2026

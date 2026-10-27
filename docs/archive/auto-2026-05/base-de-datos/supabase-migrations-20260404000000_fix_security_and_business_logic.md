@@ -49,7 +49,7 @@ El archivo contiene los siguientes bloques principales:
   - Índices agregados para subscriptions, transactions, reservations y services.
 - Backfill de datos
   - Sincronización de role en raw_app_meta_data para usuarios existentes.
-  
+
 Notas sobre dependencias y entorno:
 - Este script asume que las tablas public (subscriptions, profiles, reservations, services, transactions) están bajo Row Level Security (RLS) y que las políticas definidas se aplican cuando corresponde.
 - Se utiliza la estructura de autenticación de Supabase: auth.users y el objeto app_metadata dentro del JWT. El path para el role es app_metadata ->> 'role'.

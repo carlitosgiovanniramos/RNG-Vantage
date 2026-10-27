@@ -1,7 +1,7 @@
 # Documentación técnica: components/footer.tsx
 
-Archivo: footer.tsx  
-Ruta: components/footer.tsx  
+Archivo: footer.tsx\
+Ruta: components/footer.tsx\
 Longitud: 37 líneas
 
 Contenido relevante del componente
@@ -70,7 +70,7 @@ export default function Page() {
   return (
     <div>
       {/* Contenido de la página */}
-      
+
       {/* Footer fijo en la página */}
       <Footer />
     </div>
