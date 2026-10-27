@@ -236,7 +236,13 @@ export default function ServiciosAdminPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("¿Seguro que deseas eliminar este servicio?")) return;
+    const ok = await confirm({
+      title: "Eliminar servicio",
+      message: "¿Seguro que deseas eliminar este servicio? Esta acción no se puede deshacer.",
+      confirmLabel: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
 
     const { success, error } = await deleteService(id);
     if (!success) {

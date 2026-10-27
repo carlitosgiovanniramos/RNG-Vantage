@@ -1,3 +1,5 @@
+> HISTORICAL DOCUMENT: snapshot before the PayPhone migration. Not a current setup guide. See [current documentation](/README.md).
+
 # Integración de pagos con Kushki
 
 Pasarela de pagos del checkout de RGL Estudio. Cubre:

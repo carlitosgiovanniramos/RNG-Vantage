@@ -1,123 +1,38 @@
-# Documentacion tecnica de API y backend
+# API y Server Actions
 
-Fecha: 2026-05-25
+Documento correspondiente al código consolidado en `main`.
 
-## 1) API REST disponible
+## GET /api/admin/export-transactions
 
-### GET /api/transactions
+Exporta transacciones en CSV. Requiere sesión y perfil con rol `admin` e `is_active` distinto de `false`.
 
-**Descripcion funcional**
-Lista transacciones desde Supabase ordenadas por created_at descendente.
+- 200: archivo CSV.
+- 401: no hay sesión.
+- 403: el perfil no es un administrador activo.
+- 500: error al consultar las transacciones.
 
-**Request (JSON)**
-No aplica (sin body).
+Implementación: [route.ts](../app/api/admin/export-transactions/route.ts).
 
-**Response 200 (JSON)**
-{
-  "data": [
-    {
-      "id": "uuid",
-      "user_id": "uuid|null",
-      "subscription_id": "uuid|null",
-      "amount": 150,
-      "payment_method": "cash|transfer|card|pending",
-      "status": "pending|completed|failed|refunded",
-      "notes": "string|null",
-      "created_at": "ISO-8601",
-      "updated_at": "ISO-8601"
-    }
-  ]
-}
+No existe una ruta REST `/api/transactions` ni `/api/webhooks/kushki` en esta versión.
 
-**Errores**
-- 400: { "error": "message" }
-- 500: { "error": "Internal server error" }
+## Checkout
 
-**Autenticacion**
-No hay validacion explicita en el handler. Depende de cookies de sesion de Supabase y politicas RLS.
+Las operaciones se realizan mediante Server Actions de Next.js en [payment-actions.ts](../app/(public)/checkout/payment-actions.ts):
 
----
+- `initPayphonePayment`: autentica, valida el servicio activo, crea suscripción y transacción pendientes y prepara el pago. Devuelve la URL del portal.
+- `initManualTransfer`: crea la suscripción y transacción pendientes para una transferencia manual.
+- `uploadTransferReceipt`: valida propietario, estado pendiente, tipo y tamaño del archivo; guarda el comprobante en el bucket privado `comprobantes`. Admite JPG, PNG y WEBP hasta 5 MB.
 
-### POST /api/transactions
+El importe se obtiene del servicio en la base de datos, no del cliente.
 
-**Descripcion funcional**
-Inserta una transaccion en Supabase y devuelve el registro creado.
+## Retorno de PayPhone
 
-**Request (JSON)**
-Se inserta el body directamente en la tabla. Debe coincidir con el esquema de transactions.
-{
-  "user_id": "uuid (opcional)",
-  "subscription_id": "uuid (opcional)",
-  "amount": 150,
-  "payment_method": "cash|transfer|card|pending (opcional)",
-  "status": "pending|completed|failed|refunded (opcional)",
-  "notes": "string (opcional)"
-}
+`/pago-respuesta?id=...&clientTransactionId=...` consulta el resultado del proveedor desde el servidor y actualiza transacción y suscripción. Es una página de retorno del navegador, no un webhook. Consulta [el flujo de pagos](payphone-integration.md).
 
-**Response 201 (JSON)**
-{
-  "data": [
-    {
-      "id": "uuid",
-      "user_id": "uuid|null",
-      "subscription_id": "uuid|null",
-      "amount": 150,
-      "payment_method": "cash|transfer|card|pending",
-      "status": "pending|completed|failed|refunded",
-      "notes": "string|null",
-      "created_at": "ISO-8601",
-      "updated_at": "ISO-8601"
-    }
-  ]
-}
+## Servicios administrativos
 
-**Errores**
-- 400: { "error": "message" }
-- 500: { "error": "Internal server error" }
+Las Server Actions de [actions.tsx](../app/(dashboard)/servicios/actions.tsx) validan el rol de administrador activo antes de crear, actualizar o eliminar servicios. Los datos se validan con Zod y las mutaciones invalidan el catálogo público.
 
-**Autenticacion**
-No hay validacion explicita en el handler. Depende de cookies de sesion de Supabase y politicas RLS.
+## Edge Functions
 
-
-## 2) Backend real (no REST tradicional)
-
-La mayoria de operaciones usan Server Actions de Next.js ("use server") con Supabase SDK. El frontend invoca funciones del servidor directamente en lugar de consumir endpoints REST.
-
-### Autenticacion
-- login(formData)
-- signup(formData)
-Fuente: app/(auth)/actions.ts
-
-### Clientes (admin)
-- getClients()
-- updateClient(id, { first_name, last_name, is_active })
-- toggleClientActive(id, isActive)
-Fuente: app/(dashboard)/clientes/actions.ts
-
-### Servicios
-- getServices()
-- createService(formData)
-- updateService(id, formData)
-- deleteService(id)
-Fuente: app/(dashboard)/servicios/actions.tsx
-
-### Reservas
-- createReservation(data)
-- getReservations()
-- updateReservationStatus(id, status)
-Fuente: app/(public)/reservar/actions.ts, app/(dashboard)/reservas/actions.tsx
-
-### Transacciones (admin)
-- markTransactionAsCompleted(data)
-- getTransactions()
-- markTransactionAsFailed(transaction_id)
-- cleanExpiredTransactions()
-Fuente: app/(dashboard)/transacciones/actions.ts
-
-### Suscripciones / Checkout
-- createSubscription({ service_id, auto_renew })
-Fuente: app/(public)/checkout/actions.ts
-
-### Dashboard
-- getDashboardMetrics() (invoca Edge Function dashboard-metrics; fallback a vistas SQL)
-Fuente: app/(dashboard)/dashboard/actions.ts
+`dashboard-metrics` y `subscription-renewal` residen en `supabase/functions`, fuera de las rutas HTTP de Next.js. Consulta su código y las migraciones de cron para la autenticación y el despliegue.

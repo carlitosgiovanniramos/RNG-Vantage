@@ -63,10 +63,8 @@ export const config = {
      * Ejecutar el middleware en todo excepto:
      * - _next/static, _next/image (assets de Next)
      * - favicon, service worker, manifest PWA
-     * - api/webhooks (el webhook de Kushki se autentica por secreto,
-     *   no necesita sesion: ahorra un round trip de auth por evento)
      * - archivos de imagen
      */
-    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|api/webhooks|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

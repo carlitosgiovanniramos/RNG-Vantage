@@ -1,3 +1,5 @@
+> HISTORICAL DOCUMENT: snapshot before the PayPhone migration. Not a current setup guide. See [current documentation](/README.md).
+
 # Documentación Técnica Automática — RNG Vantage
 
 > Generada el 29/5/2026 por el Agente IA RNG Vantage

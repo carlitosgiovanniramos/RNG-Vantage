@@ -1,3 +1,5 @@
+> Historical architecture notes: payment references to Kushki describe the previous implementation. See [current payment flow](payphone-integration.md) and [deployment guide](DEPLOY.md).
+
 # Arquitectura y Diseño Técnico
 
 Este documento detalla la arquitectura de alto nivel del proyecto RGL Estudio, incluyendo el stack tecnológico, la estructura de directorios, la base de datos y los flujos principales.
