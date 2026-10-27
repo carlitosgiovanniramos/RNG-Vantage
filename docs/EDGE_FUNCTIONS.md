@@ -1,3 +1,5 @@
+> Historical architecture notes: payment references to Kushki describe the previous implementation. See [current payment flow](payphone-integration.md) and [deployment guide](DEPLOY.md).
+
 # Edge Functions de Supabase
 
 Este documento detalla las funciones serverless alojadas en Supabase (Edge Functions basadas en Deno), su propósito, mecanismos de autenticación y flujos esperados.

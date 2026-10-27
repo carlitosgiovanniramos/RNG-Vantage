@@ -84,7 +84,7 @@ export async function GET() {
     "Estado",
     "Metodo",
     "Pasarela",
-    "ID Kushki",
+    "ID Pasarela",
     "ID Transaccion",
   ];
   const lines = [header.map(csvCell).join(",")];

@@ -2,9 +2,9 @@ name: CI / Build Validation
 
 on:
   push:
-    branches: ["main", "develop"]
+    branches: ["main"]
   pull_request:
-    branches: ["main", "develop"]
+    branches: ["main"]
 
 jobs:
   build-and-lint:
@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Dependencies
@@ -26,7 +26,9 @@ jobs:
 
       - name: Run Linter
         run: npm run lint
-        continue-on-error: true # Opcional: Para evitar fallar PRs temporalmente si el lint estricto falla
+
+      - name: Unit Tests
+        run: npm run test:run
 
       - name: TypeScript Type Checking
         run: npx tsc --noEmit
