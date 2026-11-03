@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { logout } from "@/app/(auth)/actions";
+import { BrandLogo } from "@/components/brand-logo";
 import { useSupabase } from "@/hooks/use-supabase";
 
 const navLinks = [
@@ -31,18 +31,20 @@ export function Navbar() {
   const pathname = usePathname();
   const supabase = useSupabase();
   const isHome = pathname === "/";
+  // Paginas con encabezado claro y degradado detras del menu.
+  const hasLightHero = isHome || pathname === "/catalogo";
+  // Paginas con foto a pantalla completa detras del menu (menu transparente).
   const hasHero =
-    isHome ||
-    pathname === "/catalogo" ||
     pathname === "/capacitacion" ||
     pathname === "/sobre-nosotros";
 
   useEffect(() => {
-    if (!hasHero) return;
+    if (!hasHero && !hasLightHero) return;
     const onScroll = () => setScrolled(window.scrollY > 60);
+    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [hasHero]);
+  }, [hasHero, hasLightHero]);
 
   useEffect(() => {
     let isMounted = true;
@@ -113,22 +115,16 @@ export function Navbar() {
   const accountHref = isAdmin ? "/dashboard" : "/perfil";
 
   const transparent = hasHero && !scrolled;
+  // Home: fondo claro con degradado detras del menu; el menu va sin fondo
+  // pero conserva el texto oscuro.
+  const overLightHero = hasLightHero && !scrolled;
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 w-full transition-colors duration-300 ${transparent ? "bg-transparent" : "bg-background"}`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 w-full transition-colors duration-300 ${transparent || overLightHero ? "bg-transparent" : "bg-background"}`}>
       <div className="mx-auto flex w-full max-w-360 items-center justify-between px-8 py-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3">
-          <Image
-            src="/images/logo-rng.webp"
-            alt="RGL Estudio Logo"
-            width={42}
-            height={42}
-            className="rounded-none"
-          />
-          <span className={`font-spaceGrotesk text-2xl font-black tracking-tighter uppercase transition-colors duration-300 ${transparent ? "text-white" : "text-foreground"}`}>
-            RGL Estudio
-          </span>
+        <Link href="/" aria-label="RGL Estudio, inicio">
+          <BrandLogo inverted={transparent} className="[&>span:first-child]:text-3xl" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -212,17 +208,8 @@ export function Navbar() {
                 <SheetTitle className="sr-only">Menú de navegación</SheetTitle>
 
                 {/* Logo en el panel */}
-                <div className="px-8 pt-8 pb-6 flex items-center gap-3">
-                  <Image
-                    src="/images/logo-rng.webp"
-                    alt="RGL Estudio Logo"
-                    width={28}
-                    height={28}
-                    className="rounded-none"
-                  />
-                  <span className="font-spaceGrotesk text-xl font-black tracking-tighter uppercase text-foreground">
-                    RGL Estudio
-                  </span>
+                <div className="px-8 pt-8 pb-6">
+                  <BrandLogo />
                 </div>
                 <div className="h-px w-full bg-border" />
 
@@ -293,7 +280,7 @@ export function Navbar() {
           </div>
         </div>
       </div>
-      {!transparent && <div className="h-px w-full bg-[#dadedb] dark:bg-[#3d4140]" />}
+      {!transparent && !overLightHero && <div className="h-px w-full bg-[#dadedb] dark:bg-[#3d4140]" />}
     </header>
   );
 }
