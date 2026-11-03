@@ -14,57 +14,19 @@ export type DashboardMetrics = {
 };
 
 /**
- * Invoca la Edge Function `dashboard-metrics` para obtener
- * todas las metricas financieras y operativas en una sola llamada.
+ * Obtiene las metricas del dashboard desde las vistas SQL
+ * (v_dashboard_summary, v_monthly_income, v_service_mix).
  *
- * Fallback: si la Edge Function no esta disponible (ej. desarrollo local),
- * ejecuta las queries directamente desde el server component.
+ * Las 3 consultas van en paralelo (un solo round trip efectivo) y las
+ * vistas usan security_invoker, asi que respetan la RLS del admin.
+ * Antes se invocaba la Edge Function `dashboard-metrics`, que sumaba un
+ * salto extra (y arranque en frio) para calcular lo mismo.
  */
 export async function getDashboardMetrics(): Promise<{
   data: DashboardMetrics | null;
   error: string | null;
-  source: "edge-function" | "fallback";
 }> {
   const supabase = await createClient();
-
-  // Intentar invocar la Edge Function
-  try {
-    const { data, error } = await supabase.functions.invoke("dashboard-metrics", {
-      method: "GET",
-    });
-
-    if (!error && data) {
-      return { data: data as DashboardMetrics, error: null, source: "edge-function" };
-    }
-
-    // Si falla la Edge Function, usar fallback
-    console.warn(
-      "[dashboard-metrics] Edge Function no disponible, usando fallback:",
-      error?.message ?? "Unknown error",
-    );
-  } catch (err) {
-    console.warn(
-      "[dashboard-metrics] Edge Function no disponible, usando fallback:",
-      err instanceof Error ? err.message : err,
-    );
-  }
-
-  // ---------- FALLBACK: queries directas ----------
-  return getFallbackMetrics(supabase);
-}
-
-/**
- * Fallback que replica la logica de la Edge Function
- * usando vistas SQL precalculadas en vez de queries directas.
- * Util para desarrollo local sin Supabase Edge Functions.
- */
-async function getFallbackMetrics(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<{
-  data: DashboardMetrics | null;
-  error: string | null;
-  source: "fallback";
-}> {
   const now = new Date();
 
   const [summaryResult, incomeResult, mixResult] = await Promise.all([
@@ -81,7 +43,7 @@ async function getFallbackMetrics(
     ]
       .filter(Boolean)
       .join("; ");
-    return { data: null, error: msg, source: "fallback" };
+    return { data: null, error: msg };
   }
 
   const summary = summaryResult.data;
@@ -130,7 +92,6 @@ async function getFallbackMetrics(
       service_mix: serviceMix,
     },
     error: null,
-    source: "fallback",
   };
 }
 

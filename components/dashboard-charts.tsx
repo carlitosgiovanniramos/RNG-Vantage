@@ -1,8 +1,10 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { BarChart3, PieChart as PieChartIcon } from "lucide-react";
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   Cell,
   Pie,
   PieChart,
@@ -36,6 +38,14 @@ const PIE_COLORS = [
   CHART_COLORS.income,
 ];
 
+const TOOLTIP_STYLE = {
+  borderRadius: 0,
+  border: "1px solid var(--border)",
+  background: "var(--card)",
+  color: "var(--foreground)",
+  fontSize: 12,
+};
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("es-EC", {
     style: "currency",
@@ -44,129 +54,147 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function EmptyState({ icon, text }: { icon: ReactNode; text: string }) {
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 border border-dashed border-border/70 text-muted-foreground">
+      <span className="flex size-10 items-center justify-center bg-muted/60">{icon}</span>
+      <p className="text-sm">{text}</p>
+    </div>
+  );
+}
+
 export function DashboardCharts({
   monthlyIncome,
   serviceMix,
 }: DashboardChartsProps) {
   const hasIncome = monthlyIncome.some((item) => item.value > 0);
   const hasServiceMix = serviceMix.some((item) => item.value > 0);
+  const mixTotal = serviceMix.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <section className="grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)]">
-      <article className="relative overflow-hidden border border-border/60 bg-card/80 p-6 backdrop-blur-sm md:p-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-52 w-52 rounded-full bg-primary/10 blur-3xl"
-        />
-        <div className="relative space-y-4">
-          <div>
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.2em] text-primary">
-              Ingresos
-            </p>
-            <h2 className="font-spaceGrotesk text-lg font-black uppercase tracking-[0.12em] text-foreground">
-              Ingresos Mensuales
-            </h2>
-          </div>
-          <div className="h-64">
-            {hasIncome ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={monthlyIncome} barSize={32}>
-                  <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    fontSize={12}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "rgba(0,0,0,0.04)" }}
-                    contentStyle={{
-                      borderRadius: 12,
-                      borderColor: "rgba(15, 23, 42, 0.08)",
-                      fontSize: 12,
-                    }}
-                    formatter={(value) => formatCurrency(Number(value))}
-                  />
-                  <Bar dataKey="value" fill={CHART_COLORS.income} radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Sin datos suficientes para el grafico.
-              </div>
-            )}
-          </div>
+    <section className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <article
+        className="animate-rise border border-border/60 bg-card/80 p-6 backdrop-blur-sm"
+        style={{ animationDelay: "500ms" }}
+      >
+        <h2 className="font-spaceGrotesk text-base font-bold text-foreground">
+          Ingresos mensuales
+        </h2>
+        <div className="mt-6 h-64">
+          {hasIncome ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={monthlyIncome} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" style={{ stopColor: "var(--primary)", stopOpacity: 0.35 }} />
+                    <stop offset="100%" style={{ stopColor: "var(--primary)", stopOpacity: 0 }} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  fontSize={12}
+                  tick={{ fill: "var(--muted-foreground)" }}
+                />
+                <Tooltip
+                  cursor={{ stroke: "var(--border)" }}
+                  contentStyle={TOOLTIP_STYLE}
+                  formatter={(value) => formatCurrency(Number(value))}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke={CHART_COLORS.income}
+                  strokeWidth={2.5}
+                  fill="url(#incomeFill)"
+                  animationDuration={1400}
+                  activeDot={{ r: 5, strokeWidth: 0, fill: CHART_COLORS.income }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyState
+              icon={<BarChart3 className="size-5" />}
+              text="Aún no hay ingresos registrados"
+            />
+          )}
         </div>
       </article>
 
-      <article className="relative overflow-hidden border border-border/60 bg-card/80 p-6 backdrop-blur-sm md:p-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-20 -top-20 h-44 w-44 rounded-full bg-primary/10 blur-3xl"
-        />
-        <div className="relative space-y-4">
-          <div>
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.2em] text-primary">
-              Mix de servicios
-            </p>
-            <h2 className="font-spaceGrotesk text-lg font-black uppercase tracking-[0.12em] text-foreground">
-              Ingresos por Tipo
-            </h2>
-          </div>
-          <div className="h-64">
-            {hasServiceMix ? (
+      <article
+        className="animate-rise border border-border/60 bg-card/80 p-6 backdrop-blur-sm"
+        style={{ animationDelay: "580ms" }}
+      >
+        <h2 className="font-spaceGrotesk text-base font-bold text-foreground">
+          Ingresos por tipo
+        </h2>
+        {hasServiceMix ? (
+          <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row lg:flex-col xl:flex-row">
+            <div className="relative h-48 w-48 shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={serviceMix}
                     dataKey="value"
                     nameKey="name"
-                    innerRadius={54}
-                    outerRadius={84}
-                    paddingAngle={4}
+                    innerRadius={60}
+                    outerRadius={88}
+                    paddingAngle={3}
+                    stroke="none"
+                    animationDuration={1200}
                   >
                     {serviceMix.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={PIE_COLORS[index % PIE_COLORS.length]}
-                      />
+                      <Cell key={entry.name} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: 12,
-                      borderColor: "rgba(15, 23, 42, 0.08)",
-                      fontSize: 12,
-                    }}
-                  />
+                  <Tooltip contentStyle={TOOLTIP_STYLE} />
                 </PieChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Sin datos suficientes para el grafico.
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="font-spaceGrotesk text-2xl font-bold text-foreground">
+                  {mixTotal}
+                </span>
+                <span className="text-xs text-muted-foreground">total</span>
               </div>
-            )}
-          </div>
-          {hasServiceMix ? (
-            <div className="space-y-2">
-              {serviceMix.map((item, index) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="inline-flex h-2.5 w-2.5 rounded-full"
-                      style={{
-                        backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
-                      }}
-                    />
-                    <span className="text-muted-foreground">{item.name}</span>
-                  </div>
-                  <span className="font-spaceGrotesk text-xs font-bold text-foreground">
-                    {item.value}
-                  </span>
-                </div>
-              ))}
             </div>
-          ) : null}
-        </div>
+            <ul className="w-full space-y-3">
+              {serviceMix.map((item, index) => {
+                const percent = mixTotal > 0 ? Math.round((item.value / mixTotal) * 100) : 0;
+                return (
+                  <li key={item.name} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2 text-muted-foreground">
+                        <span
+                          className="size-2 rounded-full"
+                          style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                        />
+                        {item.name}
+                      </span>
+                      <span className="font-medium tabular-nums text-foreground">{percent}%</span>
+                    </div>
+                    <div className="h-1 bg-muted">
+                      <div
+                        className="h-full transition-[width] duration-1000 ease-out"
+                        style={{
+                          width: `${percent}%`,
+                          backgroundColor: PIE_COLORS[index % PIE_COLORS.length],
+                        }}
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : (
+          <div className="mt-6 h-64">
+            <EmptyState
+              icon={<PieChartIcon className="size-5" />}
+              text="Sin ventas por tipo todavía"
+            />
+          </div>
+        )}
       </article>
     </section>
   );

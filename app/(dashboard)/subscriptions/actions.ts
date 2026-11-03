@@ -2,24 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminSession } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 async function ensureAdmin() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "No autorizado" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, is_active")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile || profile.role !== "admin" || profile.is_active === false) {
-    return { error: "No autorizado" };
-  }
+  const { isAdmin } = await getAdminSession(supabase);
+  if (!isAdmin) return { error: "No autorizado" };
 
   return { error: null };
 }

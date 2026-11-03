@@ -1,10 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, PencilLine, Plus, Power, Trash2 } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleOff,
+  Layers,
+  PencilLine,
+  Plus,
+  Power,
+  Trash2,
+} from "lucide-react";
+
+import { AdminPageHeader } from "@/components/admin-page-header";
+import { TableSkeleton } from "@/components/admin-skeleton";
+import { DataCard } from "@/components/data-card";
 
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
@@ -361,245 +372,200 @@ export default function ServiciosAdminPage() {
   const inactiveCount = services.length - activeCount;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-8 md:py-10">
-      <header className="relative overflow-hidden border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:p-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/15 blur-3xl"
-        />
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-2">
-            <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-primary">
-              Administración de catálogo
-            </p>
-            <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
-              Gestión de Servicios
-            </h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              Diseña y actualiza servicios con un flujo rápido, limpio y
-              controlado para el equipo de RGL Estudio.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-              <DialogTrigger
-                render={
-                  <Button
-                    type="button"
-                    size="lg"
-                    className="h-11 rounded-none px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
-                    onClick={handleOpenNewServiceDialog}
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-10 md:py-12">
+      <AdminPageHeader eyebrow="Administración de catálogo" title="Gestión de servicios">
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+          <DialogTrigger
+            render={
+              <Button
+                type="button"
+                size="lg"
+                className="h-11 rounded-none px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em]"
+                onClick={handleOpenNewServiceDialog}
+              />
+            }
+          >
+            <Plus className="size-4" />
+            Nuevo Servicio
+          </DialogTrigger>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingServiceId ? "Editar Servicio" : "Nuevo Servicio"}
+                </DialogTitle>
+                <DialogDescription>
+                  Completa la información visible en el catálogo y define si
+                  el servicio estará activo.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Nombre</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="h-11"
+                    required
                   />
-                }
-              >
-                <Plus className="size-4" />
-                Nuevo Servicio
-              </DialogTrigger>
-              <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {editingServiceId ? "Editar Servicio" : "Nuevo Servicio"}
-                    </DialogTitle>
-                    <DialogDescription>
-                      Completa la información visible en el catálogo y define si
-                      el servicio estará activo.
-                    </DialogDescription>
-                  </DialogHeader>
+                  {formFieldErrors?.name && (
+                    <p className="text-xs text-destructive">
+                      {formFieldErrors.name[0]}
+                    </p>
+                  )}
+                </div>
 
-                  <div className="grid gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Nombre</Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="h-11"
-                        required
-                      />
-                      {formFieldErrors?.name && (
-                        <p className="text-xs text-destructive">
-                          {formFieldErrors.name[0]}
-                        </p>
-                      )}
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Descripción</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    value={formData.description || ""}
+                    onChange={handleInputChange}
+                    rows={4}
+                  />
+                  {formFieldErrors?.description && (
+                    <p className="text-xs text-destructive">
+                      {formFieldErrors.description[0]}
+                    </p>
+                  )}
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Descripción</Label>
-                      <Textarea
-                        id="description"
-                        name="description"
-                        value={formData.description || ""}
-                        onChange={handleInputChange}
-                        rows={4}
-                      />
-                      {formFieldErrors?.description && (
-                        <p className="text-xs text-destructive">
-                          {formFieldErrors.description[0]}
-                        </p>
-                      )}
-                    </div>
+                <div className="space-y-2">
+                  <Label htmlFor="type">Tipo</Label>
+                  <select
+                    id="type"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    className="h-11 w-full border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  >
+                    {SERVICE_TYPE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {formFieldErrors?.type && (
+                    <p className="text-xs text-destructive">
+                      {formFieldErrors.type[0]}
+                    </p>
+                  )}
+                </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="type">Tipo</Label>
-                      <select
-                        id="type"
-                        name="type"
-                        value={formData.type}
-                        onChange={handleInputChange}
-                        className="h-11 w-full border border-input bg-background px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      >
-                        {SERVICE_TYPE_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                      {formFieldErrors?.type && (
-                        <p className="text-xs text-destructive">
-                          {formFieldErrors.type[0]}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="price">Precio</Label>
-                        <Input
-                          id="price"
-                          type="number"
-                          name="price"
-                          step="0.01"
-                          min="0"
-                          value={formData.price}
-                          onChange={handleInputChange}
-                          className="h-11"
-                          required
-                        />
-                        {formFieldErrors?.price && (
-                          <p className="text-xs text-destructive">
-                            {formFieldErrors.price[0]}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="duration_months">Duración</Label>
-                        <Input
-                          id="duration_months"
-                          type="number"
-                          name="duration_months"
-                          min="1"
-                          value={formData.duration_months}
-                          onChange={handleInputChange}
-                          className="h-11"
-                          required
-                        />
-                        {formFieldErrors?.duration_months && (
-                          <p className="text-xs text-destructive">
-                            {formFieldErrors.duration_months[0]}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <label
-                      htmlFor="is_active"
-                      className="flex items-center gap-3 border border-border/60 bg-muted/40 p-3"
-                    >
-                      <input
-                        type="checkbox"
-                        name="is_active"
-                        id="is_active"
-                        checked={formData.is_active}
-                        onChange={handleInputChange}
-                        className="h-4 w-4 accent-primary"
-                      />
-                      <span className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.14em] text-foreground">
-                        Activo / Visible
-                      </span>
-                    </label>
-
-                    {typeof formError === "string" && (
-                      <p className="text-sm text-destructive">{formError}</p>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Precio</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      name="price"
+                      step="0.01"
+                      min="0"
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      className="h-11"
+                      required
+                    />
+                    {formFieldErrors?.price && (
+                      <p className="text-xs text-destructive">
+                        {formFieldErrors.price[0]}
+                      </p>
                     )}
                   </div>
 
-                  <DialogFooter>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleDialogOpenChange(false)}
-                      disabled={isSubmitting}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting
-                        ? "Guardando..."
-                        : editingServiceId
-                          ? "Guardar cambios"
-                          : "Guardar servicio"}
-                    </Button>
-                  </DialogFooter>
-                </form>
-              </DialogContent>
-            </Dialog>
+                  <div className="space-y-2">
+                    <Label htmlFor="duration_months">Duración</Label>
+                    <Input
+                      id="duration_months"
+                      type="number"
+                      name="duration_months"
+                      min="1"
+                      value={formData.duration_months}
+                      onChange={handleInputChange}
+                      className="h-11"
+                      required
+                    />
+                    {formFieldErrors?.duration_months && (
+                      <p className="text-xs text-destructive">
+                        {formFieldErrors.duration_months[0]}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
-            <Link
-              href="/dashboard"
-              className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-            >
-              <ArrowLeft className="size-4" />
-              Volver al dashboard
-            </Link>
-          </div>
-        </div>
-      </header>
+                <label
+                  htmlFor="is_active"
+                  className="flex items-center gap-3 border border-border/60 bg-muted/40 p-3"
+                >
+                  <input
+                    type="checkbox"
+                    name="is_active"
+                    id="is_active"
+                    checked={formData.is_active}
+                    onChange={handleInputChange}
+                    className="h-4 w-4 accent-primary"
+                  />
+                  <span className="font-spaceGrotesk text-[0.7rem] font-bold uppercase tracking-[0.14em] text-foreground">
+                    Activo / Visible
+                  </span>
+                </label>
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Total
-          </p>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
-            {services.length}
-          </p>
-        </article>
-        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Activos
-          </p>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
-            {activeCount}
-          </p>
-        </article>
-        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Inactivos
-          </p>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
-            {inactiveCount}
-          </p>
-        </article>
+                {typeof formError === "string" && (
+                  <p className="text-sm text-destructive">{formError}</p>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleDialogOpenChange(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? "Guardando..."
+                    : editingServiceId
+                      ? "Guardar cambios"
+                      : "Guardar servicio"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </AdminPageHeader>
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <DataCard
+          title="Total de servicios"
+          value={services.length}
+          icon={<Layers className="size-4" />}
+          delay={80}
+        />
+        <DataCard
+          title="Activos"
+          value={activeCount}
+          icon={<CheckCircle2 className="size-4" />}
+          delay={140}
+        />
+        <DataCard
+          title="Inactivos"
+          value={inactiveCount}
+          icon={<CircleOff className="size-4" />}
+          delay={200}
+        />
       </section>
 
-      <section className="space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="font-spaceGrotesk text-2xl font-black uppercase tracking-[0.08em] text-foreground md:text-3xl">
-            Catálogo de Servicios
-          </h2>
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-            {services.length} servicio(s) en catálogo
-          </p>
-        </div>
-
+      <section className="animate-rise" style={{ animationDelay: "260ms" }}>
         {isLoading ? (
-          <div className="border border-border/60 bg-card/80 p-8 text-center">
-            Cargando servicios...
-          </div>
+          <TableSkeleton />
         ) : isError ? (
           <div className="border border-border/60 bg-card/80 p-8 text-center text-red-500">
             Error: {error.message}

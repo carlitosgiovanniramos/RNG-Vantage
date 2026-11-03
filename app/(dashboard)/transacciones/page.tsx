@@ -2,12 +2,24 @@
 
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Eye, Home } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Download,
+  Eraser,
+  Eye,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 
+import { AdminPageHeader, headerActionClass } from "@/components/admin-page-header";
+import { AdminPageSkeleton } from "@/components/admin-skeleton";
+import { DataCard } from "@/components/data-card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
+import { FilterSelect } from "@/components/filter-select";
 import { StatusBadge } from "@/components/status-badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -20,7 +32,7 @@ import {
   cleanExpiredTransactions,
   getReceiptSignedUrl,
 } from "./actions";
-import { PAYMENT_METHOD_LABELS, TRANSACTION_STATUS_LABELS } from "@/lib/labels";
+import { PAYMENT_METHOD_LABELS } from "@/lib/labels";
 import { formatCurrency } from "@/lib/utils";
 
 export type TransactionRow = {
@@ -303,8 +315,22 @@ export default function TransaccionesAdminPage() {
     0,
   );
 
+  const countByStatus = (status: TransactionRow["status"]) =>
+    transactions.filter((tx) => tx.status === status).length;
+  const statusTabs: {
+    label: string;
+    value: TransactionRow["status"] | "all";
+    count: number;
+  }[] = [
+    { label: "Todas", value: "all", count: transactions.length },
+    { label: "Pendientes", value: "pending", count: countByStatus("pending") },
+    { label: "Completadas", value: "completed", count: countByStatus("completed") },
+    { label: "Fallidas", value: "failed", count: countByStatus("failed") },
+    { label: "Reembolsadas", value: "refunded", count: countByStatus("refunded") },
+  ];
+
   if (isLoading) {
-    return <div className="p-8 text-center">Cargando transacciones...</div>;
+    return <AdminPageSkeleton />;
   }
 
   if (isError) {
@@ -314,97 +340,54 @@ export default function TransaccionesAdminPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8 md:py-10">
-      <header className="flex flex-col gap-4 border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:flex-row md:items-end md:justify-between">
-        <div className="space-y-2">
-          <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-primary">
-            Registro financiero
-          </p>
-          <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
-            Transacciones
-          </h1>
-        </div>
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-10 md:py-12">
+      <AdminPageHeader eyebrow="Registro financiero" title="Transacciones">
+        <button type="button" onClick={handleCleanExpired} className={headerActionClass}>
+          <Eraser className="size-4" />
+          Limpiar expiradas (24h)
+        </button>
+        <a href="/api/admin/export-transactions" className={headerActionClass}>
+          <Download className="size-4" />
+          Exportar CSV
+        </a>
+        <Link href="/pagos-fallidos" className={headerActionClass}>
+          <AlertTriangle className="size-4" />
+          Pagos fallidos
+        </Link>
+      </AdminPageHeader>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCleanExpired}
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            Limpiar Expiradas (24h)
-          </Button>
-
-          <a
-            href="/api/admin/export-transactions"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            Exportar CSV
-          </a>
-
-          <Link
-            href="/pagos-fallidos"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            Pagos fallidos
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            <ArrowLeft className="size-4" />
-            Volver al dashboard
-          </Link>
-          <Link
-            href="/"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            <Home className="size-4" />
-            Panel principal
-          </Link>
-        </div>
-      </header>
-
-      <section className="flex flex-wrap items-center gap-4 border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-        <div className="min-w-[180px] space-y-2">
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Estado
-          </p>
-          <Select
-            value={statusFilter}
-            onValueChange={(value) =>
-              setStatusFilter(value as TransactionRow["status"] | "all")
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Filtrar">
-                {statusFilter === "all"
-                  ? "Todos"
-                  : TRANSACTION_STATUS_LABELS[statusFilter] ?? "Todos"}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="pending">Pendiente</SelectItem>
-              <SelectItem value="completed">Completado</SelectItem>
-              <SelectItem value="failed">Fallido</SelectItem>
-              <SelectItem value="refunded">Reembolsado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="ml-auto border border-border/60 bg-background/80 px-4 py-3">
-          <p className="font-spaceGrotesk text-[0.62rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Total filtrado
-          </p>
-          <p className="mt-1 font-spaceGrotesk text-2xl font-black text-foreground">
-            {formatCurrency(totalFiltered)}
-          </p>
-        </div>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <DataCard
+          title="Total filtrado"
+          value={totalFiltered}
+          format="currency"
+          icon={<Wallet className="size-4" />}
+          delay={80}
+        />
+        <DataCard
+          title="Completadas"
+          value={countByStatus("completed")}
+          icon={<CheckCircle2 className="size-4" />}
+          delay={140}
+        />
+        <DataCard
+          title="Pendientes"
+          value={countByStatus("pending")}
+          icon={<Clock3 className="size-4" />}
+          delay={200}
+          highlight
+        />
       </section>
 
       <DataTable
         data={filteredTransactions}
+        toolbar={
+          <FilterSelect
+            options={statusTabs}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        }
         columns={columns}
         pageSize={5}
         filterPlaceholder="Buscar por ID, estado o método"

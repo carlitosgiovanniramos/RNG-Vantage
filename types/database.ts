@@ -266,7 +266,19 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      admin_list_clients: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          first_name: string | null
+          last_name: string | null
+          email: string
+          role: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

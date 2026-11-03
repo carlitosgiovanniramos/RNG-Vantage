@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { CheckCircle2, Clock3, Repeat } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin-page-header";
+import { DataCard } from "@/components/data-card";
 import { SubscriptionsTable } from "@/app/(dashboard)/subscriptions/subscriptions-table";
 import { RealtimeRefresher } from "@/components/realtime-refresher";
 import type { Database } from "@/types/database";
@@ -86,50 +87,35 @@ export default async function SubscriptionsPage() {
   ).length;
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-8 md:py-10">
-      <header className="flex flex-col gap-3 border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-primary">
-            Ciclo comercial
-          </p>
-          <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground">
-            Suscripciones
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Vista general de renovaciones, estados y fechas de vencimiento.
-          </p>
-        </div>
-        <Link
-          href="/dashboard"
-          className="inline-flex h-10 items-center gap-2 border border-border/70 bg-background/80 px-3 font-spaceGrotesk text-[0.65rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-        >
-          <ArrowLeft className="size-4" />
-          Volver
-        </Link>
-      </header>
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-10 md:py-12">
+      <AdminPageHeader eyebrow="Ciclo comercial" title="Suscripciones" />
 
-      <section className="grid gap-3 sm:grid-cols-3">
-        {[
-          { label: "Total", value: subscriptionRows.length },
-          { label: "Activas", value: activeCount },
-          { label: "Pendientes", value: pendingCount },
-        ].map((stat) => (
-          <article
-            key={stat.label}
-            className="border border-border/60 bg-card/80 p-4 text-sm backdrop-blur-sm"
-          >
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              {stat.label}
-            </p>
-            <p className="mt-2 font-spaceGrotesk text-2xl font-black text-foreground">
-              {stat.value}
-            </p>
-          </article>
-        ))}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <DataCard
+          title="Total"
+          value={subscriptionRows.length}
+          icon={<Repeat className="size-4" />}
+          delay={80}
+        />
+        <DataCard
+          title="Activas"
+          value={activeCount}
+          icon={<CheckCircle2 className="size-4" />}
+          delay={140}
+        />
+        <DataCard
+          title="Pendientes"
+          value={pendingCount}
+          icon={<Clock3 className="size-4" />}
+          delay={200}
+          highlight
+        />
       </section>
 
       <RealtimeRefresher tables={["subscriptions"]} />
-      <SubscriptionsTable rows={subscriptionRows} />
+      <div className="animate-rise" style={{ animationDelay: "260ms" }}>
+        <SubscriptionsTable rows={subscriptionRows} />
+      </div>
     </div>
   );
 }

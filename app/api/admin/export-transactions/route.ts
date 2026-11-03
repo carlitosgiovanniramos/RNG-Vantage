@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAdminSession } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -26,20 +27,11 @@ function csvCell(value: string | number | null | undefined): string {
 export async function GET() {
   // 1. Verificar que el llamante es un admin activo.
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  const { userId, isAdmin } = await getAdminSession(supabase);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, is_active")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile || profile.role !== "admin" || profile.is_active === false) {
+  if (!isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

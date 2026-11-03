@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { ArrowLeft, PencilLine, Power, UserCheck, UserRoundX, UsersRound } from "lucide-react";
+import { PencilLine, Power, UserCheck, UserRoundX, UsersRound } from "lucide-react";
 
+import { AdminPageHeader } from "@/components/admin-page-header";
+import { TableSkeleton } from "@/components/admin-skeleton";
+import { DataCard } from "@/components/data-card";
 import { DataTable, type DataTableColumn } from "@/components/data-table";
 import { StatusBadge } from "@/components/status-badge";
 import { useConfirm } from "@/components/use-confirm";
@@ -176,61 +178,33 @@ export default function ClientesAdminPage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-8 md:py-10">
-      <header className="relative overflow-hidden border border-border/70 bg-card/90 p-6 shadow-[12px_12px_0_var(--border)] backdrop-blur-xl md:p-8">
-        <div className="absolute inset-x-0 top-0 h-1 bg-primary" />
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-2">
-            <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-primary">
-              Gestion de clientes
-            </p>
-            <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
-              Clientes
-            </h1>
-            <p className="max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Administra clientes registrados, actualiza sus datos principales y desactiva accesos cuando ya no esten activos.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            <ArrowLeft className="size-4" />
-            Volver al dashboard
-          </Link>
-        </div>
-      </header>
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-10 md:py-12">
+      <AdminPageHeader eyebrow="Gestión de clientes" title="Clientes" />
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <article className="border border-border/70 bg-card/90 p-5 backdrop-blur-xl">
-          <UsersRound className="mb-4 size-5 text-primary" />
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">Total clientes</p>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">{clients.length}</p>
-        </article>
-        <article className="border border-border/70 bg-card/90 p-5 backdrop-blur-xl">
-          <UserCheck className="mb-4 size-5 text-primary" />
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">Activos</p>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">{activeCount}</p>
-        </article>
-        <article className="border border-border/70 bg-card/90 p-5 backdrop-blur-xl">
-          <UserRoundX className="mb-4 size-5 text-primary" />
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">Inactivos</p>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">{inactiveCount}</p>
-        </article>
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <DataCard
+          title="Total de clientes"
+          value={clients.length}
+          icon={<UsersRound className="size-4" />}
+          delay={80}
+        />
+        <DataCard
+          title="Activos"
+          value={activeCount}
+          icon={<UserCheck className="size-4" />}
+          delay={140}
+        />
+        <DataCard
+          title="Inactivos"
+          value={inactiveCount}
+          icon={<UserRoundX className="size-4" />}
+          delay={200}
+        />
       </section>
 
-      <section className="space-y-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="font-spaceGrotesk text-2xl font-black uppercase tracking-[0.08em] text-foreground md:text-3xl">
-            Registro de clientes
-          </h2>
-          <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-            {clients.length} cliente(s)
-          </p>
-        </div>
-
+      <section className="animate-rise" style={{ animationDelay: "260ms" }}>
         {isLoading ? (
-          <div className="border border-border/60 bg-card/80 p-8 text-center">Cargando clientes...</div>
+          <TableSkeleton />
         ) : isError ? (
           <div className="border border-border/60 bg-card/80 p-8 text-center text-red-500">Error: {error.message}</div>
         ) : (

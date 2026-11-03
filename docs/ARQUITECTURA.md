@@ -37,7 +37,7 @@ lib/
 hooks/           → use-admin-realtime.ts, use-supabase.ts
 types/           → database.ts, index.ts
 supabase/
-  functions/     → dashboard-metrics, subscription-renewal
+  functions/     → subscription-renewal
   migrations/    → migraciones secuenciales en SQL
 ```
 

@@ -1,17 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import type { User } from "@supabase/supabase-js";
+import type { JwtPayload, SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Refresca los tokens de sesion y devuelve el usuario autenticado.
+ * Refresca los tokens de sesion y devuelve los claims del JWT.
  *
- * Devuelve tambien el `user` para que el middleware NO tenga que llamar
- * a `auth.getUser()` una segunda vez (cada llamada es un round trip de
- * red a Supabase y penaliza el TTFB de todas las paginas).
+ * Usa getClaims() en vez de getUser(): con claves de firma asimetricas
+ * (ES256) el token se verifica localmente con la JWKS en cache, sin
+ * round trip a Supabase Auth en cada navegacion. Devuelve tambien el
+ * cliente para reutilizarlo si hace falta consultar la BD.
  */
 export async function updateSession(request: NextRequest): Promise<{
   response: NextResponse;
-  user: User | null;
+  claims: JwtPayload | null;
+  supabase: SupabaseClient | null;
 }> {
   // Visitante anonimo (sin cookies de sesion de Supabase): no hay token
   // que refrescar. Se evita el round trip de red a Supabase Auth, que de
@@ -21,7 +23,7 @@ export async function updateSession(request: NextRequest): Promise<{
     .some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
 
   if (!hasAuthCookies) {
-    return { response: NextResponse.next({ request }), user: null };
+    return { response: NextResponse.next({ request }), claims: null, supabase: null };
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -47,12 +49,10 @@ export async function updateSession(request: NextRequest): Promise<{
     }
   );
 
-  // Do not run code between createServerClient and supabase.auth.getUser().
+  // Do not run code between createServerClient and supabase.auth.getClaims().
   // A simple mistake could make it very hard to debug issues with users being
   // randomly logged out.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
 
-  return { response: supabaseResponse, user };
+  return { response: supabaseResponse, claims: data?.claims ?? null, supabase };
 }

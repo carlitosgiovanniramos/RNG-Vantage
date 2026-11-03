@@ -35,4 +35,4 @@ Las Server Actions de [actions.tsx](../app/(dashboard)/servicios/actions.tsx) va
 
 ## Edge Functions
 
-`dashboard-metrics` y `subscription-renewal` residen en `supabase/functions`, fuera de las rutas HTTP de Next.js. Consulta su código y las migraciones de cron para la autenticación y el despliegue.
+`subscription-renewal` reside en `supabase/functions`, fuera de las rutas HTTP de Next.js. Consulta su código y las migraciones de cron para la autenticación y el despliegue. Las métricas del dashboard se leen de vistas SQL desde [actions.ts](../app/(dashboard)/dashboard/actions.ts).

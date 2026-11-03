@@ -27,7 +27,6 @@ Verifica RLS, el bucket privado `comprobantes`, los permisos de subida y las pol
 ## Edge Functions
 
 ```bash
-npx supabase functions deploy dashboard-metrics
 npx supabase functions deploy subscription-renewal
 ```
 
