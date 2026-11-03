@@ -9,7 +9,10 @@ export function Providers({ children }: { children: ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000,
+            // Los datos del panel se mantienen frescos via Realtime e
+            // invalidaciones tras cada mutacion; volver a una vista no
+            // necesita repetir la consulta.
+            staleTime: 5 * 60 * 1000,
             refetchOnWindowFocus: false,
           },
         },

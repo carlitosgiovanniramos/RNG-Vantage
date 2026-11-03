@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,7 +13,11 @@ import {
   getReservationDisplayStatus,
   RESERVATION_STATUS_META,
 } from "@/lib/reservations";
-import { ArrowLeft, AlarmClock, CalendarCheck2, Clock3, XCircle } from "lucide-react";
+import { AlarmClock, CalendarCheck2, Clock3, XCircle } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin-page-header";
+import { AdminPageSkeleton } from "@/components/admin-skeleton";
+import { DataCard } from "@/components/data-card";
+import { FilterSelect } from "@/components/filter-select";
 import { toast } from "sonner";
 import { useAdminRealtime } from "@/hooks/use-admin-realtime";
 
@@ -168,116 +171,53 @@ export default function ReservasAdminPage() {
     { label: "Canceladas", value: "cancelled", count: cancelledCount },
   ] as const;
 
-  if (isLoading)
-    return <div className="p-8 text-center">Cargando reservas...</div>;
+  if (isLoading) return <AdminPageSkeleton cards={4} />;
   if (isError)
     return (
       <div className="p-8 text-center text-red-500">Error: {error.message}</div>
     );
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-8 px-6 py-8 md:py-10">
-      <header className="relative overflow-hidden border border-border/60 bg-card/85 p-6 backdrop-blur-sm md:p-8">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-primary/15 blur-3xl"
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-6 py-10 md:py-12">
+      <AdminPageHeader eyebrow="Agenda y seguimiento" title="Gestión de reservas" />
+
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <DataCard
+          title="Pendientes"
+          value={pendingCount}
+          icon={<Clock3 className="size-4" />}
+          delay={80}
+          highlight
         />
-        <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-2">
-            <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-primary">
-              Agenda y seguimiento
-            </p>
-            <h1 className="font-spaceGrotesk text-3xl font-black uppercase tracking-tight text-foreground md:text-4xl">
-              Gestión de Reservas
-            </h1>
-            <p className="max-w-2xl text-sm text-muted-foreground">
-              Supervisa el estado de las reservas y ejecuta confirmaciones o
-              cancelaciones de forma rápida y segura.
-            </p>
-          </div>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-11 items-center gap-2 border border-border/70 bg-background/80 px-4 font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground transition-colors hover:bg-muted"
-          >
-            <ArrowLeft className="size-4" />
-            Volver al dashboard
-          </Link>
-        </div>
-      </header>
-
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Pendientes
-            </p>
-            <Clock3 className="size-4 text-amber-600" />
-          </div>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
-            {pendingCount}
-          </p>
-        </article>
-
-        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Atrasadas
-            </p>
-            <AlarmClock className="size-4 text-red-600" />
-          </div>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
-            {overdueCount}
-          </p>
-        </article>
-
-        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Confirmadas
-            </p>
-            <CalendarCheck2 className="size-4 text-emerald-600" />
-          </div>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
-            {confirmedCount}
-          </p>
-        </article>
-
-        <article className="border border-border/60 bg-card/80 p-4 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <p className="font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Canceladas
-            </p>
-            <XCircle className="size-4 text-red-600" />
-          </div>
-          <p className="mt-2 font-spaceGrotesk text-3xl font-black text-foreground">
-            {cancelledCount}
-          </p>
-        </article>
-      </section>
-
-      <section className="flex flex-wrap gap-2 border border-border/60 bg-card/80 p-3 backdrop-blur-sm">
-        {statusTabs.map((tab) => {
-          const isActive = statusFilter === tab.value;
-          return (
-            <Button
-              key={tab.value}
-              type="button"
-              variant={isActive ? "default" : "outline"}
-              onClick={() => setStatusFilter(tab.value)}
-              className={
-                isActive
-                  ? "h-9 rounded-none font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em]"
-                  : "h-9 rounded-none border-border/70 font-spaceGrotesk text-[0.66rem] font-bold uppercase tracking-[0.16em]"
-              }
-            >
-              {tab.label} ({tab.count})
-            </Button>
-          );
-        })}
+        <DataCard
+          title="Atrasadas"
+          value={overdueCount}
+          icon={<AlarmClock className="size-4" />}
+          delay={140}
+        />
+        <DataCard
+          title="Confirmadas"
+          value={confirmedCount}
+          icon={<CalendarCheck2 className="size-4" />}
+          delay={200}
+        />
+        <DataCard
+          title="Canceladas"
+          value={cancelledCount}
+          icon={<XCircle className="size-4" />}
+          delay={260}
+        />
       </section>
 
       <DataTable
         data={filteredReservations}
+        toolbar={
+          <FilterSelect
+            options={statusTabs}
+            value={statusFilter}
+            onChange={setStatusFilter}
+          />
+        }
         columns={columns}
         pageSize={5}
         filterPlaceholder="Buscar por cliente, email o estado"

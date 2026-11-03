@@ -1,5 +1,6 @@
 import { AuthCard } from "./auth-card";
 import Link from "next/link";
+import { BrandLogo } from "@/components/brand-logo";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,10 +10,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Link
           href="/"
           aria-label="RGL Estudio, inicio"
-          className="flex items-baseline gap-2.5 text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
+          className="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary"
         >
-          <span className="font-spaceGrotesk text-2xl font-bold tracking-[-0.08em]">RGL<span className="text-primary">.</span></span>
-          <span className="text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">Estudio</span>
+          <BrandLogo />
         </Link>
         <Link
           href="/"

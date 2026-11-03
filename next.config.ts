@@ -17,6 +17,8 @@ const externalOrigins = siteHost && !siteHost.startsWith("localhost") ? [siteHos
 const nextConfig: NextConfig = {
   // Permite peticiones cross-origin en desarrollo (assets/HMR) desde el tunel.
   allowedDevOrigins: externalOrigins,
+  // El indicador de dev tapaba el menú de cuenta del sidebar (abajo a la izquierda).
+  devIndicators: { position: "bottom-right" },
   // Los Server Actions tienen un limite de body de 1 MB por defecto.
   // Se sube a 6 MB para permitir la carga de comprobantes (hasta 5 MB).
   experimental: {

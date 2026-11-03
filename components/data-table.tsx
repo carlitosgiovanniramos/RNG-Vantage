@@ -1,9 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { useMemo, useState, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -27,14 +26,35 @@ type DataTableProps<T extends Record<string, unknown>> = {
   columns: DataTableColumn<T>[];
   pageSize?: number;
   filterPlaceholder?: string;
+  /** Controles extra junto al buscador (p. ej. un filtro por estado) */
+  toolbar?: ReactNode;
   className?: string;
 };
+
+/** Páginas visibles: todas si son pocas; si no, primera, última y vecinas con "…". */
+function getPageItems(current: number, total: number): (number | "ellipsis")[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, index) => index + 1);
+  }
+  const items: (number | "ellipsis")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) items.push("ellipsis");
+  for (let page = start; page <= end; page++) items.push(page);
+  if (end < total - 1) items.push("ellipsis");
+  items.push(total);
+  return items;
+}
+
+const pageButtonClass =
+  "flex size-9 items-center justify-center rounded-full text-sm tabular-nums transition-colors";
 
 export function DataTable<T extends Record<string, unknown>>({
   data,
   columns,
   pageSize = 10,
   filterPlaceholder = "Filtrar...",
+  toolbar,
   className,
 }: DataTableProps<T>) {
   const [page, setPage] = useState(1);
@@ -61,11 +81,13 @@ export function DataTable<T extends Record<string, unknown>>({
     return filteredData.slice(start, start + pageSize);
   }, [currentPage, filteredData, pageSize]);
 
+  const resultsLabel = `${filteredData.length} ${filteredData.length === 1 ? "resultado" : "resultados"}`;
+
   return (
-    <div className={cn("space-y-5", className)}>
-      <div className="flex flex-col gap-4 border border-border/70 bg-card/90 p-4 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-md">
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-primary" />
+    <div className={cn("space-y-4", className)}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={filter}
             onChange={(event) => {
@@ -73,21 +95,15 @@ export function DataTable<T extends Record<string, unknown>>({
               setPage(1);
             }}
             placeholder={filterPlaceholder}
-            className="h-12 w-full border-border/70 bg-background/90 pl-11 font-workSans text-sm shadow-none"
+            className="h-11 w-full rounded-none border-border/70 bg-background/90 pl-10 font-workSans text-sm shadow-none"
           />
         </div>
-        <div className="border border-border bg-background/80 px-4 py-3 text-right">
-          <p className="font-spaceGrotesk text-[0.62rem] font-black uppercase tracking-[0.18em] text-muted-foreground">
-            Resultados
-          </p>
-          <p className="font-spaceGrotesk text-lg font-black text-foreground">
-            {filteredData.length}
-          </p>
-        </div>
+        {toolbar}
+        <p className="text-sm text-muted-foreground sm:ml-auto">{resultsLabel}</p>
       </div>
 
       {/* Vista de tabla (escritorio / tablet >= md) */}
-      <div className="hidden overflow-hidden border border-border/70 bg-card/90 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl md:block">
+      <div className="hidden overflow-hidden border border-border/70 bg-card/90 backdrop-blur-xl md:block">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -148,7 +164,7 @@ export function DataTable<T extends Record<string, unknown>>({
           paginated.map((row, index) => (
             <div
               key={(row as { id?: string | number }).id ?? index}
-              className="space-y-2 border border-border/70 bg-card/90 p-4 shadow-[6px_6px_0_var(--border)]"
+              className="space-y-2 border border-border/70 bg-card/90 p-4"
             >
               {columns.map((column) => (
                 <div
@@ -174,31 +190,59 @@ export function DataTable<T extends Record<string, unknown>>({
         )}
       </div>
 
-      <div className="flex items-center justify-between border border-border/70 bg-card/90 px-4 py-3 shadow-[6px_6px_0_var(--border)]">
-        <p className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
-          Pagina {currentPage} de {totalPages}
-        </p>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+      {totalPages > 1 ? (
+        <nav aria-label="Paginación" className="flex items-center justify-center gap-1 pt-1">
+          <button
+            type="button"
+            onClick={() => setPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
-            className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
+            aria-label="Página anterior"
+            className={cn(
+              pageButtonClass,
+              "text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30",
+            )}
           >
-            Anterior
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+            <ChevronLeft className="size-4" />
+          </button>
+
+          {getPageItems(currentPage, totalPages).map((item, index) =>
+            item === "ellipsis" ? (
+              <span key={`ellipsis-${index}`} className="w-6 text-center text-sm text-muted-foreground">
+                …
+              </span>
+            ) : (
+              <button
+                key={item}
+                type="button"
+                onClick={() => setPage(item)}
+                aria-label={`Página ${item}`}
+                aria-current={item === currentPage ? "page" : undefined}
+                className={cn(
+                  pageButtonClass,
+                  item === currentPage
+                    ? "bg-primary font-semibold text-primary-foreground"
+                    : "text-foreground/70 hover:bg-muted hover:text-foreground",
+                )}
+              >
+                {item}
+              </button>
+            ),
+          )}
+
+          <button
+            type="button"
+            onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
-            className="font-spaceGrotesk text-xs font-bold uppercase tracking-wide"
+            aria-label="Página siguiente"
+            className={cn(
+              pageButtonClass,
+              "text-muted-foreground hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30",
+            )}
           >
-            Siguiente
-          </Button>
-        </div>
-      </div>
+            <ChevronRight className="size-4" />
+          </button>
+        </nav>
+      ) : null}
     </div>
   );
 }

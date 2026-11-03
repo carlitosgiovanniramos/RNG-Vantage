@@ -10,24 +10,20 @@ Este documento detalla las funciones serverless alojadas en Supabase (Edge Funct
 
 ---
 
-## 1. `dashboard-metrics` (ACTIVA)
-**Propósito:** Centraliza el cálculo de métricas financieras y operativas del dashboard administrativo en una sola llamada para optimizar tiempos de carga.
-- **Endpoint:** `GET /functions/v1/dashboard-metrics`
-- **Auth:** Requiere JWT válido en el header `Authorization` + Rol `admin` en el `app_metadata` del JWT.
-- **Fallback:** En caso de que la Edge Function falle (timeout o error de red), la Server Action `app/(dashboard)/dashboard/actions.ts` utiliza automáticamente las Vistas SQL (`v_dashboard_summary`, etc.) como respaldo.
-- **Respuesta Esperada (200 OK):**
-  ```json
-  {
-    "mrr": 1200,
-    "monthly_income": 3500,
-    "active_subscriptions": 15,
-    "recurring_subscriptions": 8,
-    "one_time_subscriptions": 7,
-    "pending_reservations": 4,
-    "monthly_income_series": [{ "label": "Ene", "value": 1500 }],
-    "service_mix": [{ "name": "Manejo Redes", "value": 8 }]
-  }
-  ```
+## 1. `dashboard-metrics` (RETIRADA)
+**Estado:** Retirada — eliminada del repositorio.
+
+Las métricas del dashboard se obtienen directamente de las vistas SQL
+`v_dashboard_summary`, `v_monthly_income` y `v_service_mix` desde la Server
+Action `app/(dashboard)/dashboard/actions.ts`. Las tres consultas van en
+paralelo y las vistas usan `security_invoker`, por lo que respetan la RLS.
+La Edge Function añadía un salto extra (y arranque en frío) para calcular lo
+mismo.
+
+Si sigue desplegada en el proyecto de Supabase, puede eliminarse con:
+```bash
+supabase functions delete dashboard-metrics
+```
 
 ---
 
@@ -89,7 +85,7 @@ supabase functions delete payment-webhook
 Para testear localmente o contra producción, debes proporcionar los secretos de entorno correspondientes y un JWT válido de un usuario con rol administrador.
 
 ```bash
-curl -i --request GET 'https://<PROJECT_REF>.supabase.co/functions/v1/dashboard-metrics' \
+curl -i --request POST 'https://<PROJECT_REF>.supabase.co/functions/v1/subscription-renewal' \
   --header 'Authorization: Bearer <TU_ADMIN_JWT>'
 ```
 

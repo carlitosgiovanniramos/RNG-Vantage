@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getAdminSession } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { markTransactionAsPaidSchema } from "@/lib/validators/transaction";
 import { sendEmail } from "@/lib/email/client";
@@ -47,19 +48,11 @@ export async function markTransactionAsCompleted(data: unknown) {
   const supabase = await createClient();
 
   // PASO 1: Verificar que el usuario es admin
-  const { data: user, error: userError } = await supabase.auth.getUser();
-  if (userError || !user?.user) {
+  const { userId, isAdmin } = await getAdminSession(supabase);
+  if (!userId) {
     return { success: false, error: "No estás autenticado." };
   }
-
-  // Verificar que es admin (consultando su rol en profiles)
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("role, is_active")
-    .eq("id", user.user.id)
-    .single();
-
-  if (profileError || profile?.role !== "admin" || profile?.is_active === false) {
+  if (!isAdmin) {
     return {
       success: false,
       error: "Solo administradores pueden registrar pagos.",
@@ -160,18 +153,11 @@ export async function getTransactions() {
   const supabase = await createClient();
 
   // Verificar que el usuario es admin
-  const { data: user, error: userError } = await supabase.auth.getUser();
-  if (userError || !user?.user) {
+  const { userId, isAdmin } = await getAdminSession(supabase);
+  if (!userId) {
     return { data: null, error: "No estás autenticado." };
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, is_active")
-    .eq("id", user.user.id)
-    .single();
-
-  if (profile?.role !== "admin" || profile?.is_active === false) {
+  if (!isAdmin) {
     return { data: null, error: "Solo administradores pueden ver transacciones." };
   }
 
@@ -230,11 +216,9 @@ export async function markTransactionAsFailed(transaction_id: string) {
 
   const supabase = await createClient();
 
-  const { data: user, error: userError } = await supabase.auth.getUser();
-  if (userError || !user?.user) return { success: false, error: "No estás autenticado." };
-
-  const { data: profile } = await supabase.from("profiles").select("role, is_active").eq("id", user.user.id).single();
-  if (profile?.role !== "admin" || profile?.is_active === false) return { success: false, error: "No autorizado." };
+  const { userId, isAdmin } = await getAdminSession(supabase);
+  if (!userId) return { success: false, error: "No estás autenticado." };
+  if (!isAdmin) return { success: false, error: "No autorizado." };
 
   const { data: transaction, error: getError } = await supabase
     .from("transactions")
@@ -271,11 +255,9 @@ export async function markTransactionAsFailed(transaction_id: string) {
 export async function cleanExpiredTransactions() {
   const supabase = await createClient();
 
-  const { data: user } = await supabase.auth.getUser();
-  if (!user?.user) return { success: false, error: "No estás autenticado." };
-
-  const { data: profile } = await supabase.from("profiles").select("role, is_active").eq("id", user.user.id).single();
-  if (profile?.role !== "admin" || profile?.is_active === false) return { success: false, error: "No autorizado." };
+  const { userId, isAdmin } = await getAdminSession(supabase);
+  if (!userId) return { success: false, error: "No estás autenticado." };
+  if (!isAdmin) return { success: false, error: "No autorizado." };
 
   // Calcular la fecha hace 24 horas
   const date24hAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -326,18 +308,11 @@ export async function getReceiptSignedUrl(transaction_id: string) {
 
   const supabase = await createClient();
 
-  const { data: user, error: userError } = await supabase.auth.getUser();
-  if (userError || !user?.user) {
+  const { userId, isAdmin } = await getAdminSession(supabase);
+  if (!userId) {
     return { success: false, error: "No estás autenticado." };
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, is_active")
-    .eq("id", user.user.id)
-    .single();
-
-  if (profile?.role !== "admin" || profile?.is_active === false) {
+  if (!isAdmin) {
     return { success: false, error: "No autorizado." };
   }
 

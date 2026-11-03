@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getAdminSession } from "@/lib/auth/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type ClientRow = {
@@ -17,21 +18,8 @@ export type ClientRow = {
 
 async function ensureAdmin() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) return { supabase, error: "No autorizado" };
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role,is_active")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (!profile || profile.role !== "admin" || profile.is_active === false) {
-    return { supabase, error: "No autorizado" };
-  }
+  const { isAdmin } = await getAdminSession(supabase);
+  if (!isAdmin) return { supabase, error: "No autorizado" };
 
   return { supabase, error: null };
 }
@@ -40,6 +28,13 @@ export async function getClients() {
   const { supabase, error: authError } = await ensureAdmin();
   if (authError) return { error: authError };
 
+  // Una sola consulta: perfiles + email (migracion admin_list_clients).
+  const { data: rpcClients, error: rpcError } = await supabase.rpc("admin_list_clients");
+  if (!rpcError && rpcClients) {
+    return { data: rpcClients as ClientRow[] };
+  }
+
+  // Fallback mientras la funcion no exista en la BD: perfiles + emails de Auth.
   const { data: profiles, error } = await supabase
     .from("profiles")
     .select("id, first_name, last_name, role, is_active, created_at, updated_at")

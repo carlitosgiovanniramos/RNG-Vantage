@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedNumber } from "@/components/animated-number";
 import { cn } from "@/lib/utils";
 
 type DataCardTrendDirection = "up" | "down" | "neutral";
@@ -14,8 +15,14 @@ type DataCardTrend = {
 
 type DataCardProps = {
   title: string;
-  value: string | number;
+  value: number;
+  format?: "currency" | "number";
   icon?: ReactNode;
+  hint?: string;
+  href?: string;
+  /** Retraso de la animación de entrada en ms */
+  delay?: number;
+  highlight?: boolean;
   trend?: DataCardTrend;
   className?: string;
 };
@@ -23,7 +30,12 @@ type DataCardProps = {
 export function DataCard({
   title,
   value,
+  format = "number",
   icon,
+  hint,
+  href,
+  delay = 0,
+  highlight = false,
   trend,
   className,
 }: DataCardProps) {
@@ -35,50 +47,65 @@ export function DataCard({
         ? "text-red-600 dark:text-red-400"
         : "text-muted-foreground";
 
-  return (
-    <Card
-      className={cn(
-        "group relative overflow-hidden border border-border/70 bg-card/90 shadow-[8px_8px_0_var(--border)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-[10px_10px_0_var(--border)]",
-        className,
-      )}
-    >
+  const content = (
+    <>
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-primary"
+        className="pointer-events-none absolute left-0 top-0 h-0.5 w-[18%] bg-primary"
       />
-      <CardHeader className="flex flex-row items-center justify-between gap-3 pb-4">
-        <CardTitle className="font-spaceGrotesk text-[0.68rem] font-bold uppercase tracking-[0.22em] text-muted-foreground/80">
-          {title}
-        </CardTitle>
-        {icon ? (
-          <div className="flex h-10 w-10 items-center justify-center border border-border bg-background text-primary transition-colors duration-300 group-hover:border-primary/50">
-            {icon}
-          </div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5 text-muted-foreground">
+          {icon ? (
+            <span className="flex size-8 items-center justify-center bg-primary/10 text-primary">
+              {icon}
+            </span>
+          ) : null}
+          <span className="text-sm font-medium">{title}</span>
+        </div>
+      </div>
+
+      <div className="mt-6 flex items-end justify-between gap-2">
+        <AnimatedNumber
+          value={value}
+          format={format}
+          className="font-spaceGrotesk text-3xl font-bold tracking-tight text-foreground tabular-nums md:text-4xl"
+        />
+        {highlight && value > 0 ? (
+          <span className="relative mb-2 flex size-2.5">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-primary" />
+          </span>
         ) : null}
-      </CardHeader>
-      <CardContent className="space-y-2 pt-2">
-        <p className="font-spaceGrotesk text-3xl font-black tracking-tight text-foreground md:text-4xl">
-          {value}
-        </p>
-        {trend ? (
-          <div
-            className={cn(
-              "flex items-center gap-1.5 text-sm font-medium",
-              trendColor,
-            )}
-          >
-            {direction === "up" ? (
-              <TrendingUp className="size-4" />
-            ) : direction === "down" ? (
-              <TrendingDown className="size-4" />
-            ) : null}
-            <span>{trend.value}</span>
-            {trend.label ? (
-              <span className="text-muted-foreground">{trend.label}</span>
-            ) : null}
-          </div>
-        ) : null}
-      </CardContent>
-    </Card>
+      </div>
+
+      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
+
+      {trend ? (
+        <div className={cn("mt-2 flex items-center gap-1.5 text-sm font-medium", trendColor)}>
+          {direction === "up" ? (
+            <TrendingUp className="size-4" />
+          ) : direction === "down" ? (
+            <TrendingDown className="size-4" />
+          ) : null}
+          <span>{trend.value}</span>
+          {trend.label ? <span className="text-muted-foreground">{trend.label}</span> : null}
+        </div>
+      ) : null}
+    </>
+  );
+
+  const classes = cn(
+    "animate-rise relative block overflow-hidden border border-border/60 bg-card/80 p-5 backdrop-blur-sm md:p-6",
+    className,
+  );
+
+  return href ? (
+    <Link href={href} className={classes} style={{ animationDelay: `${delay}ms` }}>
+      {content}
+    </Link>
+  ) : (
+    <article className={classes} style={{ animationDelay: `${delay}ms` }}>
+      {content}
+    </article>
   );
 }

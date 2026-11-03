@@ -1,12 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
-import { createServerClient } from "@supabase/ssr";
+import { checkAdminClaims, isActiveAdminInDb } from "@/lib/auth/admin";
 
 const ADMIN_ROUTES = ["/dashboard", "/reservas", "/servicios", "/clientes", "/transacciones", "/subscriptions", "/pagos-fallidos"];
 
 export async function middleware(request: NextRequest) {
-  // 1. Refresh session tokens (devuelve el usuario: una sola llamada de red)
-  const { response, user } = await updateSession(request);
+  // 1. Refresca la sesion y verifica el JWT localmente (sin red con ES256)
+  const { response, claims, supabase } = await updateSession(request);
 
   // 2. Protect admin routes
   const { pathname } = request.nextUrl;
@@ -14,42 +14,21 @@ export async function middleware(request: NextRequest) {
 
   if (isAdminRoute) {
     // Not authenticated → redirect to login
-    if (!user) {
+    if (!claims?.sub || !supabase) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // Short-circuit: el rol vive en el JWT (trigger sync_profile_role_to_auth).
-    // Si el token ya dice que NO es admin, se redirige sin tocar la BD.
-    const jwtRole = (user.app_metadata as Record<string, unknown> | null)?.role;
-    if (typeof jwtRole === "string" && jwtRole !== "admin") {
-      return NextResponse.redirect(new URL("/catalogo", request.url));
-    }
+    // El rol e is_active viven en el JWT (trigger sync_profile_to_auth).
+    // Solo se consulta la BD si el token es anterior a esa sincronizacion.
+    const check = checkAdminClaims(claims);
+    const isAdmin =
+      check === "unknown"
+        ? await isActiveAdminInDb(supabase, claims.sub)
+        : check === "admin";
 
-    // Confirmacion en BD (cubre is_active y tokens emitidos antes del sync).
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
-          },
-          setAll() {
-            // No-op: cookies already handled by updateSession
-          },
-        },
-      }
-    );
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role,is_active")
-      .eq("id", user.id)
-      .maybeSingle(); // .single() lanza error si no existe el perfil; maybeSingle() devuelve null
-
-    if (!profile || profile.role !== "admin" || profile.is_active === false) {
+    if (!isAdmin) {
       return NextResponse.redirect(new URL("/catalogo", request.url));
     }
   }
