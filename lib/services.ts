@@ -56,8 +56,8 @@ export function getServicePrice(service: PublicService): { amount: string; unit:
 }
 
 /**
- * Viñetas a partir de la descripción: cada oración es una viñeta, salvo la
- * lista "Incluye: a, b, c", que se separa por comas. Se omiten las
+ * Viñetas a partir de la descripción: primero los elementos de la lista
+ * "Incluye: a, b, c" y luego las demás oraciones. Se omiten las
  * aclaraciones ("No incluye…", "Precios no incluyen…", "Precio por hora", que ya
  * muestra el precio).
  */
@@ -67,15 +67,19 @@ export function getServiceHighlights(service: PublicService, max = 3): string[] 
     .map((sentence) => sentence.replace(/\.$/, "").trim())
     .filter(Boolean);
 
-  const items = sentences.flatMap((sentence) => {
-    if (/^(no incluye|precios no incluyen|precio por hora)/i.test(sentence)) return [];
+  // Primero lo que incluye (lo más concreto) y después el resto de oraciones.
+  const included: string[] = [];
+  const others: string[] = [];
+  for (const sentence of sentences) {
+    if (/^(no incluye|precios no incluyen|precio por hora)/i.test(sentence)) continue;
     if (/^incluye:/i.test(sentence)) {
-      return sentence.replace(/^incluye:\s*/i, "").split(/,\s*/);
+      included.push(...sentence.replace(/^incluye:\s*/i, "").split(/,\s*/));
+    } else {
+      others.push(sentence);
     }
-    return [sentence];
-  });
+  }
 
-  return items
+  return [...included, ...others]
     .map((item) => item.trim())
     .filter(Boolean)
     .slice(0, max)

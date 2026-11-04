@@ -103,14 +103,14 @@ export function ServiceCarousel({ id, title, description, children }: ServiceCar
         id={`${id}-track`}
         ref={trackRef}
         onScroll={update}
-        className="flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth md:py-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {items.map((item, index) => (
           <div
             key={index}
             className={cn(
               "flex shrink-0 snap-start basis-[85%]",
-              "sm:basis-[calc((100%-1.5rem)/2)] lg:basis-[calc((100%-3rem)/3)]",
+              "sm:basis-1/2 lg:basis-1/3",
               "[&>*]:w-full",
             )}
           >
