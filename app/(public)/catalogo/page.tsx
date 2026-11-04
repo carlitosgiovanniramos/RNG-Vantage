@@ -1,6 +1,8 @@
 import type { ServiceType } from "@/types/database";
+import { CtaBanner } from "@/components/cta-banner";
 import { ServiceCard } from "@/components/service-card";
 import { ServiceCarousel } from "@/components/service-carousel";
+import { ShowcaseCarousel, type ShowcaseItem } from "@/components/showcase-carousel";
 import { createPublicClient } from "@/lib/supabase/public";
 import { isHourlyService, toPublicServices } from "@/lib/services";
 
@@ -35,6 +37,54 @@ const SERVICE_GROUPS: {
   },
 ];
 
+/**
+ * Tarjetas del carrusel de presentación: una por línea de servicio.
+ * Fotos de Unsplash (licencia libre de uso comercial), guardadas en
+ * public/images/servicios:
+ *   redes        https://unsplash.com/photos/husQ4tkR8Z8
+ *   produccion   https://unsplash.com/photos/SWTHldDCpHM
+ *   fotografia   https://unsplash.com/photos/1CstmUgoSpY
+ *   capacitacion https://unsplash.com/photos/gYf49RB7bvE
+ *   auditoria    https://unsplash.com/photos/G-cJ-hO2oyA
+ */
+const SHOWCASE_ITEMS: ShowcaseItem[] = [
+  {
+    title: "Redes sociales",
+    description: "Estrategia, producción y contenido mensual para que tu marca publique con constancia.",
+    image: "/images/servicios/redes.webp",
+    imagePosition: "center",
+    href: "#redes",
+  },
+  {
+    title: "Producción audiovisual",
+    description: "Videos con guion, dirección y equipo profesional para presentar tu marca.",
+    image: "/images/servicios/produccion.webp",
+    imagePosition: "center 65%",
+    href: "#produccion",
+  },
+  {
+    title: "Fotografía",
+    description: "Sesiones de retrato, graduación o marca con 50 fotografías editadas.",
+    image: "/images/servicios/fotografia.webp",
+    imagePosition: "42% center",
+    href: "#produccion",
+  },
+  {
+    title: "Capacitación",
+    description: "Aprende a crear, editar y medir tu propio contenido en un curso de 3 meses.",
+    image: "/images/servicios/capacitacion.webp",
+    imagePosition: "40% center",
+    href: "#formacion",
+  },
+  {
+    title: "Auditoría de marca",
+    description: "Analizamos tu marca y tu estrategia de contenido para trazar el siguiente paso.",
+    image: "/images/servicios/auditoria.webp",
+    imagePosition: "35% center",
+    href: "#formacion",
+  },
+];
+
 export default async function CatalogoPage() {
   const supabase = createPublicClient();
 
@@ -59,36 +109,21 @@ export default async function CatalogoPage() {
 
   return (
     <div className="flex flex-col">
-      {/* Encabezado corto con el mismo difuminado del home y el login */}
-      <section className="relative -mt-[90px] overflow-hidden bg-background pt-[90px]">
+      {/* Encabezado + carrusel de presentación, con el difuminado del home y el login */}
+      <section className="relative -mt-[90px] flex min-h-svh flex-col justify-center overflow-hidden bg-background pt-[90px]">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(174,41,0,0.17),transparent_52%),radial-gradient(ellipse_at_bottom_right,rgba(174,41,0,0.04),transparent_50%)] [mask-image:linear-gradient(to_bottom,black_65%,transparent)]"
         />
-        <div className="animate-rise relative mx-auto max-w-[1440px] px-4 pb-10 pt-16 sm:px-8 sm:pt-24 lg:px-16">
-          <div className="mb-6 inline-block bg-primary px-4 py-1 font-spaceGrotesk text-sm font-medium tracking-[-0.01em] text-white">
-            RGL Estudio · Ecuador
-          </div>
-          <h1 className="mb-5 font-spaceGrotesk text-5xl font-semibold leading-[1] tracking-[-0.055em] text-foreground sm:text-7xl">
-            Servicios<span className="text-primary">.</span>
+        <div className="animate-rise relative mx-auto flex w-full max-w-[1440px] flex-col items-center px-4 pb-8 pt-6 text-center sm:px-8 lg:px-16">
+          <h1 className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 font-spaceGrotesk text-4xl font-black uppercase leading-none tracking-tight sm:text-6xl">
+            <span className="bg-foreground/[0.08] px-3 py-1 text-foreground">Nuestros</span>
+            <span className="text-[#b83a14]">Servicios</span>
           </h1>
-          <p className="max-w-xl font-workSans text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Elige el servicio que mejor se adapta a tu negocio. Sin contratos forzosos ni letras pequeñas.
-          </p>
+        </div>
 
-          {groups.length > 1 ? (
-            <nav aria-label="Categorías de servicios" className="mt-8 flex flex-wrap gap-2">
-              {groups.map((group) => (
-                <a
-                  key={group.id}
-                  href={`#${group.id}`}
-                  className="border border-border bg-card px-4 py-2 font-spaceGrotesk text-sm font-semibold tracking-[-0.02em] text-foreground transition-colors hover:border-foreground"
-                >
-                  {group.title}
-                </a>
-              ))}
-            </nav>
-          ) : null}
+        <div className="animate-rise relative mx-auto w-full max-w-[1440px] px-4 pb-6 sm:px-8 lg:px-16" style={{ animationDelay: "120ms" }}>
+          <ShowcaseCarousel items={SHOWCASE_ITEMS} />
         </div>
       </section>
 
@@ -118,11 +153,14 @@ export default async function CatalogoPage() {
               <ServiceCard
                 key={service.id}
                 service={service}
+                index={i}
                 featured={group.id === "redes" && group.services.length === 3 && i === 1}
               />
             ))}
           </ServiceCarousel>
         ))}
+
+        <CtaBanner />
       </div>
     </div>
   );

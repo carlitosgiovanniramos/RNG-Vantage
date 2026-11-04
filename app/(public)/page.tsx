@@ -43,7 +43,8 @@ export default async function LandingPage() {
 
         <div className="relative mx-auto flex min-h-[calc(100svh-90px)] max-w-[1440px] items-center justify-center px-4 py-12 text-center sm:px-8 lg:px-16">
           <div className="animate-rise flex flex-col items-center">
-            <div className="mb-6 inline-block bg-primary px-4 py-1 font-spaceGrotesk text-sm font-medium tracking-[-0.01em] text-white">
+            <div className="mb-6 inline-flex items-center gap-2 bg-foreground/[0.06] px-3 py-1.5 font-spaceGrotesk text-xs font-bold uppercase tracking-[0.12em] text-foreground/80">
+              <span aria-hidden className="size-1.5 rounded-full bg-[#b83a14]" />
               Marketing · Contenido · Producción audiovisual
             </div>
 
@@ -113,11 +114,12 @@ export default async function LandingPage() {
               </Link>
             </div>
 
-            <div className="relative grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="relative grid grid-cols-1 md:grid-cols-3 md:py-6">
               {landingServices.map((service, i) => (
                 <ServiceCard
                   key={service.id}
                   service={service}
+                  index={i}
                   featured={landingServices.length === 3 && i === 1}
                 />
               ))}

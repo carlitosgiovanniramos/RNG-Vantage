@@ -1,15 +1,6 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  BarChart,
-  CheckCircle2,
-  Clapperboard,
-  GraduationCap,
-  Network,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
-import type { ServiceType } from "@/types/database";
 import {
   getServiceDisplayName,
   getServiceHighlights,
@@ -18,80 +9,84 @@ import {
 } from "@/lib/services";
 import { cn } from "@/lib/utils";
 
-const TYPE_ICONS: Record<ServiceType, LucideIcon> = {
-  manejo_redes: Network,
-  auditoria: BarChart,
-  capacitacion: GraduationCap,
-  otro: Clapperboard,
-};
+// Paleta de los paneles: rojo profundo (tertiary), más suave a la vista que el
+// primary en superficies grandes, y el gris carbón del sitio (valor fijo para
+// que no cambie en modo oscuro, donde el texto blanco dejaría de leerse).
+const PANEL_RED = "bg-[#9e2f0e]";
+const PANEL_DARK = "bg-[#2c2f2e]";
+const ACCENT = "bg-[#b83a14]";
 
 type ServiceCardProps = {
   service: PublicService;
-  /** Resalta la tarjeta (línea roja, etiqueta "Más popular" y botón en rojo) */
+  /** Posición en la fila: los paneles alternan rojo profundo (pares) y gris carbón (impares). */
+  index: number;
+  /** Plan destacado: sobresale arriba y abajo y lleva la etiqueta "Más popular". */
   featured?: boolean;
 };
 
-/** Tarjeta pública de un servicio: ícono, nombre, 3 viñetas, precio y botón de contratar. */
-export function ServiceCard({ service, featured = false }: ServiceCardProps) {
-  const Icon = TYPE_ICONS[service.type];
+/**
+ * Panel público de un servicio. Los paneles van pegados y alternan color,
+ * con el contenido centrado: nombre, detalle, precio, lo que incluye y botón.
+ */
+export function ServiceCard({ service, index, featured = false }: ServiceCardProps) {
   const name = getServiceDisplayName(service);
   const price = getServicePrice(service);
   const highlights = getServiceHighlights(service);
+  const dark = index % 2 === 1;
 
   return (
     <div
       className={cn(
-        "relative flex flex-col border bg-card p-7 sm:p-8",
-        featured ? "border-primary/40" : "border-border",
+        "relative flex flex-col items-center px-8 py-12 text-center text-white",
+        dark ? PANEL_DARK : PANEL_RED,
+        featured && "z-10 md:-my-6 md:py-[4.5rem]",
       )}
     >
       {featured ? (
-        <>
-          <div aria-hidden className="absolute inset-x-0 top-0 h-1.5 bg-primary" />
-          <span className="absolute right-0 top-1.5 bg-primary px-3 py-1 font-spaceGrotesk text-[0.65rem] font-black uppercase tracking-[0.18em] text-primary-foreground">
-            Más popular
-          </span>
-        </>
+        <span
+          className={cn(
+            "mb-5 px-3 py-1 font-spaceGrotesk text-xs font-semibold tracking-[-0.01em]",
+            dark ? ACCENT : PANEL_DARK,
+            "text-white",
+          )}
+        >
+          Más popular
+        </span>
       ) : null}
 
-      <div className="mb-7 flex size-12 items-center justify-center border border-primary/40 bg-primary/5">
-        <Icon className="size-6 text-primary" />
-      </div>
-
-      <h3 className="font-spaceGrotesk text-2xl font-black uppercase leading-[0.98] tracking-tight text-foreground sm:text-3xl">
+      <h3 className="font-spaceGrotesk text-3xl font-semibold leading-[1] tracking-[-0.05em]">
         {name.title}
       </h3>
       {name.detail ? (
-        <p className="mt-2 font-workSans text-base text-muted-foreground">{name.detail}</p>
+        <p className="mt-2 font-workSans text-sm text-white/70">{name.detail}</p>
       ) : null}
 
-      <ul className="my-6 flex-1 space-y-3 border-t border-primary/20 pt-6">
+      <p className="mt-5 flex items-baseline justify-center gap-1.5 font-spaceGrotesk">
+        <span className="text-4xl font-semibold tracking-[-0.04em]">{price.amount}</span>
+        {price.unit ? (
+          <span className="font-workSans text-sm text-white/70">{price.unit}</span>
+        ) : null}
+      </p>
+
+      <ul className="my-8 flex-1 space-y-2 font-workSans text-sm leading-relaxed text-white/85">
         {highlights.map((item) => (
-          <li key={item} className="flex gap-3 font-workSans text-sm leading-relaxed text-muted-foreground">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
-            <span className="line-clamp-2">{item}</span>
+          <li key={item} className="line-clamp-2">
+            {item}
           </li>
         ))}
       </ul>
 
-      <p className="mb-5 flex items-baseline gap-1.5 border-t border-primary/20 pt-5 font-spaceGrotesk text-foreground">
-        <span className="text-4xl font-black tracking-tight sm:text-5xl">{price.amount}</span>
-        {price.unit ? (
-          <span className="font-workSans text-sm font-medium text-muted-foreground">{price.unit}</span>
-        ) : null}
-      </p>
-
       <Link
         href={`/checkout?service_id=${service.id}`}
         className={cn(
-          "inline-flex h-12 w-full items-center justify-between border px-5 font-spaceGrotesk text-sm font-black uppercase tracking-[0.14em] transition-colors duration-300",
-          featured
-            ? "border-primary bg-primary text-primary-foreground hover:bg-primary/85"
-            : "border-foreground/80 text-foreground hover:bg-foreground hover:text-background",
+          "group inline-flex h-11 items-center gap-2 px-6 font-spaceGrotesk text-sm font-semibold tracking-[-0.01em] transition-colors duration-300",
+          dark
+            ? "border border-white text-white hover:bg-white hover:text-[#2c2f2e]"
+            : "bg-[#2c2f2e] text-white hover:bg-[#2c2f2e]/85",
         )}
       >
-        <span>Contratar</span>
-        <ArrowRight className="size-4" />
+        Contratar
+        <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
       </Link>
     </div>
   );
