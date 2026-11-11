@@ -1,7 +1,6 @@
 import type { ServiceType } from "@/types/database";
-import { CtaBanner } from "@/components/cta-banner";
-import { ServiceCard } from "@/components/service-card";
-import { ServiceCarousel } from "@/components/service-carousel";
+import { ServiceDeck } from "@/components/service-deck";
+import { ServiceGroupIntro, type ServiceGroupIntroProps } from "@/components/service-group-intro";
 import { ShowcaseCarousel, type ShowcaseItem } from "@/components/showcase-carousel";
 import { createPublicClient } from "@/lib/supabase/public";
 import { isHourlyService, toPublicServices } from "@/lib/services";
@@ -14,26 +13,56 @@ export const revalidate = 300;
 const SERVICE_GROUPS: {
   id: string;
   title: string;
-  description: string;
   types: ServiceType[];
+  intro: Omit<ServiceGroupIntroProps, "children" | "reverse">;
 }[] = [
   {
     id: "redes",
     title: "Redes sociales",
-    description: "Planes mensuales de estrategia, producción y contenido.",
     types: ["manejo_redes"],
+    intro: {
+      titleLead: "Redes",
+      titleAccent: "sociales",
+      highlights: [
+        "Planificación estratégica",
+        "Producción audiovisual mensual",
+        "Spots y fotografía para redes",
+        "Informes y análisis de métricas",
+      ],
+      cta: { label: "Cotiza tu plan mensual", href: "/reservar" },
+    },
   },
   {
     id: "produccion",
     title: "Producción audiovisual",
-    description: "Sesiones de video y fotografía para tu marca.",
     types: ["otro"],
+    intro: {
+      titleLead: "Producción",
+      titleAccent: "audiovisual",
+      highlights: [
+        "Videos de presentación",
+        "Paquetes de 2, 6 y 15 videos",
+        "Sesiones fotográficas",
+        "Modelos para producciones",
+      ],
+      cta: { label: "Agenda tu sesión", href: "/reservar" },
+    },
   },
   {
     id: "formacion",
     title: "Formación y asesoría",
-    description: "Aprende a crear contenido o recibe una auditoría de tu marca.",
     types: ["capacitacion", "auditoria"],
+    intro: {
+      titleLead: "Formación",
+      titleAccent: "y asesoría",
+      highlights: [
+        "Curso de marketing de 3 meses",
+        "Auditoría de marca",
+        "Estrategia de contenido",
+        "Métricas en Meta Ads y TikTok Ads",
+      ],
+      cta: { label: "Reserva una reunión", href: "/reservar" },
+    },
   },
 ];
 
@@ -122,12 +151,12 @@ export default async function CatalogoPage() {
           </h1>
         </div>
 
-        <div className="animate-rise relative mx-auto w-full max-w-[1440px] px-4 pb-6 sm:px-8 lg:px-16" style={{ animationDelay: "120ms" }}>
+        <div className="animate-rise relative w-full px-4 pb-6 sm:px-8 lg:px-12" style={{ animationDelay: "120ms" }}>
           <ShowcaseCarousel items={SHOWCASE_ITEMS} />
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-[1440px] space-y-20 px-4 pb-24 pt-8 sm:px-8 sm:pb-32 lg:px-16">
+      <div className="mx-auto w-full max-w-[1440px] space-y-24 px-4 pb-24 pt-12 sm:space-y-32 sm:px-8 sm:pb-32 lg:px-16">
         {error ? (
           <div className="border border-red-200 bg-red-50 px-4 py-3 font-workSans text-sm text-red-900 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
             No se pudieron cargar los servicios. Verifica la conexión con Supabase.
@@ -142,25 +171,16 @@ export default async function CatalogoPage() {
           </div>
         ) : null}
 
-        {groups.map((group) => (
-          <ServiceCarousel
-            key={group.id}
-            id={group.id}
-            title={group.title}
-            description={group.description}
-          >
-            {group.services.map((service, i) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                index={i}
-                featured={group.id === "redes" && group.services.length === 3 && i === 1}
+        {groups.map((group, groupIndex) => (
+          <section key={group.id} id={group.id} aria-label={group.title} className="scroll-mt-28">
+            <ServiceGroupIntro {...group.intro} reverse={groupIndex % 2 === 1}>
+              <ServiceDeck
+                services={group.services}
+                featuredIndex={group.id === "redes" && group.services.length === 3 ? 1 : undefined}
               />
-            ))}
-          </ServiceCarousel>
+            </ServiceGroupIntro>
+          </section>
         ))}
-
-        <CtaBanner />
       </div>
     </div>
   );

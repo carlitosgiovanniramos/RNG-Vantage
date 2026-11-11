@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk, Inter, Work_Sans } from "next/font/google";
+import { Space_Grotesk, Inter, Work_Sans, Instrument_Serif } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -16,6 +16,14 @@ const inter = Inter({
 
 const workSans = Work_Sans({
   variable: "--font-work-sans",
+  subsets: ["latin"],
+});
+
+// Cursiva editorial para acentos en títulos (p. ej. "Redes *sociales*").
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  weight: "400",
+  style: ["normal", "italic"],
   subsets: ["latin"],
 });
 
@@ -44,7 +52,7 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${spaceGrotesk.variable} ${inter.variable} ${workSans.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${inter.variable} ${workSans.variable} ${instrumentSerif.variable} antialiased`}
       >
         <Providers>
           {children}

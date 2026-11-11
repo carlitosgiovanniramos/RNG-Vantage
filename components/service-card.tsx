@@ -12,8 +12,8 @@ import { cn } from "@/lib/utils";
 // Paleta de los paneles: rojo profundo (tertiary), más suave a la vista que el
 // primary en superficies grandes, y el gris carbón del sitio (valor fijo para
 // que no cambie en modo oscuro, donde el texto blanco dejaría de leerse).
-const PANEL_RED = "bg-[#9e2f0e]";
-const PANEL_DARK = "bg-[#2c2f2e]";
+export const PANEL_RED = "bg-[#9e2f0e]";
+export const PANEL_DARK = "bg-[#2c2f2e]";
 const ACCENT = "bg-[#b83a14]";
 
 type ServiceCardProps = {
@@ -25,29 +25,31 @@ type ServiceCardProps = {
 };
 
 /**
- * Panel público de un servicio. Los paneles van pegados y alternan color,
- * con el contenido centrado: nombre, detalle, precio, lo que incluye y botón.
+ * Contenido de un panel de servicio (centrado, en blanco): etiqueta opcional,
+ * nombre, detalle, precio, lo que incluye y botón. Se usa en los paneles del
+ * inicio y en el mazo giratorio del catálogo.
  */
-export function ServiceCard({ service, index, featured = false }: ServiceCardProps) {
+export function ServicePanelContent({
+  service,
+  dark,
+  featured = false,
+}: {
+  service: PublicService;
+  /** Panel gris carbón (true) o rojo (false): cambia el estilo del botón y la etiqueta. */
+  dark: boolean;
+  featured?: boolean;
+}) {
   const name = getServiceDisplayName(service);
   const price = getServicePrice(service);
   const highlights = getServiceHighlights(service);
-  const dark = index % 2 === 1;
 
   return (
-    <div
-      className={cn(
-        "relative flex flex-col items-center px-8 py-12 text-center text-white",
-        dark ? PANEL_DARK : PANEL_RED,
-        featured && "z-10 md:-my-6 md:py-[4.5rem]",
-      )}
-    >
+    <>
       {featured ? (
         <span
           className={cn(
-            "mb-5 px-3 py-1 font-spaceGrotesk text-xs font-semibold tracking-[-0.01em]",
+            "mb-5 px-3 py-1 font-spaceGrotesk text-xs font-semibold tracking-[-0.01em] text-white",
             dark ? ACCENT : PANEL_DARK,
-            "text-white",
           )}
         >
           Más popular
@@ -88,6 +90,26 @@ export function ServiceCard({ service, index, featured = false }: ServiceCardPro
         Contratar
         <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
       </Link>
+    </>
+  );
+}
+
+/**
+ * Panel público de un servicio. Los paneles van pegados y alternan color,
+ * con el contenido centrado: nombre, detalle, precio, lo que incluye y botón.
+ */
+export function ServiceCard({ service, index, featured = false }: ServiceCardProps) {
+  const dark = index % 2 === 1;
+
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col items-center px-8 py-12 text-center text-white",
+        dark ? PANEL_DARK : PANEL_RED,
+        featured && "z-10 md:-my-6 md:py-[4.5rem]",
+      )}
+    >
+      <ServicePanelContent service={service} dark={dark} featured={featured} />
     </div>
   );
 }
